@@ -16,12 +16,24 @@ var cell: Vector2i
 var target_cell: Vector2i
 var job: Job = null
 var carrying: WoodItem = null
+var reserved_dest := WorldGrid.INVALID_CELL  # claimed stockpile cell while hauling
 var hunger := HUNGER_MAX
 var food_target: FoodItem = null
 var eat_ticks_left := 0
 var dead := false
 
+## 1 = preferred, higher = later, 0 = never does this job type.
+var work_priorities := {Job.Type.CHOP: 1, Job.Type.HAUL: 1}
+
 @onready var body: ColorRect = $Body
+@onready var selection_ring: ColorRect = $SelectionRing
+
+func set_selected(on: bool) -> void:
+	selection_ring.visible = on
+
+func cycle_priority(type: Job.Type) -> void:
+	# 1 -> 2 -> 3 -> 0 (off) -> 1
+	work_priorities[type] = (int(work_priorities[type]) + 1) % 4
 
 func _ready() -> void:
 	cell = WorldGrid.world_to_cell(position)
@@ -61,17 +73,18 @@ func _tick_hunger() -> void:
 		_die()
 		return
 	# Hunger overrides work: below the threshold, drop everything and
-	# head for the nearest reachable food (if any exists).
+	# head for the nearest reachable unclaimed food (if any exists).
 	if hunger < SEEK_FOOD_THRESHOLD and food_target == null:
 		var food := _find_food()
 		if food:
 			_abort_work()
+			food.reserved = true
 			food_target = food
 			eat_ticks_left = EAT_TICKS
 			target_cell = food.cell
 
 func _find_something_to_do() -> void:
-	job = JobManager.request_job(cell)
+	job = JobManager.request_job(cell, work_priorities)
 	if job:
 		target_cell = job.cell
 
@@ -115,10 +128,13 @@ func _pick_up(wood: WoodItem) -> void:
 	if dest == WorldGrid.INVALID_CELL:
 		wood.drop_at(cell)  # storage vanished since we took the job
 		return
+	WorldGrid.reserve_storage(dest)
+	reserved_dest = dest
 	carrying = wood
 	target_cell = dest
 
 func _deliver() -> void:
+	_release_dest()
 	if WorldGrid.is_cell_free_for_storage(cell):
 		carrying.drop_at(cell)
 		carrying = null
@@ -129,6 +145,8 @@ func _deliver() -> void:
 		carrying.drop_at(cell)
 		carrying = null
 	else:
+		WorldGrid.reserve_storage(dest)
+		reserved_dest = dest
 		target_cell = dest
 
 func _find_food() -> FoodItem:
@@ -136,11 +154,18 @@ func _find_food() -> FoodItem:
 	var best_dist := INF
 	for node in get_tree().get_nodes_in_group("food"):
 		var food := node as FoodItem
+		if food.reserved:
+			continue
 		var dist := float((food.cell - cell).length_squared())
 		if dist < best_dist and not WorldGrid.astar.get_id_path(cell, food.cell).is_empty():
 			best = food
 			best_dist = dist
 	return best
+
+func _release_dest() -> void:
+	if reserved_dest != WorldGrid.INVALID_CELL:
+		WorldGrid.release_storage(reserved_dest)
+		reserved_dest = WorldGrid.INVALID_CELL
 
 func _abort_work() -> void:
 	if job:
@@ -149,6 +174,9 @@ func _abort_work() -> void:
 	if carrying:
 		carrying.drop_at(cell)
 		carrying = null
+	_release_dest()
+	if is_instance_valid(food_target):
+		food_target.reserved = false
 	food_target = null
 
 func _die() -> void:

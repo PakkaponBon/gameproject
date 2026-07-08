@@ -11,6 +11,7 @@ const INVALID_CELL := Vector2i(-1, -1)
 var astar := AStarGrid2D.new()
 var stockpile_cells := {}  # Set of Vector2i (value unused)
 var items := {}  # Vector2i -> Node2D occupying that cell
+var reserved_storage := {}  # Set of Vector2i claimed as a haul destination
 
 func _ready() -> void:
 	astar.region = Rect2i(Vector2i.ZERO, MAP_SIZE)
@@ -46,8 +47,15 @@ func register_item(cell: Vector2i, item: Node2D) -> void:
 func unregister_item(cell: Vector2i) -> void:
 	items.erase(cell)
 
+func reserve_storage(cell: Vector2i) -> void:
+	reserved_storage[cell] = true
+
+func release_storage(cell: Vector2i) -> void:
+	reserved_storage.erase(cell)
+
 func is_cell_free_for_storage(cell: Vector2i) -> bool:
-	return is_stockpile(cell) and not items.has(cell) and not is_wall(cell)
+	return is_stockpile(cell) and not items.has(cell) \
+		and not reserved_storage.has(cell) and not is_wall(cell)
 
 ## Nearest reachable stockpile cell with no item on it, or INVALID_CELL.
 func get_free_stockpile_cell(from_cell: Vector2i) -> Vector2i:
