@@ -7,9 +7,6 @@ signal died
 ## How fast the sprite eases toward its logical cell (rendering only).
 const LERP_WEIGHT := 12.0
 const EAT_TICKS := 10
-const HP_MAX := 100.0
-const ATTACK_DAMAGE := 10.0
-const ATTACK_COOLDOWN_TICKS := 10
 const WANDER_EVERY_TICKS := 3
 const DIRS: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
 
@@ -20,9 +17,7 @@ var carrying: WoodItem = null
 var reserved_dest := WorldGrid.INVALID_CELL  # claimed stockpile cell while hauling
 var food_target: FoodItem = null
 var eat_ticks_left := 0
-var hp := HP_MAX
 var dead := false
-var attack_cooldown := 0
 var wander_cooldown := 0
 
 ## 1 = preferred, higher = later, 0 = never does this job type.
@@ -31,6 +26,7 @@ var work_priorities := {Job.Type.CHOP: 1, Job.Type.HAUL: 1, Job.Type.BUILD: 1}
 @onready var body: ColorRect = $Body
 @onready var selection_ring: ColorRect = $SelectionRing
 @onready var needs: PawnNeeds = $Needs
+@onready var combat: PawnCombat = $Combat
 
 func _ready() -> void:
 	add_to_group("pawns")
@@ -40,6 +36,8 @@ func _ready() -> void:
 	needs.starved.connect(_die)
 	needs.changed.connect(stats_changed.emit)
 	needs.break_started.connect(_on_break_started)
+	combat.damaged.connect(_on_damaged)
+	combat.defeated.connect(_die)
 	GameClock.ticked.connect(_on_tick)
 
 func set_selected(on: bool) -> void:
@@ -58,13 +56,12 @@ func move_to(destination: Vector2i) -> void:
 	target_cell = destination
 
 func take_damage(amount: float) -> void:
-	if dead:
-		return
-	hp = maxf(hp - amount, 0.0)
+	if not dead:
+		combat.take_damage(amount)
+
+func _on_damaged() -> void:
 	needs.attacked()
 	stats_changed.emit()
-	if hp <= 0.0:
-		_die()
 
 func _on_tick() -> void:
 	if dead:
@@ -72,13 +69,10 @@ func _on_tick() -> void:
 	needs.tick()
 	if dead:
 		return  # starved just now
-	if attack_cooldown > 0:
-		attack_cooldown -= 1
+	combat.tick()
 	_seek_food_if_hungry()
 	# Melee is survival: an adjacent raider preempts everything else.
-	var raider := _adjacent_raider()
-	if raider:
-		_attack(raider)
+	if combat.engage_adjacent():
 		return
 	if cell != target_cell:
 		_step()
@@ -192,20 +186,6 @@ func _step_off_wall(wall_cell: Vector2i) -> void:
 			cell = next
 			target_cell = next
 			return
-
-func _adjacent_raider() -> Raider:
-	for node in get_tree().get_nodes_in_group("raiders"):
-		var raider := node as Raider
-		var d := (raider.cell - cell).abs()
-		if d.x + d.y <= 1:
-			return raider
-	return null
-
-func _attack(raider: Raider) -> void:
-	if attack_cooldown > 0:
-		return
-	attack_cooldown = ATTACK_COOLDOWN_TICKS
-	raider.take_damage(ATTACK_DAMAGE)
 
 func _find_food() -> FoodItem:
 	var best: FoodItem = null

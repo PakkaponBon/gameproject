@@ -198,7 +198,7 @@ func _update_stats_label() -> void:
 	var suffix := "  (MENTAL BREAK)" if selected.needs.on_break else ""
 	stats_label.text = "%s — hunger %d  mood %d  hp %d%s" % [
 		selected.name, roundi(selected.needs.hunger),
-		roundi(selected.needs.mood), roundi(selected.hp), suffix]
+		roundi(selected.needs.mood), roundi(selected.combat.hp), suffix]
 
 func _update_priority_label() -> void:
 	if selected == null:
