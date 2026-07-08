@@ -9,6 +9,8 @@ const WALL := Vector2i(2, 0)
 
 const TREE_SCENE := preload("res://scenes/tree_entity.tscn")
 const TREE_COUNT := 40
+const FOOD_SCENE := preload("res://scenes/food_item.tscn")
+const FOOD_COUNT := 15
 
 var mode := Mode.COMMAND
 
@@ -17,11 +19,14 @@ var mode := Mode.COMMAND
 @onready var entities: Node2D = $Entities
 @onready var pawn: Pawn = $Pawn
 @onready var mode_label: Label = $HUD/ModeLabel
+@onready var hunger_label: Label = $HUD/HungerLabel
 
 func _ready() -> void:
 	_generate_ground()
-	_spawn_trees()
+	_spawn_entities()
 	_update_mode_label()
+	pawn.hunger_changed.connect(_on_pawn_hunger_changed)
+	pawn.died.connect(_on_pawn_died)
 
 func _generate_ground() -> void:
 	var noise := FastNoiseLite.new()
@@ -32,18 +37,24 @@ func _generate_ground() -> void:
 			var tile := DIRT if noise.get_noise_2d(x, y) > 0.25 else GRASS
 			ground.set_cell(Vector2i(x, y), SOURCE_ID, tile)
 
-func _spawn_trees() -> void:
-	var used := {}
+func _spawn_entities() -> void:
+	var used := {pawn.cell: true}
+	_scatter(TREE_SCENE, TREE_COUNT, used)
+	_scatter(FOOD_SCENE, FOOD_COUNT, used)
+
+func _scatter(scene: PackedScene, count: int, used: Dictionary) -> void:
+	var placed := 0
 	var attempts := 0
-	while used.size() < TREE_COUNT and attempts < 1000:
+	while placed < count and attempts < 1000:
 		attempts += 1
 		var cell := Vector2i(randi() % WorldGrid.MAP_SIZE.x, randi() % WorldGrid.MAP_SIZE.y)
-		if used.has(cell) or cell == pawn.cell:
+		if used.has(cell):
 			continue
 		used[cell] = true
-		var tree: Node2D = TREE_SCENE.instantiate()
-		tree.position = WorldGrid.cell_to_world(cell)
-		entities.add_child(tree)
+		var node: Node2D = scene.instantiate()
+		node.position = WorldGrid.cell_to_world(cell)
+		entities.add_child(node)
+		placed += 1
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_build_mode"):
@@ -93,6 +104,12 @@ func _erase_wall(cell: Vector2i) -> void:
 func _set_mode(new_mode: Mode) -> void:
 	mode = new_mode
 	_update_mode_label()
+
+func _on_pawn_hunger_changed(value: float) -> void:
+	hunger_label.text = "Hunger: %d" % roundi(value)
+
+func _on_pawn_died() -> void:
+	hunger_label.text = "DEAD — colonist starved"
 
 func _update_mode_label() -> void:
 	match mode:
