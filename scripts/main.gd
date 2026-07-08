@@ -14,23 +14,30 @@ const FOOD_COUNT := 15
 const PAWN_SCENE := preload("res://scenes/pawn.tscn")
 const PAWN_COUNT := 3
 const PAWN_SPAWN_RADIUS := 5  # around map center
+const BLUEPRINT_SCENE := preload("res://scenes/blueprint.tscn")
 
 var mode := Mode.COMMAND
 var pawns: Array[Pawn] = []
 var selected: Pawn = null
+var blueprints := {}  # cell -> Blueprint
 
 @onready var ground: TileMapLayer = $Ground
 @onready var walls: TileMapLayer = $Walls
 @onready var entities: Node2D = $Entities
+@onready var raid_director: RaidDirector = $RaidDirector
 @onready var mode_label: Label = $HUD/ModeLabel
-@onready var hunger_label: Label = $HUD/HungerLabel
+@onready var stats_label: Label = $HUD/StatsLabel
 @onready var priority_label: Label = $HUD/PriorityLabel
+@onready var event_label: Label = $HUD/EventLabel
 
 func _ready() -> void:
 	_generate_ground()
 	_spawn_entities()
 	_select(pawns[0])
 	_update_mode_label()
+	raid_director.spawn_parent = entities
+	raid_director.raid_started.connect(func() -> void: event_label.text = "RAID — a raider approaches!")
+	raid_director.raid_ended.connect(func() -> void: event_label.text = "")
 
 func _generate_ground() -> void:
 	var noise := FastNoiseLite.new()
@@ -48,11 +55,11 @@ func _spawn_entities() -> void:
 	_scatter(FOOD_SCENE, FOOD_COUNT, used)
 
 func _spawn_pawns(used: Dictionary) -> void:
-	# Showcase priorities: a lumberjack, a hauler, and a generalist.
+	# Showcase priorities: a lumberjack, a hauler, and a builder.
 	var presets: Array[Dictionary] = [
-		{Job.Type.CHOP: 1, Job.Type.HAUL: 2},
-		{Job.Type.CHOP: 2, Job.Type.HAUL: 1},
-		{Job.Type.CHOP: 1, Job.Type.HAUL: 1},
+		{Job.Type.CHOP: 1, Job.Type.HAUL: 2, Job.Type.BUILD: 2},
+		{Job.Type.CHOP: 2, Job.Type.HAUL: 1, Job.Type.BUILD: 2},
+		{Job.Type.CHOP: 2, Job.Type.HAUL: 2, Job.Type.BUILD: 1},
 	]
 	var center := WorldGrid.MAP_SIZE / 2
 	while pawns.size() < PAWN_COUNT:
@@ -67,8 +74,8 @@ func _spawn_pawns(used: Dictionary) -> void:
 		pawn.position = WorldGrid.cell_to_world(cell)
 		pawn.work_priorities = presets[pawns.size() % presets.size()].duplicate()
 		add_child(pawn)
-		pawn.hunger_changed.connect(_on_pawn_hunger_changed.bind(pawn))
-		pawn.died.connect(_on_pawn_died.bind(pawn))
+		pawn.stats_changed.connect(_on_pawn_stats_changed.bind(pawn))
+		pawn.died.connect(_on_pawn_died)
 		pawns.append(pawn)
 
 func _scatter(scene: PackedScene, count: int, used: Dictionary) -> void:
@@ -94,6 +101,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_cycle_selected_priority(Job.Type.CHOP)
 	elif event.is_action_pressed("cycle_haul_priority"):
 		_cycle_selected_priority(Job.Type.HAUL)
+	elif event.is_action_pressed("cycle_build_priority"):
+		_cycle_selected_priority(Job.Type.BUILD)
 	elif event is InputEventMouseButton and event.pressed:
 		_apply_tool(event.button_index)
 	elif event is InputEventMouseMotion and mode != Mode.COMMAND:
@@ -115,7 +124,7 @@ func _apply_tool(button_index: int) -> void:
 					selected.move_to(cell)
 		Mode.BUILD:
 			if button_index == MOUSE_BUTTON_LEFT:
-				_place_wall(cell)
+				_place_blueprint(cell)
 			elif button_index == MOUSE_BUTTON_RIGHT:
 				_erase_wall(cell)
 		Mode.STOCKPILE:
@@ -138,7 +147,7 @@ func _select(pawn: Pawn) -> void:
 		selected.set_selected(false)
 	selected = pawn
 	selected.set_selected(true)
-	_on_pawn_hunger_changed(selected.hunger, selected)
+	_update_stats_label()
 	_update_priority_label()
 
 func _cycle_selected_priority(type: Job.Type) -> void:
@@ -147,14 +156,26 @@ func _cycle_selected_priority(type: Job.Type) -> void:
 	selected.cycle_priority(type)
 	_update_priority_label()
 
-func _place_wall(cell: Vector2i) -> void:
-	# Never wall in a pawn's own cell.
-	if not WorldGrid.in_bounds(cell) or _pawn_at(cell):
+func _place_blueprint(cell: Vector2i) -> void:
+	if not WorldGrid.in_bounds(cell) or WorldGrid.is_wall(cell) \
+			or blueprints.has(cell) or _pawn_at(cell):
 		return
+	var bp: Blueprint = BLUEPRINT_SCENE.instantiate()
+	bp.position = WorldGrid.cell_to_world(cell)
+	bp.built.connect(_on_blueprint_built)
+	entities.add_child(bp)
+	blueprints[cell] = bp
+
+func _on_blueprint_built(cell: Vector2i) -> void:
+	blueprints.erase(cell)
 	WorldGrid.set_wall(cell, true)
 	walls.set_cell(cell, SOURCE_ID, WALL)
 
 func _erase_wall(cell: Vector2i) -> void:
+	if blueprints.has(cell):
+		blueprints[cell].cancel()
+		blueprints.erase(cell)
+		return
 	WorldGrid.set_wall(cell, false)
 	walls.erase_cell(cell)
 
@@ -162,22 +183,32 @@ func _set_mode(new_mode: Mode) -> void:
 	mode = new_mode
 	_update_mode_label()
 
-func _on_pawn_hunger_changed(value: float, pawn: Pawn) -> void:
+func _on_pawn_stats_changed(pawn: Pawn) -> void:
 	if pawn == selected:
-		hunger_label.text = "%s — hunger: %d" % [pawn.name, roundi(value)]
+		_update_stats_label()
 
-func _on_pawn_died(pawn: Pawn) -> void:
-	if pawn == selected:
-		hunger_label.text = "%s — DEAD (starved)" % pawn.name
+func _on_pawn_died() -> void:
+	if pawns.all(func(p: Pawn) -> bool: return p.dead):
+		event_label.text = "ALL COLONISTS ARE DEAD"
+
+func _update_stats_label() -> void:
+	if selected.dead:
+		stats_label.text = "%s — DEAD" % selected.name
+		return
+	var suffix := "  (MENTAL BREAK)" if selected.needs.on_break else ""
+	stats_label.text = "%s — hunger %d  mood %d  hp %d%s" % [
+		selected.name, roundi(selected.needs.hunger),
+		roundi(selected.needs.mood), roundi(selected.hp), suffix]
 
 func _update_priority_label() -> void:
 	if selected == null:
 		priority_label.text = ""
 		return
-	priority_label.text = "%s — Chop: %s  Haul: %s   [1/2: cycle priority, 0 = off]" % [
+	priority_label.text = "%s — Chop: %s  Haul: %s  Build: %s   [1/2/3: cycle priority, 0 = off]" % [
 		selected.name,
 		_priority_text(selected.work_priorities[Job.Type.CHOP]),
 		_priority_text(selected.work_priorities[Job.Type.HAUL]),
+		_priority_text(selected.work_priorities[Job.Type.BUILD]),
 	]
 
 func _priority_text(value: int) -> String:
@@ -188,6 +219,6 @@ func _update_mode_label() -> void:
 		Mode.COMMAND:
 			mode_label.text = "COMMAND — LMB select pawn / move selected  [B: build] [Z: stockpile]"
 		Mode.BUILD:
-			mode_label.text = "BUILD — LMB wall, RMB erase  [B: back]"
+			mode_label.text = "BUILD — LMB place wall blueprint, RMB erase/cancel  [B: back]"
 		Mode.STOCKPILE:
 			mode_label.text = "STOCKPILE — LMB paint zone, RMB erase  [Z: back]"

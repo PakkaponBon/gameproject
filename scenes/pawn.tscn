@@ -1,9 +1,13 @@
 [gd_scene format=3 uid="uid://cw2r7t4lam1p"]
 
 [ext_resource type="Script" uid="uid://bx5n8j2q6v3d" path="res://scripts/pawn.gd" id="1_pawn"]
+[ext_resource type="Script" uid="uid://bq9w2x5f7k3n" path="res://scripts/pawn_needs.gd" id="2_needs"]
 
 [node name="Pawn" type="Node2D"]
 script = ExtResource("1_pawn")
+
+[node name="Needs" type="Node" parent="."]
+script = ExtResource("2_needs")
 
 [node name="SelectionRing" type="ColorRect" parent="."]
 visible = false
