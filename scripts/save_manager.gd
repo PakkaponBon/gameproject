@@ -3,7 +3,7 @@ extends Node
 ## on load. Loading reloads the main scene; `pending_load` survives the
 ## reload because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 5
+const SAVE_VERSION := 6
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 
@@ -107,8 +107,11 @@ func _pawn_data(pawn: Pawn) -> Dictionary:
 		"cell": _v(pawn.cell),
 		"target": _v(pawn.target_cell),
 		"hunger": pawn.needs.hunger,
+		"rest": pawn.needs.rest,
 		"mood": pawn.needs.mood,
 		"on_break": pawn.needs.on_break,
+		"sleeping": pawn.sleeping,
+		"bed": _v(pawn.bed_cell),
 		"hp": pawn.combat.hp,
 		"atk_cd": pawn.combat.attack_cooldown,
 		"wander_cd": pawn.wander_cooldown,
@@ -171,8 +174,12 @@ func _restore_pawn(p: Dictionary) -> void:
 		priorities[int(key)] = int(p.priorities[key])
 	var pawn: Pawn = main.spawner.create_pawn(_vec(p.cell), p.name, priorities)
 	pawn.needs.hunger = float(p.hunger)
+	pawn.needs.rest = float(p.rest)
 	pawn.needs.mood = float(p.mood)
 	pawn.needs.on_break = bool(p.on_break)
+	pawn.bed_cell = _vec(p.bed)
+	if bool(p.sleeping):
+		pawn.restore_sleep()
 	pawn.combat.hp = float(p.hp)
 	pawn.combat.attack_cooldown = int(p.atk_cd)
 	pawn.wander_cooldown = int(p.wander_cd)

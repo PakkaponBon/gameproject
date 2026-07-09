@@ -36,6 +36,7 @@ const DEFS := {
 		"name": "Bed",
 		"cost": {"wood": 2},
 		"refund": 1,
+		"sleep_spot": true,
 		"build_ticks": 30,
 		"tile": Vector2i(4, 0),
 		"ghost": Color(0.55, 0.65, 0.8),

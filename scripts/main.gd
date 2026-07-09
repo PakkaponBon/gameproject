@@ -196,9 +196,13 @@ func _update_stats_label() -> void:
 	if selected.dead:
 		stats_label.text = "%s — DEAD" % selected.name
 		return
-	var suffix := "  (MENTAL BREAK)" if selected.needs.on_break else ""
-	stats_label.text = "%s — hunger %d  mood %d  hp %d%s" % [
-		selected.name, roundi(selected.needs.hunger),
+	var suffix := ""
+	if selected.sleeping:
+		suffix = "  (SLEEPING)"
+	elif selected.needs.on_break:
+		suffix = "  (MENTAL BREAK)"
+	stats_label.text = "%s — hunger %d  rest %d  mood %d  hp %d%s" % [
+		selected.name, roundi(selected.needs.hunger), roundi(selected.needs.rest),
 		roundi(selected.needs.mood), roundi(selected.combat.hp), suffix]
 
 func _update_priority_label() -> void:

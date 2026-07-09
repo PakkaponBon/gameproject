@@ -1,7 +1,7 @@
 class_name PawnNeeds
 extends Node
-## Hunger and mood for one pawn. Pure stats and thresholds — the pawn
-## decides how to act on the signals.
+## Hunger, rest, and mood for one pawn. Pure stats and thresholds — the
+## pawn decides how to act on the signals.
 
 signal starved
 signal changed
@@ -12,6 +12,15 @@ const HUNGER_MAX := 100.0
 const HUNGER_DRAIN_PER_TICK := 0.1  # empty in ~100s at 10 ticks/sec
 const HUNGRY_AT := 35.0
 
+const REST_MAX := 100.0
+const REST_DRAIN_PER_TICK := 0.04  # empty in ~0.83 in-game days
+const REST_RESTORE_BED := 0.18     # a full night in a bed ≈ full bar
+const REST_RESTORE_GROUND := 0.08
+const TIRED_AT := 35.0
+const NIGHT_SLEEPY_AT := 70.0  # at night, sleep unless mostly rested
+const EXHAUSTED_AT := 15.0
+const RESTED_AT := 95.0
+
 const MOOD_MAX := 100.0
 const MOOD_RECOVERY_PER_TICK := 0.03
 const MOOD_HUNGRY_DRAIN_PER_TICK := 0.08
@@ -20,11 +29,16 @@ const BREAK_AT := 20.0
 const BREAK_OVER_AT := 50.0
 
 var hunger := HUNGER_MAX
+var rest := REST_MAX
 var mood := MOOD_MAX
 var on_break := false
 
-func tick() -> void:
+func tick(sleeping := false, in_bed := false) -> void:
 	hunger = maxf(hunger - HUNGER_DRAIN_PER_TICK, 0.0)
+	if sleeping:
+		rest = minf(rest + (REST_RESTORE_BED if in_bed else REST_RESTORE_GROUND), REST_MAX)
+	else:
+		rest = maxf(rest - REST_DRAIN_PER_TICK, 0.0)
 	if is_hungry():
 		mood = maxf(mood - MOOD_HUNGRY_DRAIN_PER_TICK, 0.0)
 	else:
@@ -41,6 +55,15 @@ func tick() -> void:
 
 func is_hungry() -> bool:
 	return hunger < HUNGRY_AT
+
+func wants_sleep() -> bool:
+	return rest < TIRED_AT or (GameClock.is_night() and rest < NIGHT_SLEEPY_AT)
+
+func is_exhausted() -> bool:
+	return rest < EXHAUSTED_AT
+
+func is_rested() -> bool:
+	return rest >= RESTED_AT
 
 func eat() -> void:
 	hunger = HUNGER_MAX
