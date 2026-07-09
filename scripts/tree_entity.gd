@@ -11,6 +11,7 @@ var cell: Vector2i
 var job: Job
 
 func _ready() -> void:
+	add_to_group("trees")
 	cell = WorldGrid.world_to_cell(position)
 	position = WorldGrid.cell_to_world(cell)
 	job = Job.new()

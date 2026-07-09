@@ -9,6 +9,7 @@ var haul_job: Job = null
 var _home: Node = null  # container to return to after being carried
 
 func _ready() -> void:
+	add_to_group("wood")
 	_home = get_parent()
 	cell = WorldGrid.world_to_cell(position)
 	position = WorldGrid.cell_to_world(cell)

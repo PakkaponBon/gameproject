@@ -11,6 +11,8 @@ const TREE_SCENE := preload("res://scenes/tree_entity.tscn")
 const TREE_COUNT := 40
 const FOOD_SCENE := preload("res://scenes/food_item.tscn")
 const FOOD_COUNT := 15
+const WOOD_SCENE := preload("res://scenes/wood_item.tscn")
+const RAIDER_SCENE := preload("res://scenes/raider.tscn")
 const PAWN_SCENE := preload("res://scenes/pawn.tscn")
 const PAWN_COUNT := 3
 const PAWN_SPAWN_RADIUS := 5  # around map center
@@ -20,33 +22,73 @@ var mode := Mode.COMMAND
 var pawns: Array[Pawn] = []
 var selected: Pawn = null
 var blueprints := {}  # cell -> Blueprint
+var ground_seed := 0
 
 @onready var ground: TileMapLayer = $Ground
 @onready var walls: TileMapLayer = $Walls
 @onready var entities: Node2D = $Entities
 @onready var raid_director: RaidDirector = $RaidDirector
+@onready var save_manager: SaveManager = $SaveManager
+@onready var pause_menu: PauseMenu = $PauseMenu
 @onready var mode_label: Label = $HUD/ModeLabel
 @onready var stats_label: Label = $HUD/StatsLabel
 @onready var priority_label: Label = $HUD/PriorityLabel
 @onready var event_label: Label = $HUD/EventLabel
 
 func _ready() -> void:
-	_generate_ground()
-	_spawn_entities()
-	_select(pawns[0])
-	_update_mode_label()
 	raid_director.spawn_parent = entities
 	raid_director.raid_started.connect(func() -> void: event_label.text = "RAID — a raider approaches!")
 	raid_director.raid_ended.connect(func() -> void: event_label.text = "")
+	pause_menu.save_requested.connect(func() -> void: save_manager.save_game(SaveManager.MANUAL_SAVE_PATH))
+	pause_menu.load_requested.connect(func(path: String) -> void: save_manager.load_game(path))
+	if SaveManager.pending_load.is_empty():
+		ground_seed = randi()
+		generate_ground()
+		_spawn_entities()
+	else:
+		save_manager.apply_pending_load()
+	_select_first_alive()
+	_update_mode_label()
 
-func _generate_ground() -> void:
+func generate_ground() -> void:
 	var noise := FastNoiseLite.new()
-	noise.seed = randi()
+	noise.seed = ground_seed
 	noise.frequency = 0.08
 	for x in WorldGrid.MAP_SIZE.x:
 		for y in WorldGrid.MAP_SIZE.y:
 			var tile := DIRT if noise.get_noise_2d(x, y) > 0.25 else GRASS
 			ground.set_cell(Vector2i(x, y), SOURCE_ID, tile)
+
+func spawn_entity(scene: PackedScene, cell: Vector2i) -> Node2D:
+	var node: Node2D = scene.instantiate()
+	node.position = WorldGrid.cell_to_world(cell)
+	entities.add_child(node)
+	return node
+
+func create_pawn(cell: Vector2i, pawn_name: String, priorities: Dictionary) -> Pawn:
+	var pawn: Pawn = PAWN_SCENE.instantiate()
+	pawn.name = pawn_name
+	pawn.position = WorldGrid.cell_to_world(cell)
+	pawn.work_priorities = priorities
+	add_child(pawn)
+	pawn.stats_changed.connect(_on_pawn_stats_changed.bind(pawn))
+	pawn.died.connect(_on_pawn_died)
+	pawns.append(pawn)
+	return pawn
+
+func place_wall(cell: Vector2i) -> void:
+	WorldGrid.set_wall(cell, true)
+	walls.set_cell(cell, SOURCE_ID, WALL)
+
+func place_blueprint(cell: Vector2i) -> void:
+	if not WorldGrid.in_bounds(cell) or WorldGrid.is_wall(cell) \
+			or blueprints.has(cell) or _pawn_at(cell):
+		return
+	var bp: Blueprint = BLUEPRINT_SCENE.instantiate()
+	bp.position = WorldGrid.cell_to_world(cell)
+	bp.built.connect(_on_blueprint_built)
+	entities.add_child(bp)
+	blueprints[cell] = bp
 
 func _spawn_entities() -> void:
 	var used := {}
@@ -69,14 +111,8 @@ func _spawn_pawns(used: Dictionary) -> void:
 		if used.has(cell):
 			continue
 		used[cell] = true
-		var pawn: Pawn = PAWN_SCENE.instantiate()
-		pawn.name = "Pawn %d" % (pawns.size() + 1)
-		pawn.position = WorldGrid.cell_to_world(cell)
-		pawn.work_priorities = presets[pawns.size() % presets.size()].duplicate()
-		add_child(pawn)
-		pawn.stats_changed.connect(_on_pawn_stats_changed.bind(pawn))
-		pawn.died.connect(_on_pawn_died)
-		pawns.append(pawn)
+		create_pawn(cell, "Pawn %d" % (pawns.size() + 1),
+				presets[pawns.size() % presets.size()].duplicate())
 
 func _scatter(scene: PackedScene, count: int, used: Dictionary) -> void:
 	var placed := 0
@@ -87,9 +123,7 @@ func _scatter(scene: PackedScene, count: int, used: Dictionary) -> void:
 		if used.has(cell):
 			continue
 		used[cell] = true
-		var node: Node2D = scene.instantiate()
-		node.position = WorldGrid.cell_to_world(cell)
-		entities.add_child(node)
+		spawn_entity(scene, cell)
 		placed += 1
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -124,7 +158,7 @@ func _apply_tool(button_index: int) -> void:
 					selected.move_to(cell)
 		Mode.BUILD:
 			if button_index == MOUSE_BUTTON_LEFT:
-				_place_blueprint(cell)
+				place_blueprint(cell)
 			elif button_index == MOUSE_BUTTON_RIGHT:
 				_erase_wall(cell)
 		Mode.STOCKPILE:
@@ -142,6 +176,14 @@ func _pawn_at(cell: Vector2i) -> Pawn:
 			return pawn
 	return null
 
+func _select_first_alive() -> void:
+	for pawn in pawns:
+		if not pawn.dead:
+			_select(pawn)
+			return
+	if not pawns.is_empty():
+		_select(pawns[0])
+
 func _select(pawn: Pawn) -> void:
 	if selected:
 		selected.set_selected(false)
@@ -156,20 +198,9 @@ func _cycle_selected_priority(type: Job.Type) -> void:
 	selected.cycle_priority(type)
 	_update_priority_label()
 
-func _place_blueprint(cell: Vector2i) -> void:
-	if not WorldGrid.in_bounds(cell) or WorldGrid.is_wall(cell) \
-			or blueprints.has(cell) or _pawn_at(cell):
-		return
-	var bp: Blueprint = BLUEPRINT_SCENE.instantiate()
-	bp.position = WorldGrid.cell_to_world(cell)
-	bp.built.connect(_on_blueprint_built)
-	entities.add_child(bp)
-	blueprints[cell] = bp
-
 func _on_blueprint_built(cell: Vector2i) -> void:
 	blueprints.erase(cell)
-	WorldGrid.set_wall(cell, true)
-	walls.set_cell(cell, SOURCE_ID, WALL)
+	place_wall(cell)
 
 func _erase_wall(cell: Vector2i) -> void:
 	if blueprints.has(cell):
@@ -217,7 +248,7 @@ func _priority_text(value: int) -> String:
 func _update_mode_label() -> void:
 	match mode:
 		Mode.COMMAND:
-			mode_label.text = "COMMAND — LMB select pawn / move selected  [B: build] [Z: stockpile]"
+			mode_label.text = "COMMAND — LMB select pawn / move selected  [B: build] [Z: stockpile] [Esc: menu]"
 		Mode.BUILD:
 			mode_label.text = "BUILD — LMB place wall blueprint, RMB erase/cancel  [B: back]"
 		Mode.STOCKPILE:

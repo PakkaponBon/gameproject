@@ -1,138 +1,148 @@
-# ROADMAP.md — Colony Sim: Skeleton → v1.0
+# ROADMAP.md — Ashfall: Skeleton → v1.0
 
-Current state: **v0.1-skeleton** (milestones 1–7 done: world, pawn pathfinding, jobs, hauling, needs, multi-pawn priorities, basic content).
+Current state: **v0.1-skeleton** (world, pathfinding, jobs, hauling, needs, multi-villager priorities).
 
-Rules: one phase at a time, in order. Each phase has a **Definition of Done (DoD)** — do not start the next phase until DoD passes. Git tag at the end of every phase. Every new system from Phase 1 onward MUST include its save data.
+Rules: one phase at a time, in order. Each phase gates on its **Definition of Done (DoD)**. Git tag per phase. From Phase 1 on, every new system ships with save/load. Not required by a DoD → IDEAS.md.
+
+> Scope note: this is the FANTASY concept (combat + factions). It's ~2x the cozy version. Phases 4–6 are the new weight — respect the gates.
 
 ---
 
 ## Phase 1 — Persistence (v0.2)
-The foundation everything else depends on. Do this before any new content.
+- [ ] Save: grid, tiles, villagers (position, needs, skills, traits, inventory, priorities), items, jobs, stockpiles, buildings, clock/season
+- [ ] Load mid-job without desync; autosave each morning + manual save menu
+- [ ] Save versioning field
 
-- [ ] Save system: serialize world grid, tiles, pawns (position, needs, inventory, priorities), items, jobs, stockpiles, game clock
-- [ ] Load system: fully restore a session mid-job without desync
-- [ ] Autosave every N in-game minutes + manual save/load from a menu
-- [ ] Save file versioning (a `version` field so old saves can migrate later)
-
-**DoD:** Save mid-chop with a pawn carrying wood → quit → load → everything resumes correctly.
+**DoD:** Save mid-haul → quit → load → resumes exactly.
 **Tag:** `v0.2-persistence`
 
 ---
 
 ## Phase 2 — Construction (v0.3)
-Shift from "player does things" to "player orders things" — the core colony-sim feel.
+- [ ] Blueprint → haul materials → timed build job
+- [ ] Buildings: wall, gate, bed/house, storage barn
+- [ ] Deconstruct (partial refund)
 
-- [ ] Blueprint placement: ghost tile that needs resources, not instant build
-- [ ] Haul-to-blueprint job: pawn delivers required wood to the site
-- [ ] Build job: pawn constructs over time (progress bar), then blueprint becomes real
-- [ ] Buildings: wall, door (pawns path through, blocks enemies later), bed
-- [ ] Deconstruct order (refund partial resources)
-
-**DoD:** Order a 5-wall room with a door and a bed; pawns haul + build it with zero player micromanagement.
+**DoD:** Order a walled yard + gate + house + barn; built hands-off.
 **Tag:** `v0.3-construction`
 
 ---
 
-## Phase 3 — Survival Loop (v0.4)
-Make failure possible. Colony must be sustainable — or collapse.
+## Phase 3 — Economy: Farming & Seasons (v0.4)
+- [ ] Day/night + calendar (4 seasons × N days), season in UI + visual tint
+- [ ] Rest need, sleep in beds, exhaustion slows work
+- [ ] Field zoning, crop lifecycle (plant → grow → harvest), 3+ crops, winter kills crops
+- [ ] Eating, starvation → collapse → death if neglected
+- [ ] Mood v0: single value from needs (hungry/exhausted lower it), modifies work speed — foundation for trait/death effects later
+- [ ] Mining job: stone + iron ore nodes
 
-- [ ] Day/night cycle on the game clock
-- [ ] Rest need: drains while working, pawn seeks bed at night, sleep restores; exhausted pawns work slower
-- [ ] Food chain: farm plot → plant job → growth ticks → harvest job → food item → eat job
-- [ ] Starvation: hunger at zero = health drain = death
-- [ ] Pawn death handled cleanly (jobs released, corpse item, no crashes)
-
-**DoD:** A 3-pawn colony can run 5 in-game days hands-off without dying; cutting off food kills it.
-**Tag:** `v0.4-survival`
-
----
-
-## Phase 4 — Threat & Combat (v0.5)
-Tension. Without threat, it's a screensaver.
-
-- [ ] Health/combat stats on pawns (HP, melee damage, attack speed)
-- [ ] Enemy entity: spawns at map edge, pathfinds toward colony, attacks pawns/doors
-- [ ] Draft mode: player takes direct control of a pawn (move/attack orders), like RimWorld drafting
-- [ ] Raid event: timed or wealth-scaled enemy spawn
-- [ ] Walls/doors actually defend (enemies must path through or break doors)
-- [ ] Injured state: low-HP pawns move/work slower, rest to recover
-
-**DoD:** Survive a 3-enemy raid using walls, a door choke point, and 2 drafted pawns.
-**Tag:** `v0.5-threat`
+**DoD:** 3 villagers survive a year hands-off with a good field plan; a bad plan starves them.
+**Tag:** `v0.4-economy`
 
 ---
 
-## Phase 5 — UI & Game Feel (v0.6)
-Make it playable by someone who isn't you.
+## Phase 4 — Combat Core (v0.5)  *(new weight starts here)*
+- [ ] HP / damage / armor data model; wounded state → bed rest to heal; death + grave + mood hit
+- [ ] Draft mode: move/attack orders; undrafted villagers flee to safety zone
+- [ ] Melee combat: unarmed + Tier 1 swords
+- [ ] Forge building + crafting job: iron ingots → swords (first crafting chain)
+- [ ] Enemy raid v0: bandits spawn at edge, attack villagers/doors; walls & gates block pathing
+- [ ] Combat skills (melee) affecting hit/damage
+- [ ] Trait data model v0: traits as resources with stat/mood modifiers; 2–3 test traits incl. Magic affinity (Phase 5 needs it; full backstory pool comes Phase 9)
+- [ ] Pause + speed controls (pause/1x/3x, basic) — required to test raids; UI polish stays in Phase 7
 
-- [ ] Pawn panel: needs bars, current job, health, work priority row
-- [ ] Work priority grid screen (pawns × job types)
-- [ ] Resource counters (wood, food) always visible
-- [ ] Speed controls: pause / 1x / 3x, spacebar = pause
-- [ ] Placement previews, invalid-placement feedback, selection highlights
-- [ ] Notifications feed: "Pawn is starving", "Raid incoming"
-- [ ] Main menu: new game / load / quit
-
-**DoD:** A friend can play 20 minutes without asking you how anything works.
-**Tag:** `v0.6-playable`
-
----
-
-## Phase 6 — External Playtest (v0.7)
-- [ ] Export a Windows build, send to 3–5 friends
-- [ ] Watch at least 2 people play live; say nothing, take notes
-- [ ] Fix the top confusion points and top crashes ONLY (no new features)
-- [ ] Repeat once
-
-**DoD:** New player reaches day 3 and survives one raid without help.
-**Tag:** `v0.7-playtested`
+**DoD:** Survive a 4-bandit raid using a wall choke + 3 drafted sword villagers; one villager can be wounded and recover.
+**Tag:** `v0.5-combat`
 
 ---
 
-## Phase 7 — Content Depth (v0.8)
-Now — and only now — widen the game. Pick a scope you can finish in weeks, not months.
+## Phase 5 — Weapon Tiers & Magic (v0.6)
+- [ ] Bows: harder recipe, Archery skill gate, arrows as ammo; watchtower building (archer slot)
+- [ ] Ranged combat AI (kite, tower priority)
+- [ ] Magic relics: item type with unique spell + long cooldown (fireball, heal, barrier minimum)
+- [ ] Magic affinity trait gates relic use; relics NOT craftable
+- [ ] Traveling merchant event v0: rare wanderer, buy/sell menu (also the trade primitive Phase 6 diplomacy reuses)
+- [ ] Relic sources v0: merchant stock + raid boss drop + debug spawn command (expeditions come in Phase 6)
+- [ ] Healing herbs job/item (non-magic healing path)
 
-- [ ] Second resource chain (e.g. stone → mining job → stone walls/furniture)
-- [ ] Cooking: raw food → stove → meals (better hunger restore)
-- [ ] Mood system: simple happiness from food quality, sleep, deaths; low mood = work slowdown or tantrum
-- [ ] 2–3 more events (animal attack, resource windfall, cold snap)
-- [ ] Pawn variety: names, portraits, 1–2 traits affecting stats
-- [ ] Basic tech/unlock progression OR map biome variety (choose ONE)
-
-**DoD:** Two consecutive playthroughs feel meaningfully different.
-**Tag:** `v0.8-content`
+**DoD:** A mixed squad (2 swords, 1 archer on tower, 1 relic user) beats a raid that swords alone lose.
+**Tag:** `v0.6-arsenal`
 
 ---
 
-## Phase 8 — Art & Audio Pass (v0.9)
-Placeholder era ends here.
+## Phase 6 — Factions & World Map (v0.7)  *(the arc)*
+- [ ] World map screen: 5 factions with strength, attitude, personality
+- [ ] Diplomacy: envoys, gifts, trade, tribute demands; attitude max → alliance
+- [ ] Faction raids scale with their strength/attitude; allies send help to big defenses
+- [ ] Expeditions: send an armed party (they leave the map for N days) → auto-resolve from strength+gear+luck → loot/relics/casualties
+- [ ] Ruin sites on world map (relic faucet)
+- [ ] Faction destruction (strength zero) + absorption tribute
+- [ ] Victory check: all 5 resolved → Ruler of the Realm event + epilogue, sandbox continues
+- [ ] Opening event: city-fall intro, 3 survivors with backstory traits
 
-- [ ] Final tileset + sprites (16x16, consistent palette — pick one from lospec.com)
-- [ ] Pawn animations: idle, walk, work (2–4 frames each is enough)
-- [ ] SFX: chop, build, eat, combat hits, UI clicks (freesound.org / jsfxr)
-- [ ] 1–2 music loops (calm + raid)
-- [ ] Screen polish: title screen, day/night tinting, minimal particles (wood chips, blood)
+**DoD:** A full campaign is completable both ways: ally at least 2 factions, destroy at least 2, beat faction #5, see the crown screen.
+**Tag:** `v0.7-realm`
 
-**DoD:** A screenshot looks like a real indie game, not a prototype.
+---
+
+## Phase 7 — UI & Game Feel (v0.75)
+- [ ] Villager panel (needs, mood, skills, gear, job); work priority grid
+- [ ] Squad/draft UI, gear assignment UI
+- [ ] World map UI polish: faction cards, attitude bars, expedition planner
+- [ ] Resource + calendar HUD; pause/1x/3x; notifications feed; main menu
+- [ ] Placement previews, selection highlights, threat warnings
+
+**DoD:** A friend plays 30 minutes — builds, fights a raid, sends an envoy — without asking how.
+**Tag:** `v0.75-playable`
+
+---
+
+## Phase 8 — External Playtest (v0.8)
+- [ ] Windows export to 3–5 friends; watch 2+ live, silent, take notes
+- [ ] Fix top confusions + crashes ONLY; repeat once
+
+**DoD:** New player survives to year 2 and resolves one faction without help.
+**Tag:** `v0.8-playtested`
+
+---
+
+## Phase 9 — Content & Balance (v0.85)
+- [ ] Cooking (meals > raw), 2–3 more events (frost snap, refugee arrival, tribute ultimatum)
+- [ ] Villager variety: names, portraits, full backstory trait pool
+- [ ] Renown progression: unlock buildings, attract villagers
+- [ ] Balance: weapon tier curve, faction difficulty curve, economy math pass
+- [ ] Difficulty settings: normal + hard (data multipliers only)
+
+**DoD:** Two campaigns (diplomat run vs conqueror run) feel like different games.
+**Tag:** `v0.85-content`
+
+---
+
+## Phase 10 — Art & Audio (v0.9)  *(per ART_DIRECTION.md)*
+- [ ] Tileset: seasonal ground, village warm-set, wilds dark-set, ruins
+- [ ] Villagers: base + 2-frame walk/work, gear visible (sword/bow/staff overlays)
+- [ ] Enemies: 3–4 types, 2-frame budget
+- [ ] Portraits, world map art, spell effects (small, punchy)
+- [ ] SFX: combat hits, spells (distinct), craft, farm, UI; Music: 3 loops (village day, raid, world map)
+- [ ] Title screen + intro event art (2–3 still images, told-not-shown)
+
+**DoD:** A cold screenshot reads "indie fantasy colony sim," not prototype.
 **Tag:** `v0.9-polish`
 
 ---
 
-## Phase 9 — Release (v1.0)
-- [ ] Difficulty balancing pass (easy/normal at minimum)
-- [ ] Settings menu: volume, resolution/fullscreen, keybinds
-- [ ] Crash-proofing: play 3 full sessions, fix every error in the log
-- [ ] Export templates: Windows (+ Linux is nearly free in Godot)
-- [ ] itch.io page: 5 screenshots, a 30–60s GIF/trailer, short description
-- [ ] Launch on itch.io (free or pay-what-you-want for a first game)
-- [ ] Post-launch: fix critical bugs for 2 weeks, then DECIDE — grow this game or bank the experience and start the next one
+## Phase 11 — Release (v1.0)
+- [ ] Crash-proofing: 3 full campaigns, zero log errors
+- [ ] Settings: volume, fullscreen, keybinds
+- [ ] Exports: Windows + Linux; itch.io page (5 screenshots, 60s GIF, description)
+- [ ] Launch; 2 weeks critical fixes; then DECIDE: grow or next game
 
-**DoD:** A stranger downloads it, plays it, and it doesn't crash.
+**DoD:** A stranger finishes a campaign without a crash.
 **Tag:** `v1.0`
 
 ---
 
-## Scope guardrails (read when tempted)
-- No multiplayer. No mod support. No infinite maps. No z-levels. Not in 1.0.
-- If a feature isn't required by a DoD, it goes in `IDEAS.md`, not the code.
-- RimWorld had ~5 years of updates after its first public build. Your 1.0 is *their* alpha — that's correct.
+## Scope guardrails
+- The world map is menus + events. If you catch yourself simulating enemy villages tile-by-tile, stop — that's a different, 5-year game.
+- No: multiplayer, mods, z-levels, siege engines, spell crafting, romance, livestock, naval. IDEAS.md.
+- If Phase 6 starts sprawling, cut factions from 5 → 3. Shipping beats scale.

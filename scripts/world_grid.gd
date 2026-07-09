@@ -19,6 +19,14 @@ func _ready() -> void:
 	astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
 	astar.update()
 
+## Wipe all grid state (used when loading a save into a fresh scene).
+func reset() -> void:
+	stockpile_cells.clear()
+	items.clear()
+	reserved_storage.clear()
+	astar.fill_solid_region(astar.region, false)
+	stockpile_changed.emit()
+
 func in_bounds(cell: Vector2i) -> bool:
 	return astar.region.has_point(cell)
 

@@ -59,6 +59,20 @@ func take_damage(amount: float) -> void:
 	if not dead:
 		combat.take_damage(amount)
 
+## Save/load: re-attach carried wood and re-claim the storage destination.
+func restore_carry(wood: WoodItem, dest: Vector2i) -> void:
+	wood.pick_up(self)
+	carrying = wood
+	if dest != WorldGrid.INVALID_CELL:
+		WorldGrid.reserve_storage(dest)
+		reserved_dest = dest
+		target_cell = dest
+
+## Save/load: restore a corpse without re-running death side effects.
+func restore_dead() -> void:
+	dead = true
+	_apply_death_visuals()
+
 func _on_damaged() -> void:
 	needs.attacked()
 	stats_changed.emit()
@@ -228,11 +242,14 @@ func _die() -> void:
 	dead = true
 	_abort_work()
 	target_cell = cell
+	_apply_death_visuals()
+	stats_changed.emit()
+	died.emit()
+
+func _apply_death_visuals() -> void:
 	body.color = Color(0.35, 0.35, 0.38)
 	body.pivot_offset = body.size / 2.0
 	body.rotation_degrees = 90.0
-	stats_changed.emit()
-	died.emit()
 
 func _process(delta: float) -> void:
 	# Rendering only: ease the visual position toward the logical grid cell.

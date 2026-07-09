@@ -4,6 +4,10 @@ extends Node
 
 var jobs: Array[Job] = []
 
+## Wipe the pool (used when loading a save; entities re-register their jobs).
+func reset() -> void:
+	jobs.clear()
+
 func add_job(job: Job) -> void:
 	jobs.append(job)
 

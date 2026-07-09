@@ -1,0 +1,178 @@
+class_name SaveManager
+extends Node
+## Serializes the whole session to versioned JSON and rebuilds it on load.
+## Loading reloads the main scene; `pending_load` (static, survives the
+## reload) carries the data into the fresh scene's _ready.
+
+const SAVE_VERSION := 1
+const MANUAL_SAVE_PATH := "user://save.json"
+const AUTOSAVE_PATH := "user://autosave.json"
+const AUTOSAVE_EVERY_TICKS := 1800  # 3 in-game minutes at 10 ticks/sec
+
+static var pending_load: Dictionary = {}
+
+var ticks_since_autosave := 0
+
+@onready var main: Node2D = get_parent()
+
+func _ready() -> void:
+	GameClock.ticked.connect(_on_tick)
+
+func _on_tick() -> void:
+	ticks_since_autosave += 1
+	if ticks_since_autosave >= AUTOSAVE_EVERY_TICKS:
+		ticks_since_autosave = 0
+		save_game(AUTOSAVE_PATH)
+
+func save_game(path: String) -> void:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		push_error("Cannot write save file: %s" % path)
+		return
+	file.store_string(JSON.stringify(_collect()))
+
+func load_game(path: String) -> bool:
+	if not FileAccess.file_exists(path):
+		push_warning("No save file at %s" % path)
+		return false
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if data == null or int(data.get("version", -1)) != SAVE_VERSION:
+		push_error("Save file is corrupt or has an incompatible version")
+		return false
+	pending_load = data
+	get_tree().paused = false
+	get_tree().reload_current_scene()
+	return true
+
+# --- saving ---------------------------------------------------------------
+
+func _collect() -> Dictionary:
+	var walls: Array = []
+	for x in WorldGrid.MAP_SIZE.x:
+		for y in WorldGrid.MAP_SIZE.y:
+			if WorldGrid.is_wall(Vector2i(x, y)):
+				walls.append(_v(Vector2i(x, y)))
+	var trees: Array = []
+	for node in get_tree().get_nodes_in_group("trees"):
+		var tree := node as TreeEntity
+		trees.append({"cell": _v(tree.cell), "work": tree.job.work_ticks})
+	var wood: Array = []
+	for node in get_tree().get_nodes_in_group("wood"):
+		var item := node as WoodItem
+		if item.get_parent() is Pawn:
+			continue  # carried wood is saved with its pawn
+		wood.append(_v(item.cell))
+	var food: Array = []
+	for node in get_tree().get_nodes_in_group("food"):
+		food.append(_v((node as FoodItem).cell))
+	var raiders: Array = []
+	for node in get_tree().get_nodes_in_group("raiders"):
+		var raider := node as Raider
+		raiders.append({"cell": _v(raider.cell), "hp": raider.hp})
+	var blueprints: Array = []
+	for cell: Vector2i in main.blueprints:
+		blueprints.append({"cell": _v(cell), "work": main.blueprints[cell].job.work_ticks})
+	var camera: Camera2D = main.get_node("Camera")
+	return {
+		"version": SAVE_VERSION,
+		"clock_ticks": GameClock.ticks,
+		"raid_ticks": main.raid_director.ticks_until_raid,
+		"ground_seed": main.ground_seed,
+		"walls": walls,
+		"stockpiles": WorldGrid.stockpile_cells.keys().map(_v),
+		"trees": trees,
+		"wood": wood,
+		"food": food,
+		"raiders": raiders,
+		"blueprints": blueprints,
+		"pawns": main.pawns.map(_pawn_data),
+		"camera": {"pos": [camera.position.x, camera.position.y], "zoom": camera.zoom.x},
+	}
+
+func _pawn_data(pawn: Pawn) -> Dictionary:
+	var priorities := {}
+	for type: int in pawn.work_priorities:
+		priorities[str(type)] = pawn.work_priorities[type]
+	return {
+		"name": String(pawn.name),
+		"cell": _v(pawn.cell),
+		"target": _v(pawn.target_cell),
+		"hunger": pawn.needs.hunger,
+		"mood": pawn.needs.mood,
+		"on_break": pawn.needs.on_break,
+		"hp": pawn.combat.hp,
+		"dead": pawn.dead,
+		"priorities": priorities,
+		"job_cell": _v(pawn.job.cell) if pawn.job else [],
+		"job_type": int(pawn.job.type) if pawn.job else -1,
+		"carrying": pawn.carrying != null,
+		"reserved_dest": _v(pawn.reserved_dest),
+	}
+
+# --- loading ---------------------------------------------------------------
+
+## Called by Main._ready in the freshly reloaded scene.
+func apply_pending_load() -> void:
+	var data := pending_load
+	pending_load = {}
+	WorldGrid.reset()
+	JobManager.reset()
+	GameClock.ticks = int(data.clock_ticks)
+	main.raid_director.ticks_until_raid = int(data.raid_ticks)
+	main.ground_seed = int(data.ground_seed)
+	main.generate_ground()
+	for w: Array in data.walls:
+		main.place_wall(_vec(w))
+	for s: Array in data.stockpiles:
+		WorldGrid.set_stockpile(_vec(s), true)
+	for t: Dictionary in data.trees:
+		var tree: TreeEntity = main.spawn_entity(main.TREE_SCENE, _vec(t.cell))
+		tree.job.work_ticks = int(t.work)
+	for w: Array in data.wood:
+		main.spawn_entity(main.WOOD_SCENE, _vec(w))
+	for f: Array in data.food:
+		main.spawn_entity(main.FOOD_SCENE, _vec(f))
+	for r: Dictionary in data.raiders:
+		var raider: Raider = main.spawn_entity(main.RAIDER_SCENE, _vec(r.cell))
+		raider.hp = float(r.hp)
+	for b: Dictionary in data.blueprints:
+		main.place_blueprint(_vec(b.cell))
+		main.blueprints[_vec(b.cell)].job.work_ticks = int(b.work)
+	for p: Dictionary in data.pawns:
+		_restore_pawn(p)
+	var camera: Camera2D = main.get_node("Camera")
+	camera.position = Vector2(float(data.camera.pos[0]), float(data.camera.pos[1]))
+	camera.zoom = Vector2.ONE * float(data.camera.zoom)
+
+func _restore_pawn(p: Dictionary) -> void:
+	var priorities := {}
+	for key: String in p.priorities:
+		priorities[int(key)] = int(p.priorities[key])
+	var pawn: Pawn = main.create_pawn(_vec(p.cell), p.name, priorities)
+	pawn.needs.hunger = float(p.hunger)
+	pawn.needs.mood = float(p.mood)
+	pawn.needs.on_break = bool(p.on_break)
+	pawn.combat.hp = float(p.hp)
+	pawn.target_cell = _vec(p.target)
+	if bool(p.dead):
+		pawn.restore_dead()
+		return
+	if bool(p.carrying):
+		var wood: WoodItem = main.spawn_entity(main.WOOD_SCENE, pawn.cell)
+		pawn.restore_carry(wood, _vec(p.reserved_dest))
+	elif int(p.job_type) >= 0:
+		# Entities re-registered their jobs above; re-claim ours by cell+type.
+		var job_cell := _vec(p.job_cell)
+		for job in JobManager.jobs:
+			if job.cell == job_cell and int(job.type) == int(p.job_type) and not job.reserved:
+				job.reserved = true
+				pawn.job = job
+				break
+
+# --- helpers ---------------------------------------------------------------
+
+func _v(v: Vector2i) -> Array:
+	return [v.x, v.y]
+
+func _vec(a: Array) -> Vector2i:
+	return Vector2i(int(a[0]), int(a[1]))
