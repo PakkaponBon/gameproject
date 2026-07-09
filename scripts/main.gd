@@ -6,12 +6,14 @@ enum Mode { COMMAND, BUILD, STOCKPILE }
 
 const SOURCE_ID := 0
 const BLUEPRINT_SCENE := preload("res://scenes/blueprint.tscn")
+const DECON_SCENE := preload("res://scenes/deconstruct_order.tscn")
 
 var mode := Mode.COMMAND
 var current_building := "wall"
 var pawns: Array[Pawn] = []
 var selected: Pawn = null
 var blueprints := {}  # cell -> Blueprint
+var decon_orders := {}  # cell -> DeconstructOrder
 
 @onready var walls: TileMapLayer = $Walls
 @onready var entities: Node2D = $Entities
@@ -31,6 +33,7 @@ func _ready() -> void:
 	pause_menu.load_requested.connect(func(path: String) -> void: SaveManager.load_game(path))
 	spawner.pawn_created.connect(_on_pawn_created)
 	EventBus.building_built.connect(_on_building_built)
+	EventBus.building_deconstructed.connect(_on_building_deconstructed)
 	SaveManager.main = self
 	if SaveManager.pending_load.is_empty():
 		spawner.new_game()
@@ -92,11 +95,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventMouseMotion and mode != Mode.COMMAND:
 		# Drag to paint or erase in build/stockpile modes.
 		if event.button_mask & MOUSE_BUTTON_MASK_LEFT:
-			_apply_tool(MOUSE_BUTTON_LEFT)
+			_apply_tool(MOUSE_BUTTON_LEFT, true)
 		elif event.button_mask & MOUSE_BUTTON_MASK_RIGHT:
-			_apply_tool(MOUSE_BUTTON_RIGHT)
+			_apply_tool(MOUSE_BUTTON_RIGHT, true)
 
-func _apply_tool(button_index: int) -> void:
+func _apply_tool(button_index: int, dragging := false) -> void:
 	var cell := _mouse_cell()
 	match mode:
 		Mode.COMMAND:
@@ -110,7 +113,7 @@ func _apply_tool(button_index: int) -> void:
 			if button_index == MOUSE_BUTTON_LEFT:
 				place_blueprint(cell, current_building)
 			elif button_index == MOUSE_BUTTON_RIGHT:
-				_remove_at(cell)
+				_remove_at(cell, dragging)
 		Mode.STOCKPILE:
 			if button_index == MOUSE_BUTTON_LEFT:
 				WorldGrid.set_stockpile(cell, true)
@@ -148,13 +151,31 @@ func _cycle_selected_priority(type: Job.Type) -> void:
 	selected.cycle_priority(type)
 	_update_priority_label()
 
-func _remove_at(cell: Vector2i) -> void:
+## RMB: cancel a blueprint, toggle a deconstruct order, or mark a building.
+## While dragging, never un-mark — otherwise motion events would flicker it.
+func _remove_at(cell: Vector2i, dragging := false) -> void:
 	if blueprints.has(cell):
 		blueprints[cell].cancel()
 		blueprints.erase(cell)
-		return
+	elif decon_orders.has(cell):
+		if not dragging:
+			decon_orders[cell].cancel()
+			decon_orders.erase(cell)
+	elif WorldGrid.buildings.has(cell):
+		mark_deconstruct(cell)
+
+func mark_deconstruct(cell: Vector2i) -> void:
+	var order: DeconstructOrder = DECON_SCENE.instantiate()
+	order.position = WorldGrid.cell_to_world(cell)
+	entities.add_child(order)
+	decon_orders[cell] = order
+
+func _on_building_deconstructed(cell: Vector2i) -> void:
+	decon_orders.erase(cell)
+	var refund := int(BuildingDefs.get_def(WorldGrid.buildings[cell]).refund)
 	WorldGrid.remove_building(cell)
 	walls.erase_cell(cell)
+	spawner.drop_wood(cell, refund)
 
 func _set_mode(new_mode: Mode) -> void:
 	mode = new_mode

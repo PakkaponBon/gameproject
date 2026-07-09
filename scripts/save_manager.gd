@@ -3,7 +3,7 @@ extends Node
 ## on load. Loading reloads the main scene; `pending_load` survives the
 ## reload because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 4
+const SAVE_VERSION := 5
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 ## Interim cadence — switches to "each morning" when Phase 3 adds the calendar.
@@ -82,6 +82,9 @@ func _collect() -> Dictionary:
 			"delivered": bp.delivered,
 			"work": bp.build_job.work_ticks if bp.build_job else -1,
 		})
+	var decon: Array = []
+	for cell: Vector2i in main.decon_orders:
+		decon.append({"cell": _v(cell), "work": main.decon_orders[cell].job.work_ticks})
 	var camera: Camera2D = main.get_node("Camera")
 	return {
 		"version": SAVE_VERSION,
@@ -95,6 +98,7 @@ func _collect() -> Dictionary:
 		"food": food,
 		"raiders": raiders,
 		"blueprints": blueprints,
+		"decon_orders": decon,
 		"pawns": main.pawns.map(_pawn_data),
 		"selected": main.pawns.find(main.selected),
 		"camera": {"pos": [camera.position.x, camera.position.y], "zoom": camera.zoom.x},
@@ -157,6 +161,9 @@ func apply_pending_load() -> void:
 		main.place_blueprint(_vec(b.cell), b.id)
 		var bp: Blueprint = main.blueprints[_vec(b.cell)]
 		bp.restore(int(b.delivered), int(b.work))
+	for d: Dictionary in data.decon_orders:
+		main.mark_deconstruct(_vec(d.cell))
+		main.decon_orders[_vec(d.cell)].restore(int(d.work))
 	for p: Dictionary in data.pawns:
 		_restore_pawn(p)
 	main.select_pawn(int(data.selected))

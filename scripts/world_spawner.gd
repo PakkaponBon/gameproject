@@ -48,6 +48,21 @@ func spawn_entity(scene: PackedScene, cell: Vector2i) -> Node2D:
 	entities.add_child(node)
 	return node
 
+## Drop loose wood on a cell, spilling onto free neighbors (refunds etc.).
+func drop_wood(cell: Vector2i, count: int) -> void:
+	var spots: Array[Vector2i] = [cell, cell + Vector2i.UP, cell + Vector2i.DOWN,
+			cell + Vector2i.LEFT, cell + Vector2i.RIGHT]
+	var spawned := 0
+	for spot in spots:
+		if spawned >= count:
+			return
+		if WorldGrid.in_bounds(spot) and not WorldGrid.is_wall(spot) and not WorldGrid.items.has(spot):
+			spawn_entity(WOOD_SCENE, spot)
+			spawned += 1
+	while spawned < count:  # fallback: stack on the original cell
+		spawn_entity(WOOD_SCENE, cell)
+		spawned += 1
+
 func create_pawn(cell: Vector2i, pawn_name: String, priorities: Dictionary) -> Pawn:
 	var pawn: Pawn = PAWN_SCENE.instantiate()
 	pawn.name = pawn_name

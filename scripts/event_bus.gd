@@ -3,3 +3,4 @@ extends Node
 ## references to listeners. New cross-system signals go here, not point-to-point.
 
 signal building_built(cell: Vector2i, building_id: String)
+signal building_deconstructed(cell: Vector2i)

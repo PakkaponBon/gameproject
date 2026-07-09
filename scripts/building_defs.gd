@@ -13,6 +13,7 @@ const DEFS := {
 	"wall": {
 		"name": "Wall",
 		"cost": {"wood": 1},
+		"refund": 0,
 		"build_ticks": 20,
 		"tile": Vector2i(2, 0),
 		"ghost": Color(0.44, 0.44, 0.47),
@@ -23,6 +24,7 @@ const DEFS := {
 	"gate": {
 		"name": "Gate",
 		"cost": {"wood": 2},
+		"refund": 1,
 		"build_ticks": 30,
 		"tile": Vector2i(3, 0),
 		"ghost": Color(0.55, 0.45, 0.32),
@@ -33,6 +35,7 @@ const DEFS := {
 	"bed": {
 		"name": "Bed",
 		"cost": {"wood": 2},
+		"refund": 1,
 		"build_ticks": 30,
 		"tile": Vector2i(4, 0),
 		"ghost": Color(0.55, 0.65, 0.8),
@@ -43,6 +46,7 @@ const DEFS := {
 	"barn": {
 		"name": "Storage Barn",
 		"cost": {"wood": 3},
+		"refund": 2,
 		"build_ticks": 40,
 		"tile": Vector2i(5, 0),
 		"ghost": Color(0.43, 0.31, 0.2),

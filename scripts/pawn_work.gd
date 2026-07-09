@@ -19,6 +19,8 @@ func request_next() -> void:
 		return
 	if job.type == Job.Type.SUPPLY:
 		_ensure_fetch()
+	elif job.type == Job.Type.DECONSTRUCT:
+		_approach_deconstruct()
 	else:
 		pawn.target_cell = job.cell
 
@@ -61,6 +63,8 @@ func _do_job() -> void:
 			_start_storage_carry(job.target as WoodItem)
 		Job.Type.SUPPLY:
 			_ensure_fetch()  # e.g. right after load: job held, wood not yet chosen
+		Job.Type.DECONSTRUCT:
+			_do_deconstruct()
 		Job.Type.CHOP, Job.Type.BUILD:
 			if not is_instance_valid(job.target):  # e.g. blueprint canceled
 				job = null
@@ -73,6 +77,28 @@ func _do_job() -> void:
 				job = null
 				if was_build:
 					pawn.step_off_wall(work_cell)
+
+func _approach_deconstruct() -> void:
+	var spot := JobManager.nearest_work_spot(pawn.cell, job.cell)
+	if spot == WorldGrid.INVALID_CELL:
+		abort()
+		return
+	pawn.target_cell = spot
+
+func _do_deconstruct() -> void:
+	if not is_instance_valid(job.target):  # order canceled
+		job = null
+		return
+	# Worked from the target's cell or beside it; re-approach otherwise
+	# (e.g. after a load, or if a wall rerouted us).
+	var d := (job.cell - pawn.cell).abs()
+	if d.x + d.y > 1:
+		_approach_deconstruct()
+		return
+	job.work_ticks -= 1
+	if job.work_ticks <= 0:
+		JobManager.complete_job(job)
+		job = null
 
 func _ensure_fetch() -> void:
 	var wood := JobManager.find_fetchable_wood(pawn.cell)

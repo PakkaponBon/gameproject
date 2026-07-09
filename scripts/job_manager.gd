@@ -2,6 +2,8 @@ extends Node
 ## Autoload: global pool of available jobs. Pawns request the best job for
 ## their priorities and reserve it so no two pawns work the same job.
 
+const DIRS: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
+
 var jobs: Array[Job] = []
 
 ## Wipe the pool (used when loading a save; entities re-register their jobs).
@@ -27,8 +29,12 @@ func request_job(from_cell: Vector2i, priorities: Dictionary) -> Job:
 	for job in jobs:
 		if job.reserved:
 			continue
-		# SUPPLY is hauling work: it shares the HAUL priority.
-		var prio_type := Job.Type.HAUL if job.type == Job.Type.SUPPLY else job.type
+		# SUPPLY is hauling work; DECONSTRUCT is construction work.
+		var prio_type := job.type
+		if job.type == Job.Type.SUPPLY:
+			prio_type = Job.Type.HAUL
+		elif job.type == Job.Type.DECONSTRUCT:
+			prio_type = Job.Type.BUILD
 		var prio: int = priorities.get(prio_type, 1)
 		if prio <= 0:
 			continue
@@ -46,7 +52,10 @@ func request_job(from_cell: Vector2i, priorities: Dictionary) -> Job:
 				continue
 		if best and (prio > best_prio or (prio == best_prio and float((job.cell - from_cell).length_squared()) >= best_dist)):
 			continue
-		if _is_reachable(from_cell, job.cell):
+		# Solid targets (e.g. deconstructing a wall) are worked from beside.
+		var reachable := nearest_work_spot(from_cell, job.cell) != WorldGrid.INVALID_CELL \
+				if job.type == Job.Type.DECONSTRUCT else _is_reachable(from_cell, job.cell)
+		if reachable:
 			best = job
 			best_prio = prio
 			best_dist = float((job.cell - from_cell).length_squared())
@@ -69,6 +78,21 @@ func find_fetchable_wood(from_cell: Vector2i) -> WoodItem:
 		if dist < best_dist and _is_reachable(from_cell, wood.cell):
 			best = wood
 			best_dist = dist
+	return best
+
+## Nearest walkable, reachable cell to work a target from: the target's own
+## cell if it isn't solid, otherwise one of its neighbors. INVALID_CELL if none.
+func nearest_work_spot(from_cell: Vector2i, target_cell: Vector2i) -> Vector2i:
+	var best := WorldGrid.INVALID_CELL
+	var best_len := INF
+	for offset: Vector2i in [Vector2i.ZERO, Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		var spot := target_cell + offset
+		if not WorldGrid.in_bounds(spot) or WorldGrid.is_wall(spot):
+			continue
+		var path := WorldGrid.astar.get_id_path(from_cell, spot)
+		if not path.is_empty() and path.size() < best_len:
+			best = spot
+			best_len = path.size()
 	return best
 
 func release_job(job: Job) -> void:

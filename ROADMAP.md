@@ -21,7 +21,7 @@ Rules: one phase at a time, in order. Each phase gates on its **Definition of Do
 ## Phase 2 — Construction (v0.3)
 - [x] Blueprint → haul materials → timed build job
 - [x] Buildings: wall, gate, bed/house, storage barn
-- [ ] Deconstruct (partial refund)
+- [x] Deconstruct (partial refund)
 
 **DoD:** Order a walled yard + gate + house + barn; built hands-off.
 **Tag:** `v0.3-construction`
