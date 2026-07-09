@@ -29,7 +29,7 @@ Rules: one phase at a time, in order. Each phase gates on its **Definition of Do
 ---
 
 ## Phase 3 — Economy: Farming & Seasons (v0.4)
-- [ ] Day/night + calendar (4 seasons × N days), season in UI + visual tint *(also: switch autosave from the Phase 1 interim 3-min interval to each morning)*
+- [x] Day/night + calendar (4 seasons × N days), season in UI + visual tint *(autosave now fires each morning)*
 - [ ] Rest need, sleep in beds, exhaustion slows work
 - [ ] Field zoning, crop lifecycle (plant → grow → harvest), 3+ crops, winter kills crops
 - [ ] Eating, starvation → collapse → death if neglected

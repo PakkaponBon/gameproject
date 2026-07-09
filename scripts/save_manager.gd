@@ -6,23 +6,17 @@ extends Node
 const SAVE_VERSION := 5
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
-## Interim cadence — switches to "each morning" when Phase 3 adds the calendar.
-const AUTOSAVE_EVERY_TICKS := 1800  # 3 in-game minutes at 10 ticks/sec
 
 var pending_load: Dictionary = {}
 var main: Node2D = null  # current Main scene; re-registers itself each load
-var ticks_since_autosave := 0
 
 func _ready() -> void:
-	GameClock.ticked.connect(_on_tick)
+	GameClock.day_started.connect(_on_day_started)
 
-func _on_tick() -> void:
+## Autosave each morning.
+func _on_day_started(_day: int) -> void:
 	# main is briefly a freed instance while the scene reloads on load_game.
-	if not is_instance_valid(main):
-		return
-	ticks_since_autosave += 1
-	if ticks_since_autosave >= AUTOSAVE_EVERY_TICKS:
-		ticks_since_autosave = 0
+	if is_instance_valid(main):
 		save_game(AUTOSAVE_PATH)
 
 func save_game(path: String) -> void:

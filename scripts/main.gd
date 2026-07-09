@@ -24,6 +24,7 @@ var decon_orders := {}  # cell -> DeconstructOrder
 @onready var stats_label: Label = $HUD/StatsLabel
 @onready var priority_label: Label = $HUD/PriorityLabel
 @onready var event_label: Label = $HUD/EventLabel
+@onready var calendar_label: Label = $HUD/CalendarLabel
 
 func _ready() -> void:
 	raid_director.spawn_parent = entities
@@ -32,6 +33,8 @@ func _ready() -> void:
 	pause_menu.save_requested.connect(func() -> void: SaveManager.save_game(SaveManager.MANUAL_SAVE_PATH))
 	pause_menu.load_requested.connect(func(path: String) -> void: SaveManager.load_game(path))
 	spawner.pawn_created.connect(_on_pawn_created)
+	GameClock.ticked.connect(func() -> void: calendar_label.text = GameClock.calendar_text())
+	calendar_label.text = GameClock.calendar_text()
 	EventBus.building_built.connect(_on_building_built)
 	EventBus.building_deconstructed.connect(_on_building_deconstructed)
 	SaveManager.main = self
