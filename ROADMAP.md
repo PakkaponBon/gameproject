@@ -1,6 +1,6 @@
 # ROADMAP.md — Ashfall: Skeleton → v1.0
 
-Current state: **v0.2-persistence** (skeleton + full save/load: SaveManager autoload, versioned JSON, autosave, pause menu).
+Current state: **v0.3-construction** (persistence + ordered construction: material-costed blueprints, wall/gate/bed/barn, deconstruct with refunds).
 
 Rules: one phase at a time, in order. Each phase gates on its **Definition of Done (DoD)**. Git tag per phase. From Phase 1 on, every new system ships with save/load. Not required by a DoD → IDEAS.md.
 
