@@ -1,6 +1,7 @@
 extends Node
-## Autoload: single source of truth for the tile grid — walkability,
-## stockpile zones, and which cell each ground item occupies.
+## Autoload: single source of truth for the tile grid — walkability (one
+## grid per agent kind: gates are open to villagers, solid to enemies),
+## buildings, stockpile zones, and which cell each ground item occupies.
 
 signal stockpile_changed
 
@@ -8,34 +9,58 @@ const MAP_SIZE := Vector2i(64, 64)
 const TILE_SIZE := 16
 const INVALID_CELL := Vector2i(-1, -1)
 
-var astar := AStarGrid2D.new()
+var astar := AStarGrid2D.new()        # villager pathing
+var astar_enemy := AStarGrid2D.new()  # enemy pathing (gates count as solid)
+var buildings := {}  # Vector2i -> building id (String)
 var stockpile_cells := {}  # Set of Vector2i (value unused)
 var items := {}  # Vector2i -> Node2D occupying that cell
 var reserved_storage := {}  # Set of Vector2i claimed as a haul destination
 
 func _ready() -> void:
-	astar.region = Rect2i(Vector2i.ZERO, MAP_SIZE)
-	astar.cell_size = Vector2(TILE_SIZE, TILE_SIZE)
-	astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
-	astar.update()
+	for grid: AStarGrid2D in [astar, astar_enemy]:
+		grid.region = Rect2i(Vector2i.ZERO, MAP_SIZE)
+		grid.cell_size = Vector2(TILE_SIZE, TILE_SIZE)
+		grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
+		grid.update()
 
 ## Wipe all grid state (used when loading a save into a fresh scene).
 func reset() -> void:
+	buildings.clear()
 	stockpile_cells.clear()
 	items.clear()
 	reserved_storage.clear()
 	astar.fill_solid_region(astar.region, false)
+	astar_enemy.fill_solid_region(astar_enemy.region, false)
 	stockpile_changed.emit()
 
 func in_bounds(cell: Vector2i) -> bool:
 	return astar.region.has_point(cell)
 
+## "Wall" = blocks villagers. Enemies additionally treat gates as walls.
 func is_wall(cell: Vector2i) -> bool:
 	return in_bounds(cell) and astar.is_point_solid(cell)
 
-func set_wall(cell: Vector2i, solid: bool) -> void:
-	if in_bounds(cell):
-		astar.set_point_solid(cell, solid)
+func register_building(cell: Vector2i, id: String) -> void:
+	if not in_bounds(cell):
+		return
+	var def: Dictionary = BuildingDefs.get_def(id)
+	buildings[cell] = id
+	astar.set_point_solid(cell, def.block_villagers)
+	astar_enemy.set_point_solid(cell, def.block_enemies)
+	if def.storage:
+		stockpile_cells[cell] = true
+		stockpile_changed.emit()
+
+func remove_building(cell: Vector2i) -> void:
+	if not buildings.has(cell):
+		return
+	var def: Dictionary = BuildingDefs.get_def(buildings[cell])
+	buildings.erase(cell)
+	astar.set_point_solid(cell, false)
+	astar_enemy.set_point_solid(cell, false)
+	if def.storage:
+		stockpile_cells.erase(cell)
+		stockpile_changed.emit()
 
 func set_stockpile(cell: Vector2i, on: bool) -> void:
 	if not in_bounds(cell) or (on and is_wall(cell)):

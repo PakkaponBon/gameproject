@@ -44,7 +44,8 @@ func _on_tick() -> void:
 	if move_cooldown > 0:
 		return
 	move_cooldown = MOVE_EVERY_TICKS
-	var path: Array[Vector2i] = WorldGrid.astar.get_id_path(cell, target.cell, true)
+	# Enemy grid: gates count as solid, so a gated wall keeps raiders out.
+	var path: Array[Vector2i] = WorldGrid.astar_enemy.get_id_path(cell, target.cell, true)
 	if path.size() >= 2:
 		cell = path[1]
 

@@ -18,7 +18,9 @@ var build_job: Job = null
 func _ready() -> void:
 	cell = WorldGrid.world_to_cell(position)
 	position = WorldGrid.cell_to_world(cell)
-	required = int(BuildingDefs.get_def(building_id).cost.get("wood", 0))
+	var def: Dictionary = BuildingDefs.get_def(building_id)
+	body.color = def.ghost  # alpha applied by _update_visual
+	required = int(def.cost.get("wood", 0))
 	if delivered >= required:
 		_register_build_job()
 	else:

@@ -8,6 +8,7 @@ const SOURCE_ID := 0
 const BLUEPRINT_SCENE := preload("res://scenes/blueprint.tscn")
 
 var mode := Mode.COMMAND
+var current_building := "wall"
 var pawns: Array[Pawn] = []
 var selected: Pawn = null
 var blueprints := {}  # cell -> Blueprint
@@ -41,15 +42,17 @@ func _ready() -> void:
 		event_label.text = "RAID — a raider approaches!"
 	_update_mode_label()
 
-func place_wall(cell: Vector2i) -> void:
-	WorldGrid.set_wall(cell, true)
-	walls.set_cell(cell, SOURCE_ID, BuildingDefs.get_def("wall").tile)
+## Instantly realize a finished (or loaded) building at a cell.
+func place_building(cell: Vector2i, id: String) -> void:
+	WorldGrid.register_building(cell, id)
+	walls.set_cell(cell, SOURCE_ID, BuildingDefs.get_def(id).tile)
 
-func place_blueprint(cell: Vector2i) -> void:
-	if not WorldGrid.in_bounds(cell) or WorldGrid.is_wall(cell) \
+func place_blueprint(cell: Vector2i, id: String) -> void:
+	if not WorldGrid.in_bounds(cell) or WorldGrid.buildings.has(cell) \
 			or blueprints.has(cell) or _pawn_at(cell):
 		return
 	var bp: Blueprint = BLUEPRINT_SCENE.instantiate()
+	bp.building_id = id
 	bp.position = WorldGrid.cell_to_world(cell)
 	entities.add_child(bp)
 	blueprints[cell] = bp
@@ -66,10 +69,7 @@ func _on_pawn_created(pawn: Pawn) -> void:
 
 func _on_building_built(cell: Vector2i, building_id: String) -> void:
 	blueprints.erase(cell)
-	var def: Dictionary = BuildingDefs.get_def(building_id)
-	if def.solid:
-		WorldGrid.set_wall(cell, true)
-	walls.set_cell(cell, SOURCE_ID, def.tile)
+	place_building(cell, building_id)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_build_mode"):
@@ -82,6 +82,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		_cycle_selected_priority(Job.Type.HAUL)
 	elif event.is_action_pressed("cycle_build_priority"):
 		_cycle_selected_priority(Job.Type.BUILD)
+	elif event.is_action_pressed("cycle_building"):
+		if mode == Mode.BUILD:
+			var order: Array = BuildingDefs.ORDER
+			current_building = order[(order.find(current_building) + 1) % order.size()]
+			_update_mode_label()
 	elif event is InputEventMouseButton and event.pressed:
 		_apply_tool(event.button_index)
 	elif event is InputEventMouseMotion and mode != Mode.COMMAND:
@@ -103,9 +108,9 @@ func _apply_tool(button_index: int) -> void:
 					selected.move_to(cell)
 		Mode.BUILD:
 			if button_index == MOUSE_BUTTON_LEFT:
-				place_blueprint(cell)
+				place_blueprint(cell, current_building)
 			elif button_index == MOUSE_BUTTON_RIGHT:
-				_erase_wall(cell)
+				_remove_at(cell)
 		Mode.STOCKPILE:
 			if button_index == MOUSE_BUTTON_LEFT:
 				WorldGrid.set_stockpile(cell, true)
@@ -143,12 +148,12 @@ func _cycle_selected_priority(type: Job.Type) -> void:
 	selected.cycle_priority(type)
 	_update_priority_label()
 
-func _erase_wall(cell: Vector2i) -> void:
+func _remove_at(cell: Vector2i) -> void:
 	if blueprints.has(cell):
 		blueprints[cell].cancel()
 		blueprints.erase(cell)
 		return
-	WorldGrid.set_wall(cell, false)
+	WorldGrid.remove_building(cell)
 	walls.erase_cell(cell)
 
 func _set_mode(new_mode: Mode) -> void:
@@ -191,6 +196,8 @@ func _update_mode_label() -> void:
 		Mode.COMMAND:
 			mode_label.text = "COMMAND — LMB select pawn / move selected  [B: build] [Z: stockpile] [Esc: menu]"
 		Mode.BUILD:
-			mode_label.text = "BUILD — LMB place wall blueprint (needs 1 wood), RMB erase/cancel  [B: back]"
+			var def: Dictionary = BuildingDefs.get_def(current_building)
+			mode_label.text = "BUILD: %s (%d wood) — LMB place, RMB remove/cancel  [Q: next building] [B: back]" \
+					% [def.name, int(def.cost.get("wood", 0))]
 		Mode.STOCKPILE:
 			mode_label.text = "STOCKPILE — LMB paint zone, RMB erase  [Z: back]"

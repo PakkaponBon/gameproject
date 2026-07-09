@@ -3,7 +3,7 @@ extends Node
 ## on load. Loading reloads the main scene; `pending_load` survives the
 ## reload because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 3
+const SAVE_VERSION := 4
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 ## Interim cadence — switches to "each morning" when Phase 3 adds the calendar.
@@ -48,11 +48,9 @@ func load_game(path: String) -> bool:
 # --- saving ---------------------------------------------------------------
 
 func _collect() -> Dictionary:
-	var walls: Array = []
-	for x in WorldGrid.MAP_SIZE.x:
-		for y in WorldGrid.MAP_SIZE.y:
-			if WorldGrid.is_wall(Vector2i(x, y)):
-				walls.append(_v(Vector2i(x, y)))
+	var built: Array = []
+	for cell: Vector2i in WorldGrid.buildings:
+		built.append({"cell": _v(cell), "id": WorldGrid.buildings[cell]})
 	var trees: Array = []
 	for node in get_tree().get_nodes_in_group("trees"):
 		var tree := node as TreeEntity
@@ -80,6 +78,7 @@ func _collect() -> Dictionary:
 		var bp: Blueprint = main.blueprints[cell]
 		blueprints.append({
 			"cell": _v(cell),
+			"id": bp.building_id,
 			"delivered": bp.delivered,
 			"work": bp.build_job.work_ticks if bp.build_job else -1,
 		})
@@ -89,7 +88,7 @@ func _collect() -> Dictionary:
 		"clock_ticks": GameClock.ticks,
 		"raid_ticks": main.raid_director.ticks_until_raid,
 		"ground_seed": main.spawner.ground_seed,
-		"walls": walls,
+		"buildings": built,
 		"stockpiles": WorldGrid.stockpile_cells.keys().map(_v),
 		"trees": trees,
 		"wood": wood,
@@ -138,8 +137,8 @@ func apply_pending_load() -> void:
 	var spawner: WorldSpawner = main.spawner
 	spawner.ground_seed = int(data.ground_seed)
 	spawner.generate_ground()
-	for w: Array in data.walls:
-		main.place_wall(_vec(w))
+	for b: Dictionary in data.buildings:
+		main.place_building(_vec(b.cell), b.id)
 	for s: Array in data.stockpiles:
 		WorldGrid.set_stockpile(_vec(s), true)
 	for t: Dictionary in data.trees:
@@ -155,7 +154,7 @@ func apply_pending_load() -> void:
 		raider.attack_cooldown = int(r.atk_cd)
 		raider.move_cooldown = int(r.move_cd)
 	for b: Dictionary in data.blueprints:
-		main.place_blueprint(_vec(b.cell))
+		main.place_blueprint(_vec(b.cell), b.id)
 		var bp: Blueprint = main.blueprints[_vec(b.cell)]
 		bp.restore(int(b.delivered), int(b.work))
 	for p: Dictionary in data.pawns:
