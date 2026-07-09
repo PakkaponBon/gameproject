@@ -1,12 +1,14 @@
 class_name Pawn
 extends Node2D
+## Movement, tick orchestration, and player-facing state for one villager.
+## Behaviors live in components: PawnNeeds (stats), PawnSurvival (food and
+## sleep), PawnWork (colony jobs), PawnCombat (melee).
 
 signal stats_changed
 signal died
 
 ## How fast the sprite eases toward its logical cell (rendering only).
 const LERP_WEIGHT := 12.0
-const EAT_TICKS := 10
 const WANDER_EVERY_TICKS := 3
 const DIRS: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
 const BODY_COLOR := Color(0.231373, 0.482353, 0.831373)
@@ -14,10 +16,6 @@ const SLEEP_COLOR := Color(0.14, 0.29, 0.5)
 
 var cell: Vector2i
 var target_cell: Vector2i
-var food_target: FoodItem = null
-var eat_ticks_left := 0
-var sleeping := false
-var bed_cell := WorldGrid.INVALID_CELL  # claimed bed (or target while walking)
 var dead := false
 var wander_cooldown := 0
 
@@ -29,6 +27,7 @@ var work_priorities := {Job.Type.CHOP: 1, Job.Type.HAUL: 1, Job.Type.BUILD: 1}
 @onready var needs: PawnNeeds = $Needs
 @onready var combat: PawnCombat = $Combat
 @onready var work: PawnWork = $Work
+@onready var survival: PawnSurvival = $Survival
 
 func _ready() -> void:
 	add_to_group("pawns")
@@ -45,6 +44,10 @@ func _ready() -> void:
 func set_selected(on: bool) -> void:
 	selection_ring.visible = on
 
+func set_sleep_visual(on: bool) -> void:
+	if not dead:
+		body.color = SLEEP_COLOR if on else BODY_COLOR
+
 func cycle_priority(type: Job.Type) -> void:
 	# 1 -> 2 -> 3 -> 0 (off) -> 1
 	work_priorities[type] = (int(work_priorities[type]) + 1) % 4
@@ -53,7 +56,7 @@ func cycle_priority(type: Job.Type) -> void:
 func move_to(destination: Vector2i) -> void:
 	if dead or not WorldGrid.in_bounds(destination):
 		return
-	_wake()
+	survival.wake()
 	_abort_all()
 	target_cell = destination
 
@@ -80,88 +83,34 @@ func step_off_wall(wall_cell: Vector2i) -> void:
 func _on_tick() -> void:
 	if dead:
 		return
-	needs.tick(sleeping, sleeping and cell == bed_cell)
+	needs.tick(survival.sleeping, survival.is_in_bed())
 	if dead:
 		return  # starved just now
 	combat.tick()
 	# Melee is survival: an adjacent raider preempts (and wakes) everything.
 	if combat.engage_adjacent():
-		_wake()
+		survival.wake()
 		return
-	if sleeping:
+	if survival.sleeping:
 		if needs.is_rested() or needs.is_hungry():
-			_wake()
+			survival.wake()
 		return
-	_seek_food_if_hungry()
-	_seek_bed_if_tired()
+	survival.seek_food()
+	survival.seek_bed()
 	if cell != target_cell:
 		_step()
-	elif food_target:
-		_eat()
-	elif bed_cell != WorldGrid.INVALID_CELL and cell == bed_cell:
-		_fall_asleep()
+	elif survival.food_target:
+		survival.eat_tick()
+	elif survival.at_bed():
+		survival.fall_asleep()
 	elif needs.wants_sleep() and needs.is_exhausted():
-		_fall_asleep()  # no bed available: collapse where we stand
+		survival.fall_asleep()  # no bed available: collapse where we stand
 	elif needs.on_break:
 		_wander()
 	elif work.busy():
 		work.on_arrived()
 	else:
 		work.request_next()
-
-func _seek_food_if_hungry() -> void:
-	if not needs.is_hungry() or food_target != null:
-		return
-	var food := _find_food()
-	if food:
-		_abort_all()
-		food.reserved = true
-		food_target = food
-		eat_ticks_left = EAT_TICKS
-		target_cell = food.cell
-
-func _seek_bed_if_tired() -> void:
-	if not needs.wants_sleep() or bed_cell != WorldGrid.INVALID_CELL or food_target:
-		return
-	var bed := _find_free_bed()
-	if bed != WorldGrid.INVALID_CELL:
-		work.abort()
-		bed_cell = bed
-		target_cell = bed
-
-func _find_free_bed() -> Vector2i:
-	var best := WorldGrid.INVALID_CELL
-	var best_dist := INF
-	for spot: Vector2i in WorldGrid.buildings:
-		var def: Dictionary = BuildingDefs.get_def(WorldGrid.buildings[spot])
-		if not def.get("sleep_spot", false) or _bed_claimed(spot):
-			continue
-		var dist := float((spot - cell).length_squared())
-		if dist < best_dist and not WorldGrid.astar.get_id_path(cell, spot).is_empty():
-			best = spot
-			best_dist = dist
-	return best
-
-func _bed_claimed(bed: Vector2i) -> bool:
-	for node in get_tree().get_nodes_in_group("pawns"):
-		var other := node as Pawn
-		if other != self and other.bed_cell == bed:
-			return true
-	return false
-
-func _fall_asleep() -> void:
-	sleeping = true
-	body.color = SLEEP_COLOR
-
-func _wake() -> void:
-	sleeping = false
-	bed_cell = WorldGrid.INVALID_CELL
-	if not dead:
-		body.color = BODY_COLOR
-
-## Save/load: resume sleeping without re-running the fall-asleep search.
-func restore_sleep() -> void:
-	_fall_asleep()
 
 func _step() -> void:
 	# Repath every tick so walls placed mid-walk are respected immediately.
@@ -175,16 +124,6 @@ func _step() -> void:
 		return
 	cell = path[1]
 
-func _eat() -> void:
-	if not is_instance_valid(food_target):
-		food_target = null
-		return
-	eat_ticks_left -= 1
-	if eat_ticks_left <= 0:
-		food_target.queue_free()
-		food_target = null
-		needs.eat()
-
 func _wander() -> void:
 	wander_cooldown -= 1
 	if wander_cooldown > 0:
@@ -195,38 +134,21 @@ func _wander() -> void:
 		cell = next
 		target_cell = next
 
-func _find_food() -> FoodItem:
-	var best: FoodItem = null
-	var best_dist := INF
-	for node in get_tree().get_nodes_in_group("food"):
-		var food := node as FoodItem
-		if food.reserved:
-			continue
-		var dist := float((food.cell - cell).length_squared())
-		if dist < best_dist and not WorldGrid.astar.get_id_path(cell, food.cell).is_empty():
-			best = food
-			best_dist = dist
-	return best
-
 func _on_damaged() -> void:
-	if sleeping:
-		_wake()
+	if survival.sleeping:
+		survival.wake()
 	needs.attacked()
 	stats_changed.emit()
 
 func _on_break_started() -> void:
 	# Mental break: drop colony work, but keep heading to food if hungry.
 	work.abort()
-	if food_target == null:
+	if survival.food_target == null:
 		target_cell = cell
 
 func _abort_all(clear_food := true) -> void:
 	work.abort()
-	bed_cell = WorldGrid.INVALID_CELL  # release any bed claim / walk
-	if clear_food:
-		if is_instance_valid(food_target):
-			food_target.reserved = false
-		food_target = null
+	survival.release_claims(clear_food)
 
 func _die() -> void:
 	dead = true

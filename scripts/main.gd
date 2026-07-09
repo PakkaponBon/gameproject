@@ -197,7 +197,7 @@ func _update_stats_label() -> void:
 		stats_label.text = "%s — DEAD" % selected.name
 		return
 	var suffix := ""
-	if selected.sleeping:
+	if selected.survival.sleeping:
 		suffix = "  (SLEEPING)"
 	elif selected.needs.on_break:
 		suffix = "  (MENTAL BREAK)"

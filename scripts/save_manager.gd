@@ -110,8 +110,8 @@ func _pawn_data(pawn: Pawn) -> Dictionary:
 		"rest": pawn.needs.rest,
 		"mood": pawn.needs.mood,
 		"on_break": pawn.needs.on_break,
-		"sleeping": pawn.sleeping,
-		"bed": _v(pawn.bed_cell),
+		"sleeping": pawn.survival.sleeping,
+		"bed": _v(pawn.survival.bed_cell),
 		"hp": pawn.combat.hp,
 		"atk_cd": pawn.combat.attack_cooldown,
 		"wander_cd": pawn.wander_cooldown,
@@ -121,8 +121,8 @@ func _pawn_data(pawn: Pawn) -> Dictionary:
 		"job_type": int(pawn.work.job.type) if pawn.work.job else -1,
 		"carrying": pawn.work.carrying != null,
 		"reserved_dest": _v(pawn.work.reserved_dest),
-		"food_cell": _v(pawn.food_target.cell) if pawn.food_target else [],
-		"eat_ticks": pawn.eat_ticks_left,
+		"food_cell": _v(pawn.survival.food_target.cell) if pawn.survival.food_target else [],
+		"eat_ticks": pawn.survival.eat_ticks_left,
 	}
 
 # --- loading ---------------------------------------------------------------
@@ -177,9 +177,9 @@ func _restore_pawn(p: Dictionary) -> void:
 	pawn.needs.rest = float(p.rest)
 	pawn.needs.mood = float(p.mood)
 	pawn.needs.on_break = bool(p.on_break)
-	pawn.bed_cell = _vec(p.bed)
+	pawn.survival.bed_cell = _vec(p.bed)
 	if bool(p.sleeping):
-		pawn.restore_sleep()
+		pawn.survival.restore_sleep()
 	pawn.combat.hp = float(p.hp)
 	pawn.combat.attack_cooldown = int(p.atk_cd)
 	pawn.wander_cooldown = int(p.wander_cd)
@@ -209,8 +209,8 @@ func _relink_food(pawn: Pawn, food_cell: Vector2i, eat_ticks: int) -> void:
 		var food := node as FoodItem
 		if food.cell == food_cell and not food.reserved:
 			food.reserved = true
-			pawn.food_target = food
-			pawn.eat_ticks_left = eat_ticks
+			pawn.survival.food_target = food
+			pawn.survival.eat_ticks_left = eat_ticks
 			return
 
 # --- helpers ---------------------------------------------------------------
