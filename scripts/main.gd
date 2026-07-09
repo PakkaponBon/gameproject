@@ -28,7 +28,6 @@ var ground_seed := 0
 @onready var walls: TileMapLayer = $Walls
 @onready var entities: Node2D = $Entities
 @onready var raid_director: RaidDirector = $RaidDirector
-@onready var save_manager: SaveManager = $SaveManager
 @onready var pause_menu: PauseMenu = $PauseMenu
 @onready var mode_label: Label = $HUD/ModeLabel
 @onready var stats_label: Label = $HUD/StatsLabel
@@ -39,15 +38,19 @@ func _ready() -> void:
 	raid_director.spawn_parent = entities
 	raid_director.raid_started.connect(func() -> void: event_label.text = "RAID — a raider approaches!")
 	raid_director.raid_ended.connect(func() -> void: event_label.text = "")
-	pause_menu.save_requested.connect(func() -> void: save_manager.save_game(SaveManager.MANUAL_SAVE_PATH))
-	pause_menu.load_requested.connect(func(path: String) -> void: save_manager.load_game(path))
+	SaveManager.main = self
+	pause_menu.save_requested.connect(func() -> void: SaveManager.save_game(SaveManager.MANUAL_SAVE_PATH))
+	pause_menu.load_requested.connect(func(path: String) -> void: SaveManager.load_game(path))
 	if SaveManager.pending_load.is_empty():
 		ground_seed = randi()
 		generate_ground()
 		_spawn_entities()
 	else:
-		save_manager.apply_pending_load()
-	_select_first_alive()
+		SaveManager.apply_pending_load()
+	if selected == null:
+		_select_first_alive()
+	if not get_tree().get_nodes_in_group("raiders").is_empty():
+		event_label.text = "RAID — a raider approaches!"
 	_update_mode_label()
 
 func generate_ground() -> void:
@@ -175,6 +178,11 @@ func _pawn_at(cell: Vector2i) -> Pawn:
 		if pawn.cell == cell:
 			return pawn
 	return null
+
+## Save/load: restore the selection by index into the pawns array.
+func select_pawn(index: int) -> void:
+	if index >= 0 and index < pawns.size():
+		_select(pawns[index])
 
 func _select_first_alive() -> void:
 	for pawn in pawns:

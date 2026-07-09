@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 GameClock="*res://scripts/game_clock.gd"
 WorldGrid="*res://scripts/world_grid.gd"
 JobManager="*res://scripts/job_manager.gd"
+SaveManager="*res://scripts/save_manager.gd"
 
 [display]
 

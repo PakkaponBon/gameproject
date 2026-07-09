@@ -1,6 +1,6 @@
 # ROADMAP.md — Ashfall: Skeleton → v1.0
 
-Current state: **v0.1-skeleton** (world, pathfinding, jobs, hauling, needs, multi-villager priorities).
+Current state: **v0.2-persistence** (skeleton + full save/load: SaveManager autoload, versioned JSON, autosave, pause menu).
 
 Rules: one phase at a time, in order. Each phase gates on its **Definition of Done (DoD)**. Git tag per phase. From Phase 1 on, every new system ships with save/load. Not required by a DoD → IDEAS.md.
 
@@ -9,9 +9,9 @@ Rules: one phase at a time, in order. Each phase gates on its **Definition of Do
 ---
 
 ## Phase 1 — Persistence (v0.2)
-- [ ] Save: grid, tiles, villagers (position, needs, skills, traits, inventory, priorities), items, jobs, stockpiles, buildings, clock/season
-- [ ] Load mid-job without desync; autosave each morning + manual save menu
-- [ ] Save versioning field
+- [x] Save: grid, tiles, villagers (position, needs, skills, traits, inventory, priorities), items, jobs, stockpiles, buildings, clock/season *(skills/traits/season don't exist yet — they extend the save when their phases ship)*
+- [x] Load mid-job without desync; autosave each morning *(interim: 3-min interval until Phase 3 calendar)* + manual save menu
+- [x] Save versioning field
 
 **DoD:** Save mid-haul → quit → load → resumes exactly.
 **Tag:** `v0.2-persistence`
@@ -29,7 +29,7 @@ Rules: one phase at a time, in order. Each phase gates on its **Definition of Do
 ---
 
 ## Phase 3 — Economy: Farming & Seasons (v0.4)
-- [ ] Day/night + calendar (4 seasons × N days), season in UI + visual tint
+- [ ] Day/night + calendar (4 seasons × N days), season in UI + visual tint *(also: switch autosave from the Phase 1 interim 3-min interval to each morning)*
 - [ ] Rest need, sleep in beds, exhaustion slows work
 - [ ] Field zoning, crop lifecycle (plant → grow → harvest), 3+ crops, winter kills crops
 - [ ] Eating, starvation → collapse → death if neglected

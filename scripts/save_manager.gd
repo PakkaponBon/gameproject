@@ -1,24 +1,25 @@
-class_name SaveManager
 extends Node
-## Serializes the whole session to versioned JSON and rebuilds it on load.
-## Loading reloads the main scene; `pending_load` (static, survives the
-## reload) carries the data into the fresh scene's _ready.
+## Autoload: serializes the whole session to versioned JSON and rebuilds it
+## on load. Loading reloads the main scene; `pending_load` survives the
+## reload because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
+## Interim cadence — switches to "each morning" when Phase 3 adds the calendar.
 const AUTOSAVE_EVERY_TICKS := 1800  # 3 in-game minutes at 10 ticks/sec
 
-static var pending_load: Dictionary = {}
-
+var pending_load: Dictionary = {}
+var main: Node2D = null  # current Main scene; re-registers itself each load
 var ticks_since_autosave := 0
-
-@onready var main: Node2D = get_parent()
 
 func _ready() -> void:
 	GameClock.ticked.connect(_on_tick)
 
 func _on_tick() -> void:
+	# main is briefly a freed instance while the scene reloads on load_game.
+	if not is_instance_valid(main):
+		return
 	ticks_since_autosave += 1
 	if ticks_since_autosave >= AUTOSAVE_EVERY_TICKS:
 		ticks_since_autosave = 0
@@ -68,7 +69,12 @@ func _collect() -> Dictionary:
 	var raiders: Array = []
 	for node in get_tree().get_nodes_in_group("raiders"):
 		var raider := node as Raider
-		raiders.append({"cell": _v(raider.cell), "hp": raider.hp})
+		raiders.append({
+			"cell": _v(raider.cell),
+			"hp": raider.hp,
+			"atk_cd": raider.attack_cooldown,
+			"move_cd": raider.move_cooldown,
+		})
 	var blueprints: Array = []
 	for cell: Vector2i in main.blueprints:
 		blueprints.append({"cell": _v(cell), "work": main.blueprints[cell].job.work_ticks})
@@ -86,6 +92,7 @@ func _collect() -> Dictionary:
 		"raiders": raiders,
 		"blueprints": blueprints,
 		"pawns": main.pawns.map(_pawn_data),
+		"selected": main.pawns.find(main.selected),
 		"camera": {"pos": [camera.position.x, camera.position.y], "zoom": camera.zoom.x},
 	}
 
@@ -101,12 +108,16 @@ func _pawn_data(pawn: Pawn) -> Dictionary:
 		"mood": pawn.needs.mood,
 		"on_break": pawn.needs.on_break,
 		"hp": pawn.combat.hp,
+		"atk_cd": pawn.combat.attack_cooldown,
+		"wander_cd": pawn.wander_cooldown,
 		"dead": pawn.dead,
 		"priorities": priorities,
 		"job_cell": _v(pawn.job.cell) if pawn.job else [],
 		"job_type": int(pawn.job.type) if pawn.job else -1,
 		"carrying": pawn.carrying != null,
 		"reserved_dest": _v(pawn.reserved_dest),
+		"food_cell": _v(pawn.food_target.cell) if pawn.food_target else [],
+		"eat_ticks": pawn.eat_ticks_left,
 	}
 
 # --- loading ---------------------------------------------------------------
@@ -135,11 +146,14 @@ func apply_pending_load() -> void:
 	for r: Dictionary in data.raiders:
 		var raider: Raider = main.spawn_entity(main.RAIDER_SCENE, _vec(r.cell))
 		raider.hp = float(r.hp)
+		raider.attack_cooldown = int(r.atk_cd)
+		raider.move_cooldown = int(r.move_cd)
 	for b: Dictionary in data.blueprints:
 		main.place_blueprint(_vec(b.cell))
 		main.blueprints[_vec(b.cell)].job.work_ticks = int(b.work)
 	for p: Dictionary in data.pawns:
 		_restore_pawn(p)
+	main.select_pawn(int(data.selected))
 	var camera: Camera2D = main.get_node("Camera")
 	camera.position = Vector2(float(data.camera.pos[0]), float(data.camera.pos[1]))
 	camera.zoom = Vector2.ONE * float(data.camera.zoom)
@@ -153,6 +167,8 @@ func _restore_pawn(p: Dictionary) -> void:
 	pawn.needs.mood = float(p.mood)
 	pawn.needs.on_break = bool(p.on_break)
 	pawn.combat.hp = float(p.hp)
+	pawn.combat.attack_cooldown = int(p.atk_cd)
+	pawn.wander_cooldown = int(p.wander_cd)
 	pawn.target_cell = _vec(p.target)
 	if bool(p.dead):
 		pawn.restore_dead()
@@ -168,6 +184,18 @@ func _restore_pawn(p: Dictionary) -> void:
 				job.reserved = true
 				pawn.job = job
 				break
+	var food_cell: Array = p.food_cell
+	if not food_cell.is_empty():
+		_relink_food(pawn, _vec(food_cell), int(p.eat_ticks))
+
+func _relink_food(pawn: Pawn, food_cell: Vector2i, eat_ticks: int) -> void:
+	for node in get_tree().get_nodes_in_group("food"):
+		var food := node as FoodItem
+		if food.cell == food_cell and not food.reserved:
+			food.reserved = true
+			pawn.food_target = food
+			pawn.eat_ticks_left = eat_ticks
+			return
 
 # --- helpers ---------------------------------------------------------------
 
