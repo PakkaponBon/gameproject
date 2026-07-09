@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://dqj6m2x9s4hb"]
+[gd_scene load_steps=10 format=3 uid="uid://dqj6m2x9s4hb"]
 
 [ext_resource type="Script" uid="uid://b7h4z9d6r1sc" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="TileSet" uid="uid://c5w1r8p3v0gd" path="res://assets/tileset.tres" id="2_tileset"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://bn3c8r5j1x7t" path="res://scripts/raid_director.gd" id="6_raid"]
 [ext_resource type="Script" uid="uid://dm6r3f8c2v9k" path="res://scripts/world_spawner.gd" id="7_spawner"]
 [ext_resource type="Script" uid="uid://cw8d3h6r2t5n" path="res://scripts/day_night_tint.gd" id="9_tint"]
+[ext_resource type="Script" uid="uid://bm7v4h1q8d2s" path="res://scripts/field_keeper.gd" id="10_field"]
 [ext_resource type="Script" uid="uid://dt3w7q1n8h5m" path="res://scripts/pause_menu.gd" id="8_pause"]
 
 [node name="Main" type="Node2D"]
@@ -31,6 +32,9 @@ script = ExtResource("7_spawner")
 
 [node name="RaidDirector" type="Node" parent="."]
 script = ExtResource("6_raid")
+
+[node name="FieldKeeper" type="Node" parent="."]
+script = ExtResource("10_field")
 
 [node name="Camera" type="Camera2D" parent="."]
 position = Vector2(512, 512)

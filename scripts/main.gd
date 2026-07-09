@@ -2,7 +2,7 @@ extends Node2D
 ## The World scene: composes the systems and handles player input.
 ## Spawning lives in WorldSpawner; saving in the SaveManager autoload.
 
-enum Mode { COMMAND, BUILD, STOCKPILE }
+enum Mode { COMMAND, BUILD, STOCKPILE, FIELD }
 
 const SOURCE_ID := 0
 const BLUEPRINT_SCENE := preload("res://scenes/blueprint.tscn")
@@ -10,6 +10,7 @@ const DECON_SCENE := preload("res://scenes/deconstruct_order.tscn")
 
 var mode := Mode.COMMAND
 var current_building := "wall"
+var current_crop := "potato"
 var pawns: Array[Pawn] = []
 var selected: Pawn = null
 var blueprints := {}  # cell -> Blueprint
@@ -19,6 +20,7 @@ var decon_orders := {}  # cell -> DeconstructOrder
 @onready var entities: Node2D = $Entities
 @onready var spawner: WorldSpawner = $WorldSpawner
 @onready var raid_director: RaidDirector = $RaidDirector
+@onready var field_keeper: FieldKeeper = $FieldKeeper
 @onready var pause_menu: PauseMenu = $PauseMenu
 @onready var mode_label: Label = $HUD/ModeLabel
 @onready var stats_label: Label = $HUD/StatsLabel
@@ -28,6 +30,7 @@ var decon_orders := {}  # cell -> DeconstructOrder
 
 func _ready() -> void:
 	raid_director.spawn_parent = entities
+	field_keeper.spawn_parent = entities
 	raid_director.raid_started.connect(func() -> void: event_label.text = "RAID — a raider approaches!")
 	raid_director.raid_ended.connect(func() -> void: event_label.text = "")
 	pause_menu.save_requested.connect(func() -> void: SaveManager.save_game(SaveManager.MANUAL_SAVE_PATH))
@@ -82,6 +85,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_set_mode(Mode.BUILD if mode != Mode.BUILD else Mode.COMMAND)
 	elif event.is_action_pressed("toggle_stockpile_mode"):
 		_set_mode(Mode.STOCKPILE if mode != Mode.STOCKPILE else Mode.COMMAND)
+	elif event.is_action_pressed("toggle_field_mode"):
+		_set_mode(Mode.FIELD if mode != Mode.FIELD else Mode.COMMAND)
+	elif event.is_action_pressed("cycle_farm_priority"):
+		_cycle_selected_priority(Job.Type.PLANT)
 	elif event.is_action_pressed("cycle_chop_priority"):
 		_cycle_selected_priority(Job.Type.CHOP)
 	elif event.is_action_pressed("cycle_haul_priority"):
@@ -92,6 +99,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		if mode == Mode.BUILD:
 			var order: Array = BuildingDefs.ORDER
 			current_building = order[(order.find(current_building) + 1) % order.size()]
+			_update_mode_label()
+		elif mode == Mode.FIELD:
+			var crops: Array = CropDefs.ORDER
+			current_crop = crops[(crops.find(current_crop) + 1) % crops.size()]
 			_update_mode_label()
 	elif event is InputEventMouseButton and event.pressed:
 		_apply_tool(event.button_index)
@@ -122,6 +133,13 @@ func _apply_tool(button_index: int, dragging := false) -> void:
 				WorldGrid.set_stockpile(cell, true)
 			elif button_index == MOUSE_BUTTON_RIGHT:
 				WorldGrid.set_stockpile(cell, false)
+		Mode.FIELD:
+			if button_index == MOUSE_BUTTON_LEFT:
+				WorldGrid.set_field(cell, current_crop)
+				field_keeper.ensure_plant_job(cell)
+			elif button_index == MOUSE_BUTTON_RIGHT:
+				field_keeper.remove_plant_job(cell)
+				WorldGrid.remove_field(cell)
 
 func _mouse_cell() -> Vector2i:
 	return WorldGrid.world_to_cell(get_global_mouse_position())
@@ -209,11 +227,12 @@ func _update_priority_label() -> void:
 	if selected == null:
 		priority_label.text = ""
 		return
-	priority_label.text = "%s — Chop: %s  Haul: %s  Build: %s   [1/2/3: cycle priority, 0 = off]" % [
+	priority_label.text = "%s — Chop: %s  Haul: %s  Build: %s  Farm: %s   [1-4: cycle priority, 0 = off]" % [
 		selected.name,
 		_priority_text(selected.work_priorities[Job.Type.CHOP]),
 		_priority_text(selected.work_priorities[Job.Type.HAUL]),
 		_priority_text(selected.work_priorities[Job.Type.BUILD]),
+		_priority_text(selected.work_priorities[Job.Type.PLANT]),
 	]
 
 func _priority_text(value: int) -> String:
@@ -229,3 +248,6 @@ func _update_mode_label() -> void:
 					% [def.name, int(def.cost.get("wood", 0))]
 		Mode.STOCKPILE:
 			mode_label.text = "STOCKPILE — LMB paint zone, RMB erase  [Z: back]"
+		Mode.FIELD:
+			mode_label.text = "FIELD: %s — LMB zone field, RMB clear  [Q: next crop] [F: back]" \
+					% CropDefs.get_def(current_crop).name

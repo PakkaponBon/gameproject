@@ -3,7 +3,7 @@ extends Node
 ## grid per agent kind: gates are open to villagers, solid to enemies),
 ## buildings, stockpile zones, and which cell each ground item occupies.
 
-signal stockpile_changed
+signal zones_changed  # stockpiles or fields repainted
 
 const MAP_SIZE := Vector2i(64, 64)
 const TILE_SIZE := 16
@@ -13,6 +13,7 @@ var astar := AStarGrid2D.new()        # villager pathing
 var astar_enemy := AStarGrid2D.new()  # enemy pathing (gates count as solid)
 var buildings := {}  # Vector2i -> building id (String)
 var stockpile_cells := {}  # Set of Vector2i (value unused)
+var fields := {}  # Vector2i -> crop id (String)
 var items := {}  # Vector2i -> Node2D occupying that cell
 var reserved_storage := {}  # Set of Vector2i claimed as a haul destination
 
@@ -27,11 +28,12 @@ func _ready() -> void:
 func reset() -> void:
 	buildings.clear()
 	stockpile_cells.clear()
+	fields.clear()
 	items.clear()
 	reserved_storage.clear()
 	astar.fill_solid_region(astar.region, false)
 	astar_enemy.fill_solid_region(astar_enemy.region, false)
-	stockpile_changed.emit()
+	zones_changed.emit()
 
 func in_bounds(cell: Vector2i) -> bool:
 	return astar.region.has_point(cell)
@@ -49,7 +51,7 @@ func register_building(cell: Vector2i, id: String) -> void:
 	astar_enemy.set_point_solid(cell, def.block_enemies)
 	if def.storage:
 		stockpile_cells[cell] = true
-		stockpile_changed.emit()
+		zones_changed.emit()
 
 func remove_building(cell: Vector2i) -> void:
 	if not buildings.has(cell):
@@ -60,16 +62,26 @@ func remove_building(cell: Vector2i) -> void:
 	astar_enemy.set_point_solid(cell, false)
 	if def.storage:
 		stockpile_cells.erase(cell)
-		stockpile_changed.emit()
+		zones_changed.emit()
 
 func set_stockpile(cell: Vector2i, on: bool) -> void:
-	if not in_bounds(cell) or (on and is_wall(cell)):
+	if not in_bounds(cell) or (on and (is_wall(cell) or fields.has(cell))):
 		return
 	if on:
 		stockpile_cells[cell] = true
 	else:
 		stockpile_cells.erase(cell)
-	stockpile_changed.emit()
+	zones_changed.emit()
+
+func set_field(cell: Vector2i, crop_id: String) -> void:
+	if not in_bounds(cell) or is_wall(cell) or buildings.has(cell) or stockpile_cells.has(cell):
+		return
+	fields[cell] = crop_id
+	zones_changed.emit()
+
+func remove_field(cell: Vector2i) -> void:
+	fields.erase(cell)
+	zones_changed.emit()
 
 func is_stockpile(cell: Vector2i) -> bool:
 	return stockpile_cells.has(cell)

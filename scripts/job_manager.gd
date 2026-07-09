@@ -29,12 +29,15 @@ func request_job(from_cell: Vector2i, priorities: Dictionary) -> Job:
 	for job in jobs:
 		if job.reserved:
 			continue
-		# SUPPLY is hauling work; DECONSTRUCT is construction work.
+		# SUPPLY is hauling work; DECONSTRUCT is construction work;
+		# HARVEST shares the farm (PLANT) priority.
 		var prio_type := job.type
 		if job.type == Job.Type.SUPPLY:
 			prio_type = Job.Type.HAUL
 		elif job.type == Job.Type.DECONSTRUCT:
 			prio_type = Job.Type.BUILD
+		elif job.type == Job.Type.HARVEST:
+			prio_type = Job.Type.PLANT
 		var prio: int = priorities.get(prio_type, 1)
 		if prio <= 0:
 			continue

@@ -20,7 +20,7 @@ var dead := false
 var wander_cooldown := 0
 
 ## 1 = preferred, higher = later, 0 = never does this job type.
-var work_priorities := {Job.Type.CHOP: 1, Job.Type.HAUL: 1, Job.Type.BUILD: 1}
+var work_priorities := {Job.Type.CHOP: 1, Job.Type.HAUL: 1, Job.Type.BUILD: 1, Job.Type.PLANT: 1}
 
 @onready var body: ColorRect = $Body
 @onready var selection_ring: ColorRect = $SelectionRing

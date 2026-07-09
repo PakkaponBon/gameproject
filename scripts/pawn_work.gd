@@ -65,8 +65,19 @@ func _do_job() -> void:
 			_ensure_fetch()  # e.g. right after load: job held, wood not yet chosen
 		Job.Type.DECONSTRUCT:
 			_do_deconstruct()
-		Job.Type.CHOP, Job.Type.BUILD:
-			if not is_instance_valid(job.target):  # e.g. blueprint canceled
+		Job.Type.PLANT:
+			# Field unzoned or winter arrived while we walked here.
+			if not WorldGrid.fields.has(job.cell) or (job.target as FieldKeeper).is_winter():
+				job = null
+				return
+			if _too_tired_this_tick():
+				return
+			job.work_ticks -= 1
+			if job.work_ticks <= 0:
+				JobManager.complete_job(job)
+				job = null
+		Job.Type.CHOP, Job.Type.BUILD, Job.Type.HARVEST:
+			if not is_instance_valid(job.target):  # e.g. blueprint canceled, crop frosted
 				job = null
 				return
 			if _too_tired_this_tick():

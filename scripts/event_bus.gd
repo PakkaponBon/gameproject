@@ -4,3 +4,4 @@ extends Node
 
 signal building_built(cell: Vector2i, building_id: String)
 signal building_deconstructed(cell: Vector2i)
+signal crop_harvested(cell: Vector2i)

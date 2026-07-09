@@ -3,7 +3,7 @@ extends Node
 ## on load. Loading reloads the main scene; `pending_load` survives the
 ## reload because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 6
+const SAVE_VERSION := 7
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 
@@ -79,6 +79,13 @@ func _collect() -> Dictionary:
 	var decon: Array = []
 	for cell: Vector2i in main.decon_orders:
 		decon.append({"cell": _v(cell), "work": main.decon_orders[cell].job.work_ticks})
+	var field_zones: Array = []
+	for cell: Vector2i in WorldGrid.fields:
+		field_zones.append({"cell": _v(cell), "crop": WorldGrid.fields[cell]})
+	var crops: Array = []
+	for node in get_tree().get_nodes_in_group("crops"):
+		var crop := node as Crop
+		crops.append({"cell": _v(crop.cell), "id": crop.crop_id, "growth": crop.growth_ticks})
 	var camera: Camera2D = main.get_node("Camera")
 	return {
 		"version": SAVE_VERSION,
@@ -93,6 +100,8 @@ func _collect() -> Dictionary:
 		"raiders": raiders,
 		"blueprints": blueprints,
 		"decon_orders": decon,
+		"fields": field_zones,
+		"crops": crops,
 		"pawns": main.pawns.map(_pawn_data),
 		"selected": main.pawns.find(main.selected),
 		"camera": {"pos": [camera.position.x, camera.position.y], "zoom": camera.zoom.x},
@@ -161,6 +170,12 @@ func apply_pending_load() -> void:
 	for d: Dictionary in data.decon_orders:
 		main.mark_deconstruct(_vec(d.cell))
 		main.decon_orders[_vec(d.cell)].restore(int(d.work))
+	for f: Dictionary in data.fields:
+		WorldGrid.set_field(_vec(f.cell), f.crop)
+	for c: Dictionary in data.crops:
+		var crop: Crop = main.field_keeper.spawn_crop(_vec(c.cell), c.id)
+		crop.restore(int(c.growth))
+	main.field_keeper.sync_all()  # plant jobs for empty, non-winter field cells
 	for p: Dictionary in data.pawns:
 		_restore_pawn(p)
 	main.select_pawn(int(data.selected))

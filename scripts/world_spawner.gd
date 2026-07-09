@@ -73,11 +73,11 @@ func create_pawn(cell: Vector2i, pawn_name: String, priorities: Dictionary) -> P
 	return pawn
 
 func _spawn_pawns(used: Dictionary) -> void:
-	# Showcase priorities: a lumberjack, a hauler, and a builder.
+	# Showcase priorities: a lumberjack, a hauler, and a builder-farmer.
 	var presets: Array[Dictionary] = [
-		{Job.Type.CHOP: 1, Job.Type.HAUL: 2, Job.Type.BUILD: 2},
-		{Job.Type.CHOP: 2, Job.Type.HAUL: 1, Job.Type.BUILD: 2},
-		{Job.Type.CHOP: 2, Job.Type.HAUL: 2, Job.Type.BUILD: 1},
+		{Job.Type.CHOP: 1, Job.Type.HAUL: 2, Job.Type.BUILD: 2, Job.Type.PLANT: 2},
+		{Job.Type.CHOP: 2, Job.Type.HAUL: 1, Job.Type.BUILD: 2, Job.Type.PLANT: 2},
+		{Job.Type.CHOP: 2, Job.Type.HAUL: 2, Job.Type.BUILD: 1, Job.Type.PLANT: 1},
 	]
 	var center := WorldGrid.MAP_SIZE / 2
 	var count := 0
