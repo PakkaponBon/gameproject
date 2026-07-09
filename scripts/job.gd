@@ -4,7 +4,7 @@ extends RefCounted
 
 signal completed
 
-enum Type { CHOP, HAUL, BUILD }
+enum Type { CHOP, HAUL, BUILD, SUPPLY }  # SUPPLY = haul material to a blueprint
 
 var type: Type = Type.CHOP
 var cell: Vector2i

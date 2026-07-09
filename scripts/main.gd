@@ -1,32 +1,20 @@
 extends Node2D
+## The World scene: composes the systems and handles player input.
+## Spawning lives in WorldSpawner; saving in the SaveManager autoload.
 
 enum Mode { COMMAND, BUILD, STOCKPILE }
 
 const SOURCE_ID := 0
-const GRASS := Vector2i(0, 0)
-const DIRT := Vector2i(1, 0)
-const WALL := Vector2i(2, 0)
-
-const TREE_SCENE := preload("res://scenes/tree_entity.tscn")
-const TREE_COUNT := 40
-const FOOD_SCENE := preload("res://scenes/food_item.tscn")
-const FOOD_COUNT := 15
-const WOOD_SCENE := preload("res://scenes/wood_item.tscn")
-const RAIDER_SCENE := preload("res://scenes/raider.tscn")
-const PAWN_SCENE := preload("res://scenes/pawn.tscn")
-const PAWN_COUNT := 3
-const PAWN_SPAWN_RADIUS := 5  # around map center
 const BLUEPRINT_SCENE := preload("res://scenes/blueprint.tscn")
 
 var mode := Mode.COMMAND
 var pawns: Array[Pawn] = []
 var selected: Pawn = null
 var blueprints := {}  # cell -> Blueprint
-var ground_seed := 0
 
-@onready var ground: TileMapLayer = $Ground
 @onready var walls: TileMapLayer = $Walls
 @onready var entities: Node2D = $Entities
+@onready var spawner: WorldSpawner = $WorldSpawner
 @onready var raid_director: RaidDirector = $RaidDirector
 @onready var pause_menu: PauseMenu = $PauseMenu
 @onready var mode_label: Label = $HUD/ModeLabel
@@ -38,13 +26,13 @@ func _ready() -> void:
 	raid_director.spawn_parent = entities
 	raid_director.raid_started.connect(func() -> void: event_label.text = "RAID — a raider approaches!")
 	raid_director.raid_ended.connect(func() -> void: event_label.text = "")
-	SaveManager.main = self
 	pause_menu.save_requested.connect(func() -> void: SaveManager.save_game(SaveManager.MANUAL_SAVE_PATH))
 	pause_menu.load_requested.connect(func(path: String) -> void: SaveManager.load_game(path))
+	spawner.pawn_created.connect(_on_pawn_created)
+	EventBus.building_built.connect(_on_building_built)
+	SaveManager.main = self
 	if SaveManager.pending_load.is_empty():
-		ground_seed = randi()
-		generate_ground()
-		_spawn_entities()
+		spawner.new_game()
 	else:
 		SaveManager.apply_pending_load()
 	if selected == null:
@@ -53,35 +41,9 @@ func _ready() -> void:
 		event_label.text = "RAID — a raider approaches!"
 	_update_mode_label()
 
-func generate_ground() -> void:
-	var noise := FastNoiseLite.new()
-	noise.seed = ground_seed
-	noise.frequency = 0.08
-	for x in WorldGrid.MAP_SIZE.x:
-		for y in WorldGrid.MAP_SIZE.y:
-			var tile := DIRT if noise.get_noise_2d(x, y) > 0.25 else GRASS
-			ground.set_cell(Vector2i(x, y), SOURCE_ID, tile)
-
-func spawn_entity(scene: PackedScene, cell: Vector2i) -> Node2D:
-	var node: Node2D = scene.instantiate()
-	node.position = WorldGrid.cell_to_world(cell)
-	entities.add_child(node)
-	return node
-
-func create_pawn(cell: Vector2i, pawn_name: String, priorities: Dictionary) -> Pawn:
-	var pawn: Pawn = PAWN_SCENE.instantiate()
-	pawn.name = pawn_name
-	pawn.position = WorldGrid.cell_to_world(cell)
-	pawn.work_priorities = priorities
-	add_child(pawn)
-	pawn.stats_changed.connect(_on_pawn_stats_changed.bind(pawn))
-	pawn.died.connect(_on_pawn_died)
-	pawns.append(pawn)
-	return pawn
-
 func place_wall(cell: Vector2i) -> void:
 	WorldGrid.set_wall(cell, true)
-	walls.set_cell(cell, SOURCE_ID, WALL)
+	walls.set_cell(cell, SOURCE_ID, BuildingDefs.get_def("wall").tile)
 
 func place_blueprint(cell: Vector2i) -> void:
 	if not WorldGrid.in_bounds(cell) or WorldGrid.is_wall(cell) \
@@ -89,45 +51,25 @@ func place_blueprint(cell: Vector2i) -> void:
 		return
 	var bp: Blueprint = BLUEPRINT_SCENE.instantiate()
 	bp.position = WorldGrid.cell_to_world(cell)
-	bp.built.connect(_on_blueprint_built)
 	entities.add_child(bp)
 	blueprints[cell] = bp
 
-func _spawn_entities() -> void:
-	var used := {}
-	_spawn_pawns(used)
-	_scatter(TREE_SCENE, TREE_COUNT, used)
-	_scatter(FOOD_SCENE, FOOD_COUNT, used)
+## Save/load: restore the selection by index into the pawns array.
+func select_pawn(index: int) -> void:
+	if index >= 0 and index < pawns.size():
+		_select(pawns[index])
 
-func _spawn_pawns(used: Dictionary) -> void:
-	# Showcase priorities: a lumberjack, a hauler, and a builder.
-	var presets: Array[Dictionary] = [
-		{Job.Type.CHOP: 1, Job.Type.HAUL: 2, Job.Type.BUILD: 2},
-		{Job.Type.CHOP: 2, Job.Type.HAUL: 1, Job.Type.BUILD: 2},
-		{Job.Type.CHOP: 2, Job.Type.HAUL: 2, Job.Type.BUILD: 1},
-	]
-	var center := WorldGrid.MAP_SIZE / 2
-	while pawns.size() < PAWN_COUNT:
-		var cell := center + Vector2i(
-			randi_range(-PAWN_SPAWN_RADIUS, PAWN_SPAWN_RADIUS),
-			randi_range(-PAWN_SPAWN_RADIUS, PAWN_SPAWN_RADIUS))
-		if used.has(cell):
-			continue
-		used[cell] = true
-		create_pawn(cell, "Pawn %d" % (pawns.size() + 1),
-				presets[pawns.size() % presets.size()].duplicate())
+func _on_pawn_created(pawn: Pawn) -> void:
+	pawn.stats_changed.connect(_on_pawn_stats_changed.bind(pawn))
+	pawn.died.connect(_on_pawn_died)
+	pawns.append(pawn)
 
-func _scatter(scene: PackedScene, count: int, used: Dictionary) -> void:
-	var placed := 0
-	var attempts := 0
-	while placed < count and attempts < 1000:
-		attempts += 1
-		var cell := Vector2i(randi() % WorldGrid.MAP_SIZE.x, randi() % WorldGrid.MAP_SIZE.y)
-		if used.has(cell):
-			continue
-		used[cell] = true
-		spawn_entity(scene, cell)
-		placed += 1
+func _on_building_built(cell: Vector2i, building_id: String) -> void:
+	blueprints.erase(cell)
+	var def: Dictionary = BuildingDefs.get_def(building_id)
+	if def.solid:
+		WorldGrid.set_wall(cell, true)
+	walls.set_cell(cell, SOURCE_ID, def.tile)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_build_mode"):
@@ -179,11 +121,6 @@ func _pawn_at(cell: Vector2i) -> Pawn:
 			return pawn
 	return null
 
-## Save/load: restore the selection by index into the pawns array.
-func select_pawn(index: int) -> void:
-	if index >= 0 and index < pawns.size():
-		_select(pawns[index])
-
 func _select_first_alive() -> void:
 	for pawn in pawns:
 		if not pawn.dead:
@@ -205,10 +142,6 @@ func _cycle_selected_priority(type: Job.Type) -> void:
 		return
 	selected.cycle_priority(type)
 	_update_priority_label()
-
-func _on_blueprint_built(cell: Vector2i) -> void:
-	blueprints.erase(cell)
-	place_wall(cell)
 
 func _erase_wall(cell: Vector2i) -> void:
 	if blueprints.has(cell):
@@ -258,6 +191,6 @@ func _update_mode_label() -> void:
 		Mode.COMMAND:
 			mode_label.text = "COMMAND — LMB select pawn / move selected  [B: build] [Z: stockpile] [Esc: menu]"
 		Mode.BUILD:
-			mode_label.text = "BUILD — LMB place wall blueprint, RMB erase/cancel  [B: back]"
+			mode_label.text = "BUILD — LMB place wall blueprint (needs 1 wood), RMB erase/cancel  [B: back]"
 		Mode.STOCKPILE:
 			mode_label.text = "STOCKPILE — LMB paint zone, RMB erase  [Z: back]"

@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://dqj6m2x9s4hb"]
+[gd_scene load_steps=8 format=3 uid="uid://dqj6m2x9s4hb"]
 
 [ext_resource type="Script" uid="uid://b7h4z9d6r1sc" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="TileSet" uid="uid://c5w1r8p3v0gd" path="res://assets/tileset.tres" id="2_tileset"]
 [ext_resource type="Script" uid="uid://ct8y5k1w3n2e" path="res://scripts/camera_controller.gd" id="3_camera"]
 [ext_resource type="Script" uid="uid://dw3q8n5c1t6m" path="res://scripts/zone_overlay.gd" id="5_zone"]
 [ext_resource type="Script" uid="uid://bn3c8r5j1x7t" path="res://scripts/raid_director.gd" id="6_raid"]
+[ext_resource type="Script" uid="uid://dm6r3f8c2v9k" path="res://scripts/world_spawner.gd" id="7_spawner"]
 [ext_resource type="Script" uid="uid://dt3w7q1n8h5m" path="res://scripts/pause_menu.gd" id="8_pause"]
 
 [node name="Main" type="Node2D"]
@@ -20,6 +21,9 @@ tile_set = ExtResource("2_tileset")
 script = ExtResource("5_zone")
 
 [node name="Entities" type="Node2D" parent="."]
+
+[node name="WorldSpawner" type="Node" parent="."]
+script = ExtResource("7_spawner")
 
 [node name="RaidDirector" type="Node" parent="."]
 script = ExtResource("6_raid")

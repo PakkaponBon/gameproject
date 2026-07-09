@@ -3,7 +3,7 @@ extends Node
 ## on load. Loading reloads the main scene; `pending_load` survives the
 ## reload because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 ## Interim cadence — switches to "each morning" when Phase 3 adds the calendar.
@@ -77,13 +77,18 @@ func _collect() -> Dictionary:
 		})
 	var blueprints: Array = []
 	for cell: Vector2i in main.blueprints:
-		blueprints.append({"cell": _v(cell), "work": main.blueprints[cell].job.work_ticks})
+		var bp: Blueprint = main.blueprints[cell]
+		blueprints.append({
+			"cell": _v(cell),
+			"delivered": bp.delivered,
+			"work": bp.build_job.work_ticks if bp.build_job else -1,
+		})
 	var camera: Camera2D = main.get_node("Camera")
 	return {
 		"version": SAVE_VERSION,
 		"clock_ticks": GameClock.ticks,
 		"raid_ticks": main.raid_director.ticks_until_raid,
-		"ground_seed": main.ground_seed,
+		"ground_seed": main.spawner.ground_seed,
 		"walls": walls,
 		"stockpiles": WorldGrid.stockpile_cells.keys().map(_v),
 		"trees": trees,
@@ -112,10 +117,10 @@ func _pawn_data(pawn: Pawn) -> Dictionary:
 		"wander_cd": pawn.wander_cooldown,
 		"dead": pawn.dead,
 		"priorities": priorities,
-		"job_cell": _v(pawn.job.cell) if pawn.job else [],
-		"job_type": int(pawn.job.type) if pawn.job else -1,
-		"carrying": pawn.carrying != null,
-		"reserved_dest": _v(pawn.reserved_dest),
+		"job_cell": _v(pawn.work.job.cell) if pawn.work.job else [],
+		"job_type": int(pawn.work.job.type) if pawn.work.job else -1,
+		"carrying": pawn.work.carrying != null,
+		"reserved_dest": _v(pawn.work.reserved_dest),
 		"food_cell": _v(pawn.food_target.cell) if pawn.food_target else [],
 		"eat_ticks": pawn.eat_ticks_left,
 	}
@@ -130,27 +135,29 @@ func apply_pending_load() -> void:
 	JobManager.reset()
 	GameClock.ticks = int(data.clock_ticks)
 	main.raid_director.ticks_until_raid = int(data.raid_ticks)
-	main.ground_seed = int(data.ground_seed)
-	main.generate_ground()
+	var spawner: WorldSpawner = main.spawner
+	spawner.ground_seed = int(data.ground_seed)
+	spawner.generate_ground()
 	for w: Array in data.walls:
 		main.place_wall(_vec(w))
 	for s: Array in data.stockpiles:
 		WorldGrid.set_stockpile(_vec(s), true)
 	for t: Dictionary in data.trees:
-		var tree: TreeEntity = main.spawn_entity(main.TREE_SCENE, _vec(t.cell))
+		var tree: TreeEntity = spawner.spawn_entity(spawner.TREE_SCENE, _vec(t.cell))
 		tree.job.work_ticks = int(t.work)
 	for w: Array in data.wood:
-		main.spawn_entity(main.WOOD_SCENE, _vec(w))
+		spawner.spawn_entity(spawner.WOOD_SCENE, _vec(w))
 	for f: Array in data.food:
-		main.spawn_entity(main.FOOD_SCENE, _vec(f))
+		spawner.spawn_entity(spawner.FOOD_SCENE, _vec(f))
 	for r: Dictionary in data.raiders:
-		var raider: Raider = main.spawn_entity(main.RAIDER_SCENE, _vec(r.cell))
+		var raider: Raider = spawner.spawn_entity(spawner.RAIDER_SCENE, _vec(r.cell))
 		raider.hp = float(r.hp)
 		raider.attack_cooldown = int(r.atk_cd)
 		raider.move_cooldown = int(r.move_cd)
 	for b: Dictionary in data.blueprints:
 		main.place_blueprint(_vec(b.cell))
-		main.blueprints[_vec(b.cell)].job.work_ticks = int(b.work)
+		var bp: Blueprint = main.blueprints[_vec(b.cell)]
+		bp.restore(int(b.delivered), int(b.work))
 	for p: Dictionary in data.pawns:
 		_restore_pawn(p)
 	main.select_pawn(int(data.selected))
@@ -162,7 +169,7 @@ func _restore_pawn(p: Dictionary) -> void:
 	var priorities := {}
 	for key: String in p.priorities:
 		priorities[int(key)] = int(p.priorities[key])
-	var pawn: Pawn = main.create_pawn(_vec(p.cell), p.name, priorities)
+	var pawn: Pawn = main.spawner.create_pawn(_vec(p.cell), p.name, priorities)
 	pawn.needs.hunger = float(p.hunger)
 	pawn.needs.mood = float(p.mood)
 	pawn.needs.on_break = bool(p.on_break)
@@ -173,16 +180,18 @@ func _restore_pawn(p: Dictionary) -> void:
 	if bool(p.dead):
 		pawn.restore_dead()
 		return
+	# Carrying and a job can coexist: a SUPPLY pawn carries wood toward
+	# its blueprint. Restore both independently.
 	if bool(p.carrying):
-		var wood: WoodItem = main.spawn_entity(main.WOOD_SCENE, pawn.cell)
-		pawn.restore_carry(wood, _vec(p.reserved_dest))
-	elif int(p.job_type) >= 0:
+		var wood: WoodItem = main.spawner.spawn_entity(main.spawner.WOOD_SCENE, pawn.cell)
+		pawn.work.restore_carry(wood, _vec(p.reserved_dest))
+	if int(p.job_type) >= 0:
 		# Entities re-registered their jobs above; re-claim ours by cell+type.
 		var job_cell := _vec(p.job_cell)
 		for job in JobManager.jobs:
 			if job.cell == job_cell and int(job.type) == int(p.job_type) and not job.reserved:
 				job.reserved = true
-				pawn.job = job
+				pawn.work.job = job
 				break
 	var food_cell: Array = p.food_cell
 	if not food_cell.is_empty():

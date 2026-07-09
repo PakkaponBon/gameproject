@@ -12,9 +12,6 @@ const DIRS: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector
 
 var cell: Vector2i
 var target_cell: Vector2i
-var job: Job = null
-var carrying: WoodItem = null
-var reserved_dest := WorldGrid.INVALID_CELL  # claimed stockpile cell while hauling
 var food_target: FoodItem = null
 var eat_ticks_left := 0
 var dead := false
@@ -27,6 +24,7 @@ var work_priorities := {Job.Type.CHOP: 1, Job.Type.HAUL: 1, Job.Type.BUILD: 1}
 @onready var selection_ring: ColorRect = $SelectionRing
 @onready var needs: PawnNeeds = $Needs
 @onready var combat: PawnCombat = $Combat
+@onready var work: PawnWork = $Work
 
 func _ready() -> void:
 	add_to_group("pawns")
@@ -47,35 +45,32 @@ func cycle_priority(type: Job.Type) -> void:
 	# 1 -> 2 -> 3 -> 0 (off) -> 1
 	work_priorities[type] = (int(work_priorities[type]) + 1) % 4
 
-## Player command: overrides current work. A held job returns to the pool;
-## carried wood is dropped on the spot.
+## Player command: overrides current work; carried wood drops on the spot.
 func move_to(destination: Vector2i) -> void:
 	if dead or not WorldGrid.in_bounds(destination):
 		return
-	_abort_work()
+	_abort_all()
 	target_cell = destination
 
 func take_damage(amount: float) -> void:
 	if not dead:
 		combat.take_damage(amount)
 
-## Save/load: re-attach carried wood and re-claim the storage destination.
-func restore_carry(wood: WoodItem, dest: Vector2i) -> void:
-	wood.pick_up(self)
-	carrying = wood
-	if dest != WorldGrid.INVALID_CELL:
-		WorldGrid.reserve_storage(dest)
-		reserved_dest = dest
-		target_cell = dest
-
 ## Save/load: restore a corpse without re-running death side effects.
 func restore_dead() -> void:
 	dead = true
 	_apply_death_visuals()
 
-func _on_damaged() -> void:
-	needs.attacked()
-	stats_changed.emit()
+## After finishing a build, don't stand inside the new wall.
+func step_off_wall(wall_cell: Vector2i) -> void:
+	if not WorldGrid.is_wall(cell):
+		return
+	for dir in DIRS:
+		var next := wall_cell + dir
+		if WorldGrid.in_bounds(next) and not WorldGrid.is_wall(next):
+			cell = next
+			target_cell = next
+			return
 
 func _on_tick() -> void:
 	if dead:
@@ -94,21 +89,17 @@ func _on_tick() -> void:
 		_eat()
 	elif needs.on_break:
 		_wander()
-	elif carrying:
-		_deliver()
-	elif job:
-		_work()
+	elif work.busy():
+		work.on_arrived()
 	else:
-		job = JobManager.request_job(cell, work_priorities)
-		if job:
-			target_cell = job.cell
+		work.request_next()
 
 func _seek_food_if_hungry() -> void:
 	if not needs.is_hungry() or food_target != null:
 		return
 	var food := _find_food()
 	if food:
-		_abort_work()
+		_abort_all()
 		food.reserved = true
 		food_target = food
 		eat_ticks_left = EAT_TICKS
@@ -122,7 +113,7 @@ func _step() -> void:
 		# Destination unreachable; give up. Job/food searches filter
 		# unreachable targets, so abandoned work won't be re-taken.
 		target_cell = cell
-		_abort_work()
+		_abort_all()
 		return
 	cell = path[1]
 
@@ -146,61 +137,6 @@ func _wander() -> void:
 		cell = next
 		target_cell = next
 
-func _work() -> void:
-	match job.type:
-		Job.Type.HAUL:
-			_start_carry(job.target as WoodItem)
-		Job.Type.CHOP, Job.Type.BUILD:
-			if not is_instance_valid(job.target):  # e.g. blueprint canceled
-				job = null
-				return
-			job.work_ticks -= 1
-			if job.work_ticks <= 0:
-				var work_cell := job.cell
-				var was_build := job.type == Job.Type.BUILD
-				JobManager.complete_job(job)
-				job = null
-				if was_build:
-					_step_off_wall(work_cell)
-
-func _start_carry(wood: WoodItem) -> void:
-	wood.pick_up(self)  # removes its haul job from the pool
-	job = null
-	var dest := WorldGrid.get_free_stockpile_cell(cell)
-	if dest == WorldGrid.INVALID_CELL:
-		wood.drop_at(cell)  # storage vanished since we took the job
-		return
-	WorldGrid.reserve_storage(dest)
-	reserved_dest = dest
-	carrying = wood
-	target_cell = dest
-
-func _deliver() -> void:
-	_release_dest()
-	if WorldGrid.is_cell_free_for_storage(cell):
-		carrying.drop_at(cell)
-		carrying = null
-		return
-	# Destination was filled or unzoned mid-carry; try another cell.
-	var dest := WorldGrid.get_free_stockpile_cell(cell)
-	if dest == WorldGrid.INVALID_CELL:
-		carrying.drop_at(cell)
-		carrying = null
-	else:
-		WorldGrid.reserve_storage(dest)
-		reserved_dest = dest
-		target_cell = dest
-
-func _step_off_wall(wall_cell: Vector2i) -> void:
-	if not WorldGrid.is_wall(cell):
-		return
-	for dir in DIRS:
-		var next := wall_cell + dir
-		if WorldGrid.in_bounds(next) and not WorldGrid.is_wall(next):
-			cell = next
-			target_cell = next
-			return
-
 func _find_food() -> FoodItem:
 	var best: FoodItem = null
 	var best_dist := INF
@@ -214,25 +150,18 @@ func _find_food() -> FoodItem:
 			best_dist = dist
 	return best
 
-func _release_dest() -> void:
-	if reserved_dest != WorldGrid.INVALID_CELL:
-		WorldGrid.release_storage(reserved_dest)
-		reserved_dest = WorldGrid.INVALID_CELL
+func _on_damaged() -> void:
+	needs.attacked()
+	stats_changed.emit()
 
 func _on_break_started() -> void:
 	# Mental break: drop colony work, but keep heading to food if hungry.
-	_abort_work(false)
+	work.abort()
 	if food_target == null:
 		target_cell = cell
 
-func _abort_work(clear_food := true) -> void:
-	if job:
-		JobManager.release_job(job)
-		job = null
-	if carrying:
-		carrying.drop_at(cell)
-		carrying = null
-	_release_dest()
+func _abort_all(clear_food := true) -> void:
+	work.abort()
 	if clear_food:
 		if is_instance_valid(food_target):
 			food_target.reserved = false
@@ -240,7 +169,7 @@ func _abort_work(clear_food := true) -> void:
 
 func _die() -> void:
 	dead = true
-	_abort_work()
+	_abort_all()
 	target_cell = cell
 	_apply_death_visuals()
 	stats_changed.emit()

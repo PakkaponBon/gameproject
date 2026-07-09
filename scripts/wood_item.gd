@@ -5,6 +5,7 @@ extends Node2D
 
 var cell: Vector2i
 var haul_job: Job = null
+var reserved := false  # claimed as blueprint material by a supplier pawn
 
 var _home: Node = null  # container to return to after being carried
 
@@ -24,6 +25,7 @@ func pick_up(carrier: Node2D) -> void:
 	position = Vector2(0, -10)
 
 func drop_at(drop_cell: Vector2i) -> void:
+	reserved = false
 	reparent(_home)
 	cell = drop_cell
 	position = WorldGrid.cell_to_world(cell)
