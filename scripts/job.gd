@@ -9,5 +9,5 @@ enum Type { CHOP, HAUL, BUILD, SUPPLY, DECONSTRUCT, PLANT, HARVEST }  # SUPPLY =
 var type: Type = Type.CHOP
 var cell: Vector2i
 var work_ticks: int
-var target: Node2D = null
+var target: Node = null  # entity or manager the job belongs to
 var reserved: bool = false

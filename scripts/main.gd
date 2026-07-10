@@ -22,22 +22,16 @@ var decon_orders := {}  # cell -> DeconstructOrder
 @onready var raid_director: RaidDirector = $RaidDirector
 @onready var field_keeper: FieldKeeper = $FieldKeeper
 @onready var pause_menu: PauseMenu = $PauseMenu
-@onready var mode_label: Label = $HUD/ModeLabel
-@onready var stats_label: Label = $HUD/StatsLabel
-@onready var priority_label: Label = $HUD/PriorityLabel
-@onready var event_label: Label = $HUD/EventLabel
-@onready var calendar_label: Label = $HUD/CalendarLabel
+@onready var hud: HudController = $HUD
 
 func _ready() -> void:
 	raid_director.spawn_parent = entities
 	field_keeper.spawn_parent = entities
-	raid_director.raid_started.connect(func() -> void: event_label.text = "RAID — a raider approaches!")
-	raid_director.raid_ended.connect(func() -> void: event_label.text = "")
+	raid_director.raid_started.connect(func() -> void: hud.set_event("RAID — a raider approaches!"))
+	raid_director.raid_ended.connect(func() -> void: hud.set_event(""))
 	pause_menu.save_requested.connect(func() -> void: SaveManager.save_game(SaveManager.MANUAL_SAVE_PATH))
 	pause_menu.load_requested.connect(func(path: String) -> void: SaveManager.load_game(path))
 	spawner.pawn_created.connect(_on_pawn_created)
-	GameClock.ticked.connect(func() -> void: calendar_label.text = GameClock.calendar_text())
-	calendar_label.text = GameClock.calendar_text()
 	EventBus.building_built.connect(_on_building_built)
 	EventBus.building_deconstructed.connect(_on_building_deconstructed)
 	SaveManager.main = self
@@ -48,7 +42,7 @@ func _ready() -> void:
 	if selected == null:
 		_select_first_alive()
 	if not get_tree().get_nodes_in_group("raiders").is_empty():
-		event_label.text = "RAID — a raider approaches!"
+		hud.set_event("RAID — a raider approaches!")
 	_update_mode_label()
 
 ## Instantly realize a finished (or loaded) building at a cell.
@@ -163,14 +157,14 @@ func _select(pawn: Pawn) -> void:
 		selected.set_selected(false)
 	selected = pawn
 	selected.set_selected(true)
-	_update_stats_label()
-	_update_priority_label()
+	hud.update_stats(selected)
+	hud.update_priorities(selected)
 
 func _cycle_selected_priority(type: Job.Type) -> void:
 	if selected == null or selected.dead:
 		return
 	selected.cycle_priority(type)
-	_update_priority_label()
+	hud.update_priorities(selected)
 
 ## RMB: cancel a blueprint, toggle a deconstruct order, or mark a building.
 ## While dragging, never un-mark — otherwise motion events would flicker it.
@@ -204,50 +198,19 @@ func _set_mode(new_mode: Mode) -> void:
 
 func _on_pawn_stats_changed(pawn: Pawn) -> void:
 	if pawn == selected:
-		_update_stats_label()
+		hud.update_stats(selected)
 
 func _on_pawn_died() -> void:
 	if pawns.all(func(p: Pawn) -> bool: return p.dead):
-		event_label.text = "ALL COLONISTS ARE DEAD"
-
-func _update_stats_label() -> void:
-	if selected.dead:
-		stats_label.text = "%s — DEAD" % selected.name
-		return
-	var suffix := ""
-	if selected.survival.sleeping:
-		suffix = "  (SLEEPING)"
-	elif selected.needs.on_break:
-		suffix = "  (MENTAL BREAK)"
-	stats_label.text = "%s — hunger %d  rest %d  mood %d  hp %d%s" % [
-		selected.name, roundi(selected.needs.hunger), roundi(selected.needs.rest),
-		roundi(selected.needs.mood), roundi(selected.combat.hp), suffix]
-
-func _update_priority_label() -> void:
-	if selected == null:
-		priority_label.text = ""
-		return
-	priority_label.text = "%s — Chop: %s  Haul: %s  Build: %s  Farm: %s   [1-4: cycle priority, 0 = off]" % [
-		selected.name,
-		_priority_text(selected.work_priorities[Job.Type.CHOP]),
-		_priority_text(selected.work_priorities[Job.Type.HAUL]),
-		_priority_text(selected.work_priorities[Job.Type.BUILD]),
-		_priority_text(selected.work_priorities[Job.Type.PLANT]),
-	]
-
-func _priority_text(value: int) -> String:
-	return "off" if value == 0 else str(value)
+		hud.set_event("ALL COLONISTS ARE DEAD")
 
 func _update_mode_label() -> void:
 	match mode:
 		Mode.COMMAND:
-			mode_label.text = "COMMAND — LMB select pawn / move selected  [B: build] [Z: stockpile] [Esc: menu]"
+			hud.show_command_mode()
 		Mode.BUILD:
-			var def: Dictionary = BuildingDefs.get_def(current_building)
-			mode_label.text = "BUILD: %s (%d wood) — LMB place, RMB remove/cancel  [Q: next building] [B: back]" \
-					% [def.name, int(def.cost.get("wood", 0))]
+			hud.show_build_mode(BuildingDefs.get_def(current_building))
 		Mode.STOCKPILE:
-			mode_label.text = "STOCKPILE — LMB paint zone, RMB erase  [Z: back]"
+			hud.show_stockpile_mode()
 		Mode.FIELD:
-			mode_label.text = "FIELD: %s — LMB zone field, RMB clear  [Q: next crop] [F: back]" \
-					% CropDefs.get_def(current_crop).name
+			hud.show_field_mode(CropDefs.get_def(current_crop))
