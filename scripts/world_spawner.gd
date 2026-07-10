@@ -18,6 +18,7 @@ const ORE_SCENE := preload("res://scenes/ore_node.tscn")
 const STONE_NODES := 12
 const IRON_NODES := 8
 const RAIDER_SCENE := preload("res://scenes/raider.tscn")
+const GRAVE_SCENE := preload("res://scenes/grave.tscn")
 const PAWN_SCENE := preload("res://scenes/pawn.tscn")
 const PAWN_COUNT := 3
 const PAWN_SPAWN_RADIUS := 5  # around map center

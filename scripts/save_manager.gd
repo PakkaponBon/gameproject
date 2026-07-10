@@ -3,7 +3,7 @@ extends Node
 ## on load. Loading reloads the main scene; `pending_load` survives the
 ## reload because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 9
+const SAVE_VERSION := 10
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 
@@ -62,6 +62,9 @@ func _collect() -> Dictionary:
 	var food: Array = []
 	for node in get_tree().get_nodes_in_group("food"):
 		food.append(_v((node as FoodItem).cell))
+	var graves: Array = []
+	for node in get_tree().get_nodes_in_group("graves"):
+		graves.append(_v((node as Grave).cell))
 	var raiders: Array = []
 	for node in get_tree().get_nodes_in_group("raiders"):
 		var raider := node as Raider
@@ -102,6 +105,7 @@ func _collect() -> Dictionary:
 		"items": loose_items,
 		"ore_nodes": ore_nodes,
 		"food": food,
+		"graves": graves,
 		"raiders": raiders,
 		"blueprints": blueprints,
 		"decon_orders": decon,
@@ -129,7 +133,6 @@ func _pawn_data(pawn: Pawn) -> Dictionary:
 		"hp": pawn.combat.hp,
 		"atk_cd": pawn.combat.attack_cooldown,
 		"wander_cd": pawn.wander_cooldown,
-		"dead": pawn.dead,
 		"collapsed": pawn.collapsed,
 		"carrying_food": pawn.work.carrying_food,
 		"carrying_id": pawn.work.carrying.resource_id if pawn.work.carrying else "",
@@ -168,6 +171,8 @@ func apply_pending_load() -> void:
 		ore.restore(int(o.work))
 	for f: Array in data.food:
 		spawner.spawn_entity(spawner.FOOD_SCENE, _vec(f))
+	for g: Array in data.graves:
+		spawner.spawn_entity(spawner.GRAVE_SCENE, _vec(g))
 	for r: Dictionary in data.raiders:
 		var raider: Raider = spawner.spawn_entity(spawner.RAIDER_SCENE, _vec(r.cell))
 		raider.hp = float(r.hp)
@@ -209,9 +214,6 @@ func _restore_pawn(p: Dictionary) -> void:
 	pawn.combat.attack_cooldown = int(p.atk_cd)
 	pawn.wander_cooldown = int(p.wander_cd)
 	pawn.target_cell = _vec(p.target)
-	if bool(p.dead):
-		pawn.restore_dead()
-		return
 	if bool(p.collapsed):
 		pawn.restore_collapse()  # re-registers its FEED job
 		return

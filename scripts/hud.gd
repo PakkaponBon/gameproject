@@ -16,6 +16,10 @@ func _ready() -> void:
 func set_event(text: String) -> void:
 	event_label.text = text
 
+func clear_selection() -> void:
+	stats_label.text = ""
+	priority_label.text = ""
+
 func show_command_mode() -> void:
 	mode_label.text = "COMMAND — LMB select pawn / move selected  [B: build] [Z: stockpile] [F: field] [Esc: menu]"
 
@@ -40,6 +44,8 @@ func update_stats(pawn: Pawn) -> void:
 		suffix = "  (SLEEPING)"
 	elif pawn.needs.on_break:
 		suffix = "  (MENTAL BREAK)"
+	elif pawn.combat.is_wounded():
+		suffix = "  (WOUNDED)"
 	stats_label.text = "%s — hunger %d  rest %d  mood %d  hp %d%s" % [
 		pawn.name, roundi(pawn.needs.hunger), roundi(pawn.needs.rest),
 		roundi(pawn.needs.mood), roundi(pawn.combat.hp), suffix]

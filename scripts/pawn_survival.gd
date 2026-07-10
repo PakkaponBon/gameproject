@@ -34,7 +34,10 @@ func seek_food() -> void:
 	pawn.target_cell = food.cell
 
 func seek_bed() -> void:
-	if not pawn.needs.wants_sleep() or bed_cell != WorldGrid.INVALID_CELL or food_target:
+	if bed_cell != WorldGrid.INVALID_CELL or food_target:
+		return
+	# Sleep for rest — or for bed rest when badly hurt.
+	if not (pawn.needs.wants_sleep() or pawn.combat.is_wounded()):
 		return
 	var bed := _find_free_bed()
 	if bed != WorldGrid.INVALID_CELL:

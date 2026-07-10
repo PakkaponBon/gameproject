@@ -230,6 +230,8 @@ func _apply_work() -> void:
 	var speed := pawn.needs.mood_work_factor()
 	if pawn.needs.is_exhausted():
 		speed *= 0.5
+	if pawn.combat.is_wounded():
+		speed *= 0.7
 	work_progress += speed
 	while work_progress >= 1.0:
 		work_progress -= 1.0

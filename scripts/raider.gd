@@ -7,12 +7,13 @@ signal gone  # died or left; main uses this to clear the event banner
 
 const LERP_WEIGHT := 10.0
 const HP_MAX := 50.0
-const ATTACK_DAMAGE := 8.0
 const ATTACK_COOLDOWN_TICKS := 10
 const MOVE_EVERY_TICKS := 2  # half pawn speed so pawns can disengage
 
 var cell: Vector2i
 var hp := HP_MAX
+var attack_damage := 8.0
+var armor := 0.0
 var attack_cooldown := 0
 var move_cooldown := 0
 
@@ -23,7 +24,7 @@ func _ready() -> void:
 	GameClock.ticked.connect(_on_tick)
 
 func take_damage(amount: float) -> void:
-	hp -= amount
+	hp -= maxf(amount - armor, 1.0)
 	if hp <= 0.0:
 		gone.emit()
 		queue_free()
@@ -53,7 +54,7 @@ func _attack(pawn: Pawn) -> void:
 	if attack_cooldown > 0:
 		return
 	attack_cooldown = ATTACK_COOLDOWN_TICKS
-	pawn.take_damage(ATTACK_DAMAGE)
+	pawn.take_damage(attack_damage)
 
 func _nearest_living_pawn() -> Pawn:
 	var best: Pawn = null

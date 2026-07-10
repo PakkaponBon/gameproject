@@ -26,6 +26,7 @@ const MOOD_RECOVERY_PER_TICK := 0.03
 const MOOD_HUNGRY_DRAIN_PER_TICK := 0.08
 const MOOD_EXHAUSTED_DRAIN_PER_TICK := 0.05
 const MOOD_HIT_WHEN_ATTACKED := 10.0
+const MOOD_HIT_DEATH := 20.0  # a fellow villager died
 const BREAK_AT := 20.0
 const BREAK_OVER_AT := 50.0
 ## Below this mood, work slows linearly down to MOOD_MIN_WORK_FACTOR at 0.
@@ -88,4 +89,8 @@ func eat() -> void:
 
 func attacked() -> void:
 	mood = maxf(mood - MOOD_HIT_WHEN_ATTACKED, 0.0)
+	changed.emit()
+
+func mourn() -> void:
+	mood = maxf(mood - MOOD_HIT_DEATH, 0.0)
 	changed.emit()

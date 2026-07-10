@@ -67,7 +67,7 @@ func select_pawn(index: int) -> void:
 
 func _on_pawn_created(pawn: Pawn) -> void:
 	pawn.stats_changed.connect(_on_pawn_stats_changed.bind(pawn))
-	pawn.died.connect(_on_pawn_died)
+	pawn.died.connect(_on_pawn_died.bind(pawn))
 	pawns.append(pawn)
 
 func _on_building_built(cell: Vector2i, building_id: String) -> void:
@@ -200,9 +200,17 @@ func _on_pawn_stats_changed(pawn: Pawn) -> void:
 	if pawn == selected:
 		hud.update_stats(selected)
 
-func _on_pawn_died() -> void:
-	if pawns.all(func(p: Pawn) -> bool: return p.dead):
+func _on_pawn_died(pawn: Pawn) -> void:
+	spawner.spawn_entity(spawner.GRAVE_SCENE, pawn.cell)
+	pawns.erase(pawn)
+	for other in pawns:
+		other.needs.mourn()  # loss is real: colony-wide mood hit
+	if pawns.is_empty():
+		selected = null
+		hud.clear_selection()
 		hud.set_event("ALL COLONISTS ARE DEAD")
+	elif selected == pawn:
+		_select_first_alive()
 
 func _update_mode_label() -> void:
 	match mode:

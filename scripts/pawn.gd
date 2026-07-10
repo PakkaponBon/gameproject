@@ -77,11 +77,6 @@ func be_fed() -> void:
 	body.color = BODY_COLOR
 	stats_changed.emit()
 
-## Save/load: restore a corpse without re-running death side effects.
-func restore_dead() -> void:
-	dead = true
-	_apply_death_visuals()
-
 ## Save/load: restore a collapsed pawn (re-registers its FEED job).
 func restore_collapse() -> void:
 	collapsed = true
@@ -114,7 +109,8 @@ func _on_tick() -> void:
 		survival.wake()
 		return
 	if survival.sleeping:
-		if needs.is_rested() or needs.is_hungry():
+		combat.heal(PawnCombat.HEAL_IN_BED if survival.is_in_bed() else PawnCombat.HEAL_ON_GROUND)
+		if needs.is_hungry() or (needs.is_rested() and combat.fully_recovered()):
 			survival.wake()
 		return
 	survival.seek_food()
@@ -196,6 +192,8 @@ func _apply_collapse_visuals() -> void:
 	body.pivot_offset = body.size / 2.0
 	body.rotation_degrees = 90.0
 
+## Death: release everything, tell the colony, and fade — Main replaces
+## us with a grave (no lingering corpse; tone rule).
 func _die() -> void:
 	dead = true
 	collapsed = false
@@ -203,15 +201,8 @@ func _die() -> void:
 		JobManager.remove_job(feed_job)
 		feed_job = null
 	_abort_all()
-	target_cell = cell
-	_apply_death_visuals()
-	stats_changed.emit()
 	died.emit()
-
-func _apply_death_visuals() -> void:
-	body.color = Color(0.35, 0.35, 0.38)
-	body.pivot_offset = body.size / 2.0
-	body.rotation_degrees = 90.0
+	queue_free()
 
 func _process(delta: float) -> void:
 	# Rendering only: ease the visual position toward the logical grid cell.
