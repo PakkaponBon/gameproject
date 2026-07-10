@@ -5,7 +5,7 @@ extends Node2D
 ## (Named TreeEntity because `Tree` is a built-in Godot Control class.)
 
 const CHOP_TICKS := 30  # 3 seconds at 10 ticks/sec
-const WOOD_SCENE := preload("res://scenes/wood_item.tscn")
+const RESOURCE_SCENE := preload("res://scenes/resource_item.tscn")
 
 var cell: Vector2i
 var job: Job
@@ -23,7 +23,8 @@ func _ready() -> void:
 	JobManager.add_job(job)
 
 func _on_chopped() -> void:
-	var wood: Node2D = WOOD_SCENE.instantiate()
+	var wood: ResourceItem = RESOURCE_SCENE.instantiate()
+	wood.resource_id = "wood"
 	wood.position = WorldGrid.cell_to_world(cell)
 	get_parent().add_child(wood)
 	queue_free()

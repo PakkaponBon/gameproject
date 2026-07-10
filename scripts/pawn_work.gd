@@ -6,8 +6,8 @@ extends Node
 const FOOD_SCENE := preload("res://scenes/food_item.tscn")
 
 var job: Job = null
-var carrying: WoodItem = null
-var fetching: WoodItem = null  # supply leg 1: walking to pick this up
+var carrying: ResourceItem = null
+var fetching: ResourceItem = null  # supply leg 1: walking to pick this up
 var fetching_food: FoodItem = null  # feed leg 1
 var carrying_food := false  # feed leg 2: meal in hand
 var reserved_dest := WorldGrid.INVALID_CELL  # claimed stockpile cell while hauling
@@ -27,8 +27,8 @@ func request_next() -> void:
 		_ensure_fetch()
 	elif job.type == Job.Type.FEED:
 		_ensure_food_fetch()
-	elif job.type == Job.Type.DECONSTRUCT:
-		_approach_deconstruct()
+	elif job.type == Job.Type.DECONSTRUCT or job.type == Job.Type.MINE:
+		_approach_work_spot()
 	else:
 		pawn.target_cell = job.cell
 
@@ -65,10 +65,10 @@ func abort() -> void:
 		carrying = null
 	_release_dest()
 
-## Save/load: re-attach carried wood and re-claim the storage destination.
-func restore_carry(wood: WoodItem, dest: Vector2i) -> void:
-	wood.pick_up(pawn)
-	carrying = wood
+## Save/load: re-attach a carried item and re-claim the storage destination.
+func restore_carry(item: ResourceItem, dest: Vector2i) -> void:
+	item.pick_up(pawn)
+	carrying = item
 	if dest != WorldGrid.INVALID_CELL:
 		WorldGrid.reserve_storage(dest)
 		reserved_dest = dest
@@ -77,13 +77,13 @@ func restore_carry(wood: WoodItem, dest: Vector2i) -> void:
 func _do_job() -> void:
 	match job.type:
 		Job.Type.HAUL:
-			_start_storage_carry(job.target as WoodItem)
+			_start_storage_carry(job.target as ResourceItem)
 		Job.Type.SUPPLY:
 			_ensure_fetch()  # e.g. right after load: job held, wood not yet chosen
 		Job.Type.FEED:
 			_ensure_food_fetch()
-		Job.Type.DECONSTRUCT:
-			_do_deconstruct()
+		Job.Type.DECONSTRUCT, Job.Type.MINE:
+			_do_adjacent_work()
 		Job.Type.PLANT:
 			# Field unzoned or winter arrived while we walked here.
 			if not WorldGrid.fields.has(job.cell) or (job.target as FieldKeeper).is_winter():
@@ -106,14 +106,15 @@ func _do_job() -> void:
 				if was_build:
 					pawn.step_off_wall(work_cell)
 
-func _approach_deconstruct() -> void:
+func _approach_work_spot() -> void:
 	var spot := JobManager.nearest_work_spot(pawn.cell, job.cell)
 	if spot == WorldGrid.INVALID_CELL:
 		abort()
 		return
 	pawn.target_cell = spot
 
-func _do_deconstruct() -> void:
+## Deconstruction and mining: solid targets worked from beside.
+func _do_adjacent_work() -> void:
 	if not is_instance_valid(job.target):  # order canceled
 		job = null
 		return
@@ -121,7 +122,7 @@ func _do_deconstruct() -> void:
 	# (e.g. after a load, or if a wall rerouted us).
 	var d := (job.cell - pawn.cell).abs()
 	if d.x + d.y > 1:
-		_approach_deconstruct()
+		_approach_work_spot()
 		return
 	_apply_work()
 	if job.work_ticks <= 0:
@@ -129,13 +130,13 @@ func _do_deconstruct() -> void:
 		job = null
 
 func _ensure_fetch() -> void:
-	var wood := JobManager.find_fetchable_wood(pawn.cell)
-	if wood == null:
+	var item := JobManager.find_fetchable_resource(pawn.cell, "wood")
+	if item == null:
 		abort()  # wood ran out since we took the job; pool filters re-grabs
 		return
-	wood.reserved = true
-	fetching = wood
-	pawn.target_cell = wood.cell
+	item.reserved = true
+	fetching = item
+	pawn.target_cell = item.cell
 
 func _pick_up_fetched() -> void:
 	if job == null or not is_instance_valid(fetching):
@@ -195,16 +196,16 @@ func _deliver_to_site() -> void:
 	JobManager.complete_job(job)  # blueprint counts the delivery
 	job = null
 
-func _start_storage_carry(wood: WoodItem) -> void:
-	wood.pick_up(pawn)  # removes its haul job from the pool
+func _start_storage_carry(item: ResourceItem) -> void:
+	item.pick_up(pawn)  # removes its haul job from the pool
 	job = null
 	var dest := WorldGrid.get_free_stockpile_cell(pawn.cell)
 	if dest == WorldGrid.INVALID_CELL:
-		wood.drop_at(pawn.cell)  # storage vanished since we took the job
+		item.drop_at(pawn.cell)  # storage vanished since we took the job
 		return
 	WorldGrid.reserve_storage(dest)
 	reserved_dest = dest
-	carrying = wood
+	carrying = item
 	pawn.target_cell = dest
 
 func _deliver_to_stockpile() -> void:

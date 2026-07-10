@@ -190,7 +190,7 @@ func _on_building_deconstructed(cell: Vector2i) -> void:
 	var refund := int(BuildingDefs.get_def(WorldGrid.buildings[cell]).refund)
 	WorldGrid.remove_building(cell)
 	walls.erase_cell(cell)
-	spawner.drop_wood(cell, refund)
+	spawner.drop_resource(cell, "wood", refund)
 
 func _set_mode(new_mode: Mode) -> void:
 	mode = new_mode

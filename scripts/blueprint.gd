@@ -4,7 +4,7 @@ extends Node2D
 ## once fully supplied it registers the timed BUILD job. Fires
 ## EventBus.building_built when finished. Walkable until built.
 
-const WOOD_SCENE := preload("res://scenes/wood_item.tscn")
+const RESOURCE_SCENE := preload("res://scenes/resource_item.tscn")
 
 var building_id := "wall"
 var cell: Vector2i
@@ -34,7 +34,8 @@ func cancel() -> void:
 		JobManager.remove_job(build_job)
 	# Refund what was already delivered as loose wood on the site.
 	for i in delivered:
-		var wood: Node2D = WOOD_SCENE.instantiate()
+		var wood: ResourceItem = RESOURCE_SCENE.instantiate()
+		wood.resource_id = "wood"
 		wood.position = WorldGrid.cell_to_world(cell)
 		get_parent().add_child(wood)
 	queue_free()

@@ -64,6 +64,12 @@ func remove_building(cell: Vector2i) -> void:
 		stockpile_cells.erase(cell)
 		zones_changed.emit()
 
+## Solid to everyone (ore nodes etc.) — not a building, no registry entry.
+func set_obstacle(cell: Vector2i, solid: bool) -> void:
+	if in_bounds(cell):
+		astar.set_point_solid(cell, solid)
+		astar_enemy.set_point_solid(cell, solid)
+
 func set_stockpile(cell: Vector2i, on: bool) -> void:
 	if not in_bounds(cell) or (on and (is_wall(cell) or fields.has(cell))):
 		return

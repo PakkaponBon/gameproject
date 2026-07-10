@@ -30,7 +30,7 @@ func request_job(from_cell: Vector2i, priorities: Dictionary) -> Job:
 		if job.reserved:
 			continue
 		# SUPPLY is hauling work; DECONSTRUCT is construction work;
-		# HARVEST shares the farm (PLANT) priority.
+		# HARVEST shares the farm (PLANT) priority; MINE is gathering (CHOP).
 		var prio_type := job.type
 		if job.type == Job.Type.SUPPLY:
 			prio_type = Job.Type.HAUL
@@ -40,28 +40,31 @@ func request_job(from_cell: Vector2i, priorities: Dictionary) -> Job:
 			prio_type = Job.Type.PLANT
 		elif job.type == Job.Type.FEED:
 			prio_type = Job.Type.HAUL
+		elif job.type == Job.Type.MINE:
+			prio_type = Job.Type.CHOP
 		var prio: int = priorities.get(prio_type, 1)
 		if prio <= 0:
 			continue
 		if job.type == Job.Type.HAUL:
 			if not storage_available:
 				continue
-			if (job.target as WoodItem).reserved:
+			if (job.target as ResourceItem).reserved:
 				continue  # claimed as blueprint material
 		if job.type == Job.Type.SUPPLY:
 			# Supply jobs are only valid while fetchable wood exists.
 			if not supply_checked:
 				supply_checked = true
-				supply_ok = find_fetchable_wood(from_cell) != null
+				supply_ok = find_fetchable_resource(from_cell, "wood") != null
 			if not supply_ok:
 				continue
 		if job.type == Job.Type.FEED and find_fetchable_food(from_cell) == null:
 			continue
 		if best and (prio > best_prio or (prio == best_prio and float((job.cell - from_cell).length_squared()) >= best_dist)):
 			continue
-		# Solid targets (e.g. deconstructing a wall) are worked from beside.
+		# Solid targets (walls being torn down, ore) are worked from beside.
+		var adjacent_work := job.type == Job.Type.DECONSTRUCT or job.type == Job.Type.MINE
 		var reachable := nearest_work_spot(from_cell, job.cell) != WorldGrid.INVALID_CELL \
-				if job.type == Job.Type.DECONSTRUCT else _is_reachable(from_cell, job.cell)
+				if adjacent_work else _is_reachable(from_cell, job.cell)
 		if reachable:
 			best = job
 			best_prio = prio
@@ -70,20 +73,20 @@ func request_job(from_cell: Vector2i, priorities: Dictionary) -> Job:
 		best.reserved = true
 	return best
 
-## Nearest reachable wood a supplier may take: not reserved as material,
-## not being carried, and not claimed by a hauler.
-func find_fetchable_wood(from_cell: Vector2i) -> WoodItem:
-	var best: WoodItem = null
+## Nearest reachable resource of a kind a fetcher may take: not reserved
+## as material, not being carried, and not claimed by a hauler.
+func find_fetchable_resource(from_cell: Vector2i, resource_id: String) -> ResourceItem:
+	var best: ResourceItem = null
 	var best_dist := INF
-	for node in get_tree().get_nodes_in_group("wood"):
-		var wood := node as WoodItem
-		if wood.reserved or wood.get_parent() is Pawn:
+	for node in get_tree().get_nodes_in_group("resources"):
+		var item := node as ResourceItem
+		if item.resource_id != resource_id or item.reserved or item.get_parent() is Pawn:
 			continue
-		if wood.haul_job and wood.haul_job.reserved:
+		if item.haul_job and item.haul_job.reserved:
 			continue
-		var dist := float((wood.cell - from_cell).length_squared())
-		if dist < best_dist and _is_reachable(from_cell, wood.cell):
-			best = wood
+		var dist := float((item.cell - from_cell).length_squared())
+		if dist < best_dist and _is_reachable(from_cell, item.cell):
+			best = item
 			best_dist = dist
 	return best
 

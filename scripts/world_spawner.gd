@@ -13,7 +13,10 @@ const TREE_SCENE := preload("res://scenes/tree_entity.tscn")
 const TREE_COUNT := 40
 const FOOD_SCENE := preload("res://scenes/food_item.tscn")
 const FOOD_COUNT := 15
-const WOOD_SCENE := preload("res://scenes/wood_item.tscn")
+const RESOURCE_SCENE := preload("res://scenes/resource_item.tscn")
+const ORE_SCENE := preload("res://scenes/ore_node.tscn")
+const STONE_NODES := 12
+const IRON_NODES := 8
 const RAIDER_SCENE := preload("res://scenes/raider.tscn")
 const PAWN_SCENE := preload("res://scenes/pawn.tscn")
 const PAWN_COUNT := 3
@@ -32,6 +35,8 @@ func new_game() -> void:
 	_spawn_pawns(used)
 	_scatter(TREE_SCENE, TREE_COUNT, used)
 	_scatter(FOOD_SCENE, FOOD_COUNT, used)
+	_scatter_ore("stone", STONE_NODES, used)
+	_scatter_ore("iron_ore", IRON_NODES, used)
 
 func generate_ground() -> void:
 	var noise := FastNoiseLite.new()
@@ -48,8 +53,22 @@ func spawn_entity(scene: PackedScene, cell: Vector2i) -> Node2D:
 	entities.add_child(node)
 	return node
 
-## Drop loose wood on a cell, spilling onto free neighbors (refunds etc.).
-func drop_wood(cell: Vector2i, count: int) -> void:
+func spawn_resource(cell: Vector2i, id: String) -> ResourceItem:
+	var item: ResourceItem = RESOURCE_SCENE.instantiate()
+	item.resource_id = id
+	item.position = WorldGrid.cell_to_world(cell)
+	entities.add_child(item)
+	return item
+
+func spawn_ore(cell: Vector2i, id: String) -> OreNode:
+	var node: OreNode = ORE_SCENE.instantiate()
+	node.resource_id = id
+	node.position = WorldGrid.cell_to_world(cell)
+	entities.add_child(node)
+	return node
+
+## Drop loose resources on a cell, spilling onto free neighbors (refunds etc.).
+func drop_resource(cell: Vector2i, id: String, count: int) -> void:
 	var spots: Array[Vector2i] = [cell, cell + Vector2i.UP, cell + Vector2i.DOWN,
 			cell + Vector2i.LEFT, cell + Vector2i.RIGHT]
 	var spawned := 0
@@ -57,11 +76,23 @@ func drop_wood(cell: Vector2i, count: int) -> void:
 		if spawned >= count:
 			return
 		if WorldGrid.in_bounds(spot) and not WorldGrid.is_wall(spot) and not WorldGrid.items.has(spot):
-			spawn_entity(WOOD_SCENE, spot)
+			spawn_resource(spot, id)
 			spawned += 1
 	while spawned < count:  # fallback: stack on the original cell
-		spawn_entity(WOOD_SCENE, cell)
+		spawn_resource(cell, id)
 		spawned += 1
+
+func _scatter_ore(id: String, count: int, used: Dictionary) -> void:
+	var placed := 0
+	var attempts := 0
+	while placed < count and attempts < 1000:
+		attempts += 1
+		var cell := Vector2i(randi() % WorldGrid.MAP_SIZE.x, randi() % WorldGrid.MAP_SIZE.y)
+		if used.has(cell):
+			continue
+		used[cell] = true
+		spawn_ore(cell, id)
+		placed += 1
 
 func create_pawn(cell: Vector2i, pawn_name: String, priorities: Dictionary) -> Pawn:
 	var pawn: Pawn = PAWN_SCENE.instantiate()

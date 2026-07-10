@@ -1,16 +1,21 @@
-class_name WoodItem
+class_name ResourceItem
 extends Node2D
-## A loose resource on the ground. Registers a haul job for itself whenever
-## it sits outside a stockpile; stored wood (on a free stockpile cell) is inert.
+## A loose resource on the ground (wood, stone, ore — data-driven via
+## ResourceDefs). Registers a haul job for itself whenever it sits outside
+## a stockpile; stored items are inert.
 
+var resource_id := "wood"  # set before add_child
 var cell: Vector2i
 var haul_job: Job = null
 var reserved := false  # claimed as blueprint material by a supplier pawn
 
 var _home: Node = null  # container to return to after being carried
 
+@onready var body: ColorRect = $Body
+
 func _ready() -> void:
-	add_to_group("wood")
+	add_to_group("resources")
+	body.color = ResourceDefs.get_def(resource_id).color
 	_home = get_parent()
 	cell = WorldGrid.world_to_cell(position)
 	position = WorldGrid.cell_to_world(cell)

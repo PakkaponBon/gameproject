@@ -3,7 +3,7 @@ extends Node
 ## on load. Loading reloads the main scene; `pending_load` survives the
 ## reload because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 8
+const SAVE_VERSION := 9
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 
@@ -49,12 +49,16 @@ func _collect() -> Dictionary:
 	for node in get_tree().get_nodes_in_group("trees"):
 		var tree := node as TreeEntity
 		trees.append({"cell": _v(tree.cell), "work": tree.job.work_ticks})
-	var wood: Array = []
-	for node in get_tree().get_nodes_in_group("wood"):
-		var item := node as WoodItem
+	var loose_items: Array = []
+	for node in get_tree().get_nodes_in_group("resources"):
+		var item := node as ResourceItem
 		if item.get_parent() is Pawn:
-			continue  # carried wood is saved with its pawn
-		wood.append(_v(item.cell))
+			continue  # carried items are saved with their pawn
+		loose_items.append({"cell": _v(item.cell), "id": item.resource_id})
+	var ore_nodes: Array = []
+	for node in get_tree().get_nodes_in_group("ore_nodes"):
+		var ore := node as OreNode
+		ore_nodes.append({"cell": _v(ore.cell), "id": ore.resource_id, "work": ore.job.work_ticks})
 	var food: Array = []
 	for node in get_tree().get_nodes_in_group("food"):
 		food.append(_v((node as FoodItem).cell))
@@ -95,7 +99,8 @@ func _collect() -> Dictionary:
 		"buildings": built,
 		"stockpiles": WorldGrid.stockpile_cells.keys().map(_v),
 		"trees": trees,
-		"wood": wood,
+		"items": loose_items,
+		"ore_nodes": ore_nodes,
 		"food": food,
 		"raiders": raiders,
 		"blueprints": blueprints,
@@ -127,10 +132,10 @@ func _pawn_data(pawn: Pawn) -> Dictionary:
 		"dead": pawn.dead,
 		"collapsed": pawn.collapsed,
 		"carrying_food": pawn.work.carrying_food,
+		"carrying_id": pawn.work.carrying.resource_id if pawn.work.carrying else "",
 		"priorities": priorities,
 		"job_cell": _v(pawn.work.job.cell) if pawn.work.job else [],
 		"job_type": int(pawn.work.job.type) if pawn.work.job else -1,
-		"carrying": pawn.work.carrying != null,
 		"reserved_dest": _v(pawn.work.reserved_dest),
 		"food_cell": _v(pawn.survival.food_target.cell) if pawn.survival.food_target else [],
 		"eat_ticks": pawn.survival.eat_ticks_left,
@@ -156,8 +161,11 @@ func apply_pending_load() -> void:
 	for t: Dictionary in data.trees:
 		var tree: TreeEntity = spawner.spawn_entity(spawner.TREE_SCENE, _vec(t.cell))
 		tree.job.work_ticks = int(t.work)
-	for w: Array in data.wood:
-		spawner.spawn_entity(spawner.WOOD_SCENE, _vec(w))
+	for i: Dictionary in data.items:
+		spawner.spawn_resource(_vec(i.cell), i.id)
+	for o: Dictionary in data.ore_nodes:
+		var ore: OreNode = spawner.spawn_ore(_vec(o.cell), o.id)
+		ore.restore(int(o.work))
 	for f: Array in data.food:
 		spawner.spawn_entity(spawner.FOOD_SCENE, _vec(f))
 	for r: Dictionary in data.raiders:
@@ -211,9 +219,9 @@ func _restore_pawn(p: Dictionary) -> void:
 		pawn.work.carrying_food = true
 	# Carrying and a job can coexist: a SUPPLY pawn carries wood toward
 	# its blueprint. Restore both independently.
-	if bool(p.carrying):
-		var wood: WoodItem = main.spawner.spawn_entity(main.spawner.WOOD_SCENE, pawn.cell)
-		pawn.work.restore_carry(wood, _vec(p.reserved_dest))
+	if String(p.carrying_id) != "":
+		var item := main.spawner.spawn_resource(pawn.cell, p.carrying_id)
+		pawn.work.restore_carry(item, _vec(p.reserved_dest))
 	if int(p.job_type) >= 0:
 		# Entities re-registered their jobs above; re-claim ours by cell+type.
 		var job_cell := _vec(p.job_cell)
