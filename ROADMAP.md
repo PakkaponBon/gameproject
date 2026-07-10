@@ -1,6 +1,6 @@
 # ROADMAP.md — Ashfall: Skeleton → v1.0
 
-Current state: **v0.3-construction** (persistence + ordered construction: material-costed blueprints, wall/gate/bed/barn, deconstruct with refunds).
+Current state: **v0.4-economy** (construction + living economy: calendar/seasons, rest, farming with winter pressure, starvation collapse, mood, mining).
 
 Rules: one phase at a time, in order. Each phase gates on its **Definition of Done (DoD)**. Git tag per phase. From Phase 1 on, every new system ships with save/load. Not required by a DoD → IDEAS.md.
 

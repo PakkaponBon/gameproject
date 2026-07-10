@@ -220,7 +220,7 @@ func _restore_pawn(p: Dictionary) -> void:
 	# Carrying and a job can coexist: a SUPPLY pawn carries wood toward
 	# its blueprint. Restore both independently.
 	if String(p.carrying_id) != "":
-		var item := main.spawner.spawn_resource(pawn.cell, p.carrying_id)
+		var item: ResourceItem = main.spawner.spawn_resource(pawn.cell, p.carrying_id)
 		pawn.work.restore_carry(item, _vec(p.reserved_dest))
 	if int(p.job_type) >= 0:
 		# Entities re-registered their jobs above; re-claim ours by cell+type.
