@@ -3,7 +3,7 @@ extends Node
 ## on load. Loading reloads the main scene; `pending_load` survives the
 ## reload because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 10
+const SAVE_VERSION := 11
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 
@@ -101,6 +101,7 @@ func _collect() -> Dictionary:
 		"ground_seed": main.spawner.ground_seed,
 		"buildings": built,
 		"stockpiles": WorldGrid.stockpile_cells.keys().map(_v),
+		"safety": WorldGrid.safety_cells.keys().map(_v),
 		"trees": trees,
 		"items": loose_items,
 		"ore_nodes": ore_nodes,
@@ -134,6 +135,8 @@ func _pawn_data(pawn: Pawn) -> Dictionary:
 		"atk_cd": pawn.combat.attack_cooldown,
 		"wander_cd": pawn.wander_cooldown,
 		"collapsed": pawn.collapsed,
+		"drafted": pawn.drafted,
+		"attack_cell": _v(pawn.attack_target.cell) if is_instance_valid(pawn.attack_target) else [],
 		"carrying_food": pawn.work.carrying_food,
 		"carrying_id": pawn.work.carrying.resource_id if pawn.work.carrying else "",
 		"priorities": priorities,
@@ -161,6 +164,8 @@ func apply_pending_load() -> void:
 		main.place_building(_vec(b.cell), b.id)
 	for s: Array in data.stockpiles:
 		WorldGrid.set_stockpile(_vec(s), true)
+	for s: Array in data.safety:
+		WorldGrid.set_safety(_vec(s), true)
 	for t: Dictionary in data.trees:
 		var tree: TreeEntity = spawner.spawn_entity(spawner.TREE_SCENE, _vec(t.cell))
 		tree.job.work_ticks = int(t.work)
@@ -217,6 +222,13 @@ func _restore_pawn(p: Dictionary) -> void:
 	if bool(p.collapsed):
 		pawn.restore_collapse()  # re-registers its FEED job
 		return
+	if bool(p.drafted):
+		pawn.set_drafted(true)
+		pawn.target_cell = _vec(p.target)  # set_drafted resets it
+		var attack_cell: Array = p.attack_cell
+		if not attack_cell.is_empty():
+			pawn.attack_target = _raider_at(_vec(attack_cell))
+		return  # drafted pawns hold no jobs
 	if bool(p.carrying_food):
 		pawn.work.carrying_food = true
 	# Carrying and a job can coexist: a SUPPLY pawn carries wood toward
@@ -235,6 +247,13 @@ func _restore_pawn(p: Dictionary) -> void:
 	var food_cell: Array = p.food_cell
 	if not food_cell.is_empty():
 		_relink_food(pawn, _vec(food_cell), int(p.eat_ticks))
+
+func _raider_at(cell: Vector2i) -> Raider:
+	for node in get_tree().get_nodes_in_group("raiders"):
+		var raider := node as Raider
+		if raider.cell == cell:
+			return raider
+	return null
 
 func _relink_food(pawn: Pawn, food_cell: Vector2i, eat_ticks: int) -> void:
 	for node in get_tree().get_nodes_in_group("food"):

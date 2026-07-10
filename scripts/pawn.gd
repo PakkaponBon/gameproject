@@ -20,8 +20,11 @@ var cell: Vector2i
 var target_cell: Vector2i
 var collapsed := false  # starved: prone, helpless, bleeding out
 var feed_job: Job = null
+var drafted := false  # player-controlled: no jobs, no auto needs-seeking
+var attack_target: Raider = null
 var dead := false
 var wander_cooldown := 0
+var _selected := false
 
 ## 1 = preferred, higher = later, 0 = never does this job type.
 var work_priorities := {Job.Type.CHOP: 1, Job.Type.HAUL: 1, Job.Type.BUILD: 1, Job.Type.PLANT: 1}
@@ -46,7 +49,30 @@ func _ready() -> void:
 	GameClock.ticked.connect(_on_tick)
 
 func set_selected(on: bool) -> void:
-	selection_ring.visible = on
+	_selected = on
+	_update_ring()
+
+func set_drafted(on: bool) -> void:
+	if dead or collapsed:
+		return
+	drafted = on
+	attack_target = null
+	if on:
+		survival.wake()
+		_abort_all()
+		target_cell = cell
+	_update_ring()
+
+## Draft order: pursue and engage a raider.
+func attack(raider: Raider) -> void:
+	if drafted:
+		attack_target = raider
+
+func _update_ring() -> void:
+	# The ring doubles as the draft marker: red while drafted, white while
+	# merely selected.
+	selection_ring.visible = _selected or drafted
+	selection_ring.color = Color(0.9, 0.25, 0.2, 0.5) if drafted else Color(1, 1, 1, 0.35)
 
 func set_sleep_visual(on: bool) -> void:
 	if not dead:
@@ -60,6 +86,7 @@ func cycle_priority(type: Job.Type) -> void:
 func move_to(destination: Vector2i) -> void:
 	if dead or collapsed or not WorldGrid.in_bounds(destination):
 		return
+	attack_target = null
 	survival.wake()
 	_abort_all()
 	target_cell = destination
@@ -108,12 +135,16 @@ func _on_tick() -> void:
 	if combat.engage_adjacent():
 		survival.wake()
 		return
+	if drafted:
+		_drafted_tick()
+		return
 	if survival.sleeping:
 		combat.heal(PawnCombat.HEAL_IN_BED if survival.is_in_bed() else PawnCombat.HEAL_ON_GROUND)
 		if needs.is_hungry() or (needs.is_rested() and combat.fully_recovered()):
 			survival.wake()
 		return
 	survival.seek_food()
+	_flee_if_raid()
 	survival.seek_bed()
 	if cell != target_cell:
 		_step()
@@ -125,10 +156,42 @@ func _on_tick() -> void:
 		survival.fall_asleep()  # no bed available: collapse where we stand
 	elif needs.on_break:
 		_wander()
+	elif _sheltering():
+		pass  # wait out the raid inside the safety zone
 	elif work.busy():
 		work.on_arrived()
 	else:
 		work.request_next()
+
+func _drafted_tick() -> void:
+	# Hold discipline: no jobs, no auto-eat/sleep. Needs still tick.
+	if attack_target and not is_instance_valid(attack_target):
+		attack_target = null  # target down; hold position
+	if attack_target:
+		# Pursue: re-path every tick; engage_adjacent lands the hits.
+		var path: Array[Vector2i] = WorldGrid.astar.get_id_path(cell, attack_target.cell, true)
+		if path.size() >= 2:
+			cell = path[1]
+		target_cell = cell
+	elif cell != target_cell:
+		_step()
+
+func _raid_active() -> bool:
+	return not get_tree().get_nodes_in_group("raiders").is_empty()
+
+func _sheltering() -> bool:
+	return _raid_active() and WorldGrid.safety_cells.has(cell)
+
+func _flee_if_raid() -> void:
+	if not _raid_active() or WorldGrid.safety_cells.is_empty() or survival.food_target:
+		return
+	if WorldGrid.safety_cells.has(cell) or WorldGrid.safety_cells.has(target_cell):
+		return
+	var spot := WorldGrid.nearest_safety_cell(cell)
+	if spot == WorldGrid.INVALID_CELL:
+		return
+	_abort_all(false)  # drop work and bed claims; keep an eating trip
+	target_cell = spot
 
 func _step() -> void:
 	# Repath every tick so walls placed mid-walk are respected immediately.
@@ -171,6 +234,9 @@ func _abort_all(clear_food := true) -> void:
 func _collapse() -> void:
 	if collapsed or dead:
 		return
+	drafted = false
+	attack_target = null
+	_update_ring()
 	survival.wake()
 	_abort_all()
 	collapsed = true

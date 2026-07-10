@@ -14,6 +14,7 @@ var astar_enemy := AStarGrid2D.new()  # enemy pathing (gates count as solid)
 var buildings := {}  # Vector2i -> building id (String)
 var stockpile_cells := {}  # Set of Vector2i (value unused)
 var fields := {}  # Vector2i -> crop id (String)
+var safety_cells := {}  # Set of Vector2i: where undrafted villagers flee in raids
 var items := {}  # Vector2i -> Node2D occupying that cell
 var reserved_storage := {}  # Set of Vector2i claimed as a haul destination
 
@@ -29,6 +30,7 @@ func reset() -> void:
 	buildings.clear()
 	stockpile_cells.clear()
 	fields.clear()
+	safety_cells.clear()
 	items.clear()
 	reserved_storage.clear()
 	astar.fill_solid_region(astar.region, false)
@@ -88,6 +90,27 @@ func set_field(cell: Vector2i, crop_id: String) -> void:
 func remove_field(cell: Vector2i) -> void:
 	fields.erase(cell)
 	zones_changed.emit()
+
+func set_safety(cell: Vector2i, on: bool) -> void:
+	if not in_bounds(cell) or (on and is_wall(cell)):
+		return
+	if on:
+		safety_cells[cell] = true
+	else:
+		safety_cells.erase(cell)
+	zones_changed.emit()
+
+func nearest_safety_cell(from_cell: Vector2i) -> Vector2i:
+	var best := INVALID_CELL
+	var best_dist := INF
+	for cell: Vector2i in safety_cells:
+		if is_wall(cell):
+			continue
+		var dist := float((cell - from_cell).length_squared())
+		if dist < best_dist and not astar.get_id_path(from_cell, cell).is_empty():
+			best = cell
+			best_dist = dist
+	return best
 
 func is_stockpile(cell: Vector2i) -> bool:
 	return stockpile_cells.has(cell)

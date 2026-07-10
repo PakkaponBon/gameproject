@@ -2,7 +2,7 @@ extends Node2D
 ## The World scene: composes the systems and handles player input.
 ## Spawning lives in WorldSpawner; saving in the SaveManager autoload.
 
-enum Mode { COMMAND, BUILD, STOCKPILE, FIELD }
+enum Mode { COMMAND, BUILD, STOCKPILE, FIELD, SAFETY }
 
 const SOURCE_ID := 0
 const BLUEPRINT_SCENE := preload("res://scenes/blueprint.tscn")
@@ -81,6 +81,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_set_mode(Mode.STOCKPILE if mode != Mode.STOCKPILE else Mode.COMMAND)
 	elif event.is_action_pressed("toggle_field_mode"):
 		_set_mode(Mode.FIELD if mode != Mode.FIELD else Mode.COMMAND)
+	elif event.is_action_pressed("toggle_safety_mode"):
+		_set_mode(Mode.SAFETY if mode != Mode.SAFETY else Mode.COMMAND)
+	elif event.is_action_pressed("toggle_draft"):
+		if selected and not selected.dead:
+			selected.set_drafted(not selected.drafted)
+			hud.update_stats(selected)
 	elif event.is_action_pressed("cycle_farm_priority"):
 		_cycle_selected_priority(Job.Type.PLANT)
 	elif event.is_action_pressed("cycle_chop_priority"):
@@ -113,8 +119,11 @@ func _apply_tool(button_index: int, dragging := false) -> void:
 		Mode.COMMAND:
 			if button_index == MOUSE_BUTTON_LEFT:
 				var clicked := _pawn_at(cell)
+				var raider := _raider_at(cell)
 				if clicked:
 					_select(clicked)
+				elif raider and selected and selected.drafted:
+					selected.attack(raider)
 				elif selected:
 					selected.move_to(cell)
 		Mode.BUILD:
@@ -134,6 +143,11 @@ func _apply_tool(button_index: int, dragging := false) -> void:
 			elif button_index == MOUSE_BUTTON_RIGHT:
 				field_keeper.remove_plant_job(cell)
 				WorldGrid.remove_field(cell)
+		Mode.SAFETY:
+			if button_index == MOUSE_BUTTON_LEFT:
+				WorldGrid.set_safety(cell, true)
+			elif button_index == MOUSE_BUTTON_RIGHT:
+				WorldGrid.set_safety(cell, false)
 
 func _mouse_cell() -> Vector2i:
 	return WorldGrid.world_to_cell(get_global_mouse_position())
@@ -142,6 +156,13 @@ func _pawn_at(cell: Vector2i) -> Pawn:
 	for pawn in pawns:
 		if pawn.cell == cell:
 			return pawn
+	return null
+
+func _raider_at(cell: Vector2i) -> Raider:
+	for node in get_tree().get_nodes_in_group("raiders"):
+		var raider := node as Raider
+		if raider.cell == cell:
+			return raider
 	return null
 
 func _select_first_alive() -> void:
@@ -222,3 +243,5 @@ func _update_mode_label() -> void:
 			hud.show_stockpile_mode()
 		Mode.FIELD:
 			hud.show_field_mode(CropDefs.get_def(current_crop))
+		Mode.SAFETY:
+			hud.show_safety_mode()

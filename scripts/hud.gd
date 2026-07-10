@@ -21,7 +21,7 @@ func clear_selection() -> void:
 	priority_label.text = ""
 
 func show_command_mode() -> void:
-	mode_label.text = "COMMAND — LMB select pawn / move selected  [B: build] [Z: stockpile] [F: field] [Esc: menu]"
+	mode_label.text = "COMMAND — LMB select / move / attack (drafted)  [R: draft] [B/Z/F/X: modes] [Esc: menu]"
 
 func show_build_mode(def: Dictionary) -> void:
 	mode_label.text = "BUILD: %s (%d wood) — LMB place, RMB remove/cancel  [Q: next building] [B: back]" \
@@ -33,6 +33,9 @@ func show_stockpile_mode() -> void:
 func show_field_mode(def: Dictionary) -> void:
 	mode_label.text = "FIELD: %s — LMB zone field, RMB clear  [Q: next crop] [F: back]" % def.name
 
+func show_safety_mode() -> void:
+	mode_label.text = "SAFETY — LMB paint flee zone, RMB erase  [X: back]"
+
 func update_stats(pawn: Pawn) -> void:
 	if pawn.dead:
 		stats_label.text = "%s — DEAD" % pawn.name
@@ -40,6 +43,8 @@ func update_stats(pawn: Pawn) -> void:
 	var suffix := ""
 	if pawn.collapsed:
 		suffix = "  (COLLAPSED — starving!)"
+	elif pawn.drafted:
+		suffix = "  (DRAFTED)"
 	elif pawn.survival.sleeping:
 		suffix = "  (SLEEPING)"
 	elif pawn.needs.on_break:
