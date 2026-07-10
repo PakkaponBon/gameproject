@@ -11,6 +11,7 @@ var fetching: WoodItem = null  # supply leg 1: walking to pick this up
 var fetching_food: FoodItem = null  # feed leg 1
 var carrying_food := false  # feed leg 2: meal in hand
 var reserved_dest := WorldGrid.INVALID_CELL  # claimed stockpile cell while hauling
+var work_progress := 0.0  # fractional work from speed modifiers
 
 @onready var pawn: Pawn = get_parent()
 
@@ -88,9 +89,7 @@ func _do_job() -> void:
 			if not WorldGrid.fields.has(job.cell) or (job.target as FieldKeeper).is_winter():
 				job = null
 				return
-			if _too_tired_this_tick():
-				return
-			job.work_ticks -= 1
+			_apply_work()
 			if job.work_ticks <= 0:
 				JobManager.complete_job(job)
 				job = null
@@ -98,9 +97,7 @@ func _do_job() -> void:
 			if not is_instance_valid(job.target):  # e.g. blueprint canceled, crop frosted
 				job = null
 				return
-			if _too_tired_this_tick():
-				return
-			job.work_ticks -= 1
+			_apply_work()
 			if job.work_ticks <= 0:
 				var work_cell := job.cell
 				var was_build := job.type == Job.Type.BUILD
@@ -126,9 +123,7 @@ func _do_deconstruct() -> void:
 	if d.x + d.y > 1:
 		_approach_deconstruct()
 		return
-	if _too_tired_this_tick():
-		return
-	job.work_ticks -= 1
+	_apply_work()
 	if job.work_ticks <= 0:
 		JobManager.complete_job(job)
 		job = null
@@ -228,9 +223,16 @@ func _deliver_to_stockpile() -> void:
 		reserved_dest = dest
 		pawn.target_cell = dest
 
-## Exhausted pawns work at half speed: every other tick is lost.
-func _too_tired_this_tick() -> bool:
-	return pawn.needs.is_exhausted() and GameClock.ticks % 2 == 0
+## Advance the held job by this tick's work, scaled by condition:
+## exhaustion halves speed, low mood scales down to 60%.
+func _apply_work() -> void:
+	var speed := pawn.needs.mood_work_factor()
+	if pawn.needs.is_exhausted():
+		speed *= 0.5
+	work_progress += speed
+	while work_progress >= 1.0:
+		work_progress -= 1.0
+		job.work_ticks -= 1
 
 func _release_dest() -> void:
 	if reserved_dest != WorldGrid.INVALID_CELL:

@@ -33,7 +33,7 @@ Rules: one phase at a time, in order. Each phase gates on its **Definition of Do
 - [x] Rest need, sleep in beds, exhaustion slows work
 - [x] Field zoning, crop lifecycle (plant → grow → harvest), 3+ crops, winter kills crops
 - [x] Eating, starvation → collapse → death if neglected
-- [ ] Mood v0: single value from needs (hungry/exhausted lower it), modifies work speed — foundation for trait/death effects later
+- [x] Mood v0: single value from needs (hungry/exhausted lower it), modifies work speed — foundation for trait/death effects later
 - [ ] Mining job: stone + iron ore nodes
 
 **DoD:** 3 villagers survive a year hands-off with a good field plan; a bad plan starves them.
