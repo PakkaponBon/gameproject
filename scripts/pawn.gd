@@ -13,9 +13,13 @@ const WANDER_EVERY_TICKS := 3
 const DIRS: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
 const BODY_COLOR := Color(0.231373, 0.482353, 0.831373)
 const SLEEP_COLOR := Color(0.14, 0.29, 0.5)
+const COLLAPSE_COLOR := Color(0.55, 0.65, 0.85)
+const COLLAPSE_HP_DRAIN := 0.2  # per tick: ~50s from full HP to death
 
 var cell: Vector2i
 var target_cell: Vector2i
+var collapsed := false  # starved: prone, helpless, bleeding out
+var feed_job: Job = null
 var dead := false
 var wander_cooldown := 0
 
@@ -34,7 +38,7 @@ func _ready() -> void:
 	cell = WorldGrid.world_to_cell(position)
 	target_cell = cell
 	position = WorldGrid.cell_to_world(cell)
-	needs.starved.connect(_die)
+	needs.starved.connect(_collapse)
 	needs.changed.connect(stats_changed.emit)
 	needs.break_started.connect(_on_break_started)
 	combat.damaged.connect(_on_damaged)
@@ -54,7 +58,7 @@ func cycle_priority(type: Job.Type) -> void:
 
 ## Player command: overrides current work; carried wood drops on the spot.
 func move_to(destination: Vector2i) -> void:
-	if dead or not WorldGrid.in_bounds(destination):
+	if dead or collapsed or not WorldGrid.in_bounds(destination):
 		return
 	survival.wake()
 	_abort_all()
@@ -64,10 +68,25 @@ func take_damage(amount: float) -> void:
 	if not dead:
 		combat.take_damage(amount)
 
+## Fed by a rescuer: back on your feet, hungry but alive.
+func be_fed() -> void:
+	collapsed = false
+	feed_job = null
+	needs.hunger = 50.0
+	body.rotation_degrees = 0.0
+	body.color = BODY_COLOR
+	stats_changed.emit()
+
 ## Save/load: restore a corpse without re-running death side effects.
 func restore_dead() -> void:
 	dead = true
 	_apply_death_visuals()
+
+## Save/load: restore a collapsed pawn (re-registers its FEED job).
+func restore_collapse() -> void:
+	collapsed = true
+	_apply_collapse_visuals()
+	_register_feed_job()
 
 ## After finishing a build, don't stand inside the new wall.
 func step_off_wall(wall_cell: Vector2i) -> void:
@@ -85,7 +104,10 @@ func _on_tick() -> void:
 		return
 	needs.tick(survival.sleeping, survival.is_in_bed())
 	if dead:
-		return  # starved just now
+		return
+	if collapsed:
+		combat.drain(COLLAPSE_HP_DRAIN)  # defeated -> _die
+		return
 	combat.tick()
 	# Melee is survival: an adjacent raider preempts (and wakes) everything.
 	if combat.engage_adjacent():
@@ -150,8 +172,36 @@ func _abort_all(clear_food := true) -> void:
 	work.abort()
 	survival.release_claims(clear_food)
 
+func _collapse() -> void:
+	if collapsed or dead:
+		return
+	survival.wake()
+	_abort_all()
+	collapsed = true
+	target_cell = cell
+	_apply_collapse_visuals()
+	_register_feed_job()
+	stats_changed.emit()
+
+func _register_feed_job() -> void:
+	feed_job = Job.new()
+	feed_job.type = Job.Type.FEED
+	feed_job.cell = cell
+	feed_job.target = self
+	feed_job.completed.connect(be_fed)
+	JobManager.add_job(feed_job)
+
+func _apply_collapse_visuals() -> void:
+	body.color = COLLAPSE_COLOR
+	body.pivot_offset = body.size / 2.0
+	body.rotation_degrees = 90.0
+
 func _die() -> void:
 	dead = true
+	collapsed = false
+	if feed_job:
+		JobManager.remove_job(feed_job)
+		feed_job = null
 	_abort_all()
 	target_cell = cell
 	_apply_death_visuals()

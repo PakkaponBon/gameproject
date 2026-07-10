@@ -3,15 +3,20 @@ extends Node
 ## Colony-job execution for one pawn: claiming jobs from the pool and the
 ## chop/haul/supply/build behaviors. Movement and needs live on the pawn.
 
+const FOOD_SCENE := preload("res://scenes/food_item.tscn")
+
 var job: Job = null
 var carrying: WoodItem = null
 var fetching: WoodItem = null  # supply leg 1: walking to pick this up
+var fetching_food: FoodItem = null  # feed leg 1
+var carrying_food := false  # feed leg 2: meal in hand
 var reserved_dest := WorldGrid.INVALID_CELL  # claimed stockpile cell while hauling
 
 @onready var pawn: Pawn = get_parent()
 
 func busy() -> bool:
-	return job != null or carrying != null or fetching != null
+	return job != null or carrying != null or fetching != null \
+			or fetching_food != null or carrying_food
 
 func request_next() -> void:
 	job = JobManager.request_job(pawn.cell, pawn.work_priorities)
@@ -19,6 +24,8 @@ func request_next() -> void:
 		return
 	if job.type == Job.Type.SUPPLY:
 		_ensure_fetch()
+	elif job.type == Job.Type.FEED:
+		_ensure_food_fetch()
 	elif job.type == Job.Type.DECONSTRUCT:
 		_approach_deconstruct()
 	else:
@@ -27,6 +34,10 @@ func request_next() -> void:
 func on_arrived() -> void:
 	if fetching:
 		_pick_up_fetched()
+	elif fetching_food:
+		_pick_up_food()
+	elif carrying_food:
+		_deliver_food()
 	elif carrying:
 		if job and job.type == Job.Type.SUPPLY:
 			_deliver_to_site()
@@ -43,6 +54,11 @@ func abort() -> void:
 		if is_instance_valid(fetching):
 			fetching.reserved = false
 		fetching = null
+	if is_instance_valid(fetching_food):
+		fetching_food.reserved = false
+	fetching_food = null
+	if carrying_food:
+		_drop_food_in_hand()
 	if carrying:
 		carrying.drop_at(pawn.cell)  # drop_at clears its reservation
 		carrying = null
@@ -63,6 +79,8 @@ func _do_job() -> void:
 			_start_storage_carry(job.target as WoodItem)
 		Job.Type.SUPPLY:
 			_ensure_fetch()  # e.g. right after load: job held, wood not yet chosen
+		Job.Type.FEED:
+			_ensure_food_fetch()
 		Job.Type.DECONSTRUCT:
 			_do_deconstruct()
 		Job.Type.PLANT:
@@ -133,6 +151,43 @@ func _pick_up_fetched() -> void:
 	carrying = fetching
 	fetching = null
 	pawn.target_cell = job.cell
+
+func _ensure_food_fetch() -> void:
+	var food := JobManager.find_fetchable_food(pawn.cell)
+	if food == null:
+		abort()  # food ran out; the pool filters re-grabs
+		return
+	food.reserved = true
+	fetching_food = food
+	pawn.target_cell = food.cell
+
+func _pick_up_food() -> void:
+	if job == null or not is_instance_valid(fetching_food):
+		fetching_food = null
+		abort()
+		return
+	fetching_food.queue_free()  # into our hands
+	fetching_food = null
+	carrying_food = true
+	pawn.target_cell = job.cell
+
+func _deliver_food() -> void:
+	carrying_food = false
+	if job == null:  # e.g. relink failed after load; leave the meal here
+		_drop_food_in_hand()
+		return
+	var patient := job.target as Pawn
+	job = null
+	if is_instance_valid(patient) and patient.collapsed and patient.feed_job:
+		JobManager.complete_job(patient.feed_job)  # patient stands up via be_fed
+	else:
+		_drop_food_in_hand()  # died or recovered meanwhile; leave the meal here
+
+func _drop_food_in_hand() -> void:
+	carrying_food = false
+	var food: Node2D = FOOD_SCENE.instantiate()
+	food.position = WorldGrid.cell_to_world(pawn.cell)
+	pawn.get_parent().get_node("Entities").add_child(food)
 
 func _deliver_to_site() -> void:
 	if not is_instance_valid(job.target):

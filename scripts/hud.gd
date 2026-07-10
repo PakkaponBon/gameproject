@@ -34,7 +34,9 @@ func update_stats(pawn: Pawn) -> void:
 		stats_label.text = "%s — DEAD" % pawn.name
 		return
 	var suffix := ""
-	if pawn.survival.sleeping:
+	if pawn.collapsed:
+		suffix = "  (COLLAPSED — starving!)"
+	elif pawn.survival.sleeping:
 		suffix = "  (SLEEPING)"
 	elif pawn.needs.on_break:
 		suffix = "  (MENTAL BREAK)"

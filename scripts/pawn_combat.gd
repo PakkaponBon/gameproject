@@ -34,6 +34,12 @@ func take_damage(amount: float) -> void:
 	if hp <= 0.0:
 		defeated.emit()
 
+## HP loss without the attacked reaction (starvation bleed-out etc.).
+func drain(amount: float) -> void:
+	hp = maxf(hp - amount, 0.0)
+	if hp <= 0.0:
+		defeated.emit()
+
 func _adjacent_raider() -> Raider:
 	for node in get_tree().get_nodes_in_group("raiders"):
 		var raider := node as Raider

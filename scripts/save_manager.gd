@@ -3,7 +3,7 @@ extends Node
 ## on load. Loading reloads the main scene; `pending_load` survives the
 ## reload because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 7
+const SAVE_VERSION := 8
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 
@@ -125,6 +125,8 @@ func _pawn_data(pawn: Pawn) -> Dictionary:
 		"atk_cd": pawn.combat.attack_cooldown,
 		"wander_cd": pawn.wander_cooldown,
 		"dead": pawn.dead,
+		"collapsed": pawn.collapsed,
+		"carrying_food": pawn.work.carrying_food,
 		"priorities": priorities,
 		"job_cell": _v(pawn.work.job.cell) if pawn.work.job else [],
 		"job_type": int(pawn.work.job.type) if pawn.work.job else -1,
@@ -202,6 +204,11 @@ func _restore_pawn(p: Dictionary) -> void:
 	if bool(p.dead):
 		pawn.restore_dead()
 		return
+	if bool(p.collapsed):
+		pawn.restore_collapse()  # re-registers its FEED job
+		return
+	if bool(p.carrying_food):
+		pawn.work.carrying_food = true
 	# Carrying and a job can coexist: a SUPPLY pawn carries wood toward
 	# its blueprint. Restore both independently.
 	if bool(p.carrying):

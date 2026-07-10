@@ -38,6 +38,8 @@ func request_job(from_cell: Vector2i, priorities: Dictionary) -> Job:
 			prio_type = Job.Type.BUILD
 		elif job.type == Job.Type.HARVEST:
 			prio_type = Job.Type.PLANT
+		elif job.type == Job.Type.FEED:
+			prio_type = Job.Type.HAUL
 		var prio: int = priorities.get(prio_type, 1)
 		if prio <= 0:
 			continue
@@ -53,6 +55,8 @@ func request_job(from_cell: Vector2i, priorities: Dictionary) -> Job:
 				supply_ok = find_fetchable_wood(from_cell) != null
 			if not supply_ok:
 				continue
+		if job.type == Job.Type.FEED and find_fetchable_food(from_cell) == null:
+			continue
 		if best and (prio > best_prio or (prio == best_prio and float((job.cell - from_cell).length_squared()) >= best_dist)):
 			continue
 		# Solid targets (e.g. deconstructing a wall) are worked from beside.
@@ -96,6 +100,20 @@ func nearest_work_spot(from_cell: Vector2i, target_cell: Vector2i) -> Vector2i:
 		if not path.is_empty() and path.size() < best_len:
 			best = spot
 			best_len = path.size()
+	return best
+
+## Nearest reachable food item not claimed by an eater or another carrier.
+func find_fetchable_food(from_cell: Vector2i) -> FoodItem:
+	var best: FoodItem = null
+	var best_dist := INF
+	for node in get_tree().get_nodes_in_group("food"):
+		var food := node as FoodItem
+		if food.reserved:
+			continue
+		var dist := float((food.cell - from_cell).length_squared())
+		if dist < best_dist and _is_reachable(from_cell, food.cell):
+			best = food
+			best_dist = dist
 	return best
 
 func release_job(job: Job) -> void:
