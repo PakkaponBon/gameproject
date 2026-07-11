@@ -33,6 +33,7 @@ var work_priorities := {Job.Type.CHOP: 1, Job.Type.HAUL: 1, Job.Type.BUILD: 1, J
 @onready var combat: PawnCombat = $Combat
 @onready var work: PawnWork = $Work
 @onready var survival: PawnSurvival = $Survival
+@onready var skills: PawnSkills = $Skills
 
 func _ready() -> void:
 	add_to_group("pawns")

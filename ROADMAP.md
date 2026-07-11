@@ -47,7 +47,7 @@ Rules: one phase at a time, in order. Each phase gates on its **Definition of Do
 - [x] Melee combat: unarmed + Tier 1 swords
 - [x] Forge building + crafting job: iron ingots → swords (first crafting chain)
 - [x] Enemy raid v0: bandits spawn at edge, attack villagers/doors; walls & gates block pathing
-- [ ] Combat skills (melee) affecting hit/damage
+- [x] Combat skills (melee) affecting hit/damage
 - [ ] Trait data model v0: traits as resources with stat/mood modifiers; 2–3 test traits incl. Magic affinity (Phase 5 needs it; full backstory pool comes Phase 9)
 - [ ] Pause + speed controls (pause/1x/3x, basic) — required to test raids; UI polish stays in Phase 7
 

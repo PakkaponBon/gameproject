@@ -9,6 +9,10 @@ signal defeated
 
 const HP_MAX := 100.0
 const ATTACK_COOLDOWN_TICKS := 10
+const BASE_HIT_CHANCE := 0.7
+const HIT_PER_MELEE_LEVEL := 0.03   # level 10 = 100% to hit
+const DAMAGE_PER_MELEE_LEVEL := 0.05  # level 10 = +50% damage
+const MELEE_XP_PER_HIT := 8.0
 const WOUNDED_BELOW := 0.5  # of max HP: slower work, seeks bed rest
 const RECOVERED_AT := 0.9   # sleeps/heals until back to here
 const HEAL_IN_BED := 0.08   # per tick while sleeping in a bed
@@ -34,7 +38,10 @@ func engage_adjacent() -> bool:
 		return false
 	if attack_cooldown <= 0:
 		attack_cooldown = ATTACK_COOLDOWN_TICKS
-		raider.take_damage(attack_damage)
+		var lvl := pawn.skills.level("melee")
+		if randf() < BASE_HIT_CHANCE + HIT_PER_MELEE_LEVEL * lvl:
+			raider.take_damage(attack_damage * (1.0 + DAMAGE_PER_MELEE_LEVEL * lvl))
+			pawn.skills.gain("melee", MELEE_XP_PER_HIT)  # learn by landing hits
 	return true
 
 func take_damage(amount: float) -> void:
