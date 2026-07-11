@@ -12,6 +12,7 @@ const INVALID_CELL := Vector2i(-1, -1)
 var astar := AStarGrid2D.new()        # villager pathing
 var astar_enemy := AStarGrid2D.new()  # enemy pathing (gates count as solid)
 var buildings := {}  # Vector2i -> building id (String)
+var building_hp := {}  # Vector2i -> remaining HP (damageable buildings only)
 var stockpile_cells := {}  # Set of Vector2i (value unused)
 var fields := {}  # Vector2i -> crop id (String)
 var safety_cells := {}  # Set of Vector2i: where undrafted villagers flee in raids
@@ -28,6 +29,7 @@ func _ready() -> void:
 ## Wipe all grid state (used when loading a save into a fresh scene).
 func reset() -> void:
 	buildings.clear()
+	building_hp.clear()
 	stockpile_cells.clear()
 	fields.clear()
 	safety_cells.clear()
@@ -49,6 +51,8 @@ func register_building(cell: Vector2i, id: String) -> void:
 		return
 	var def: Dictionary = BuildingDefs.get_def(id)
 	buildings[cell] = id
+	if def.has("hp"):
+		building_hp[cell] = float(def.hp)
 	astar.set_point_solid(cell, def.block_villagers)
 	astar_enemy.set_point_solid(cell, def.block_enemies)
 	if def.storage:
@@ -60,11 +64,20 @@ func remove_building(cell: Vector2i) -> void:
 		return
 	var def: Dictionary = BuildingDefs.get_def(buildings[cell])
 	buildings.erase(cell)
+	building_hp.erase(cell)
 	astar.set_point_solid(cell, false)
 	astar_enemy.set_point_solid(cell, false)
 	if def.storage:
 		stockpile_cells.erase(cell)
 		zones_changed.emit()
+
+## Damage a breakable building. Emits building_destroyed at 0 HP.
+func damage_building(cell: Vector2i, amount: float) -> void:
+	if not building_hp.has(cell):
+		return
+	building_hp[cell] = float(building_hp[cell]) - amount
+	if float(building_hp[cell]) <= 0.0:
+		EventBus.building_destroyed.emit(cell)
 
 ## Solid to everyone (ore nodes etc.) — not a building, no registry entry.
 func set_obstacle(cell: Vector2i, solid: bool) -> void:

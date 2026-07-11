@@ -8,6 +8,9 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 	var built: Array = []
 	for cell: Vector2i in WorldGrid.buildings:
 		built.append({"cell": _v(cell), "id": WorldGrid.buildings[cell]})
+	var damaged: Array = []
+	for cell: Vector2i in WorldGrid.building_hp:
+		damaged.append({"cell": _v(cell), "hp": WorldGrid.building_hp[cell]})
 	var trees: Array = []
 	for node in tree.get_nodes_in_group("trees"):
 		var t := node as TreeEntity
@@ -72,6 +75,8 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 		"version": version,
 		"clock_ticks": GameClock.ticks,
 		"raid_ticks": main.raid_director.ticks_until_raid,
+		"raid_count": main.raid_director.raid_count,
+		"building_hp": damaged,
 		"ground_seed": main.spawner.ground_seed,
 		"buildings": built,
 		"stockpiles": WorldGrid.stockpile_cells.keys().map(_v),

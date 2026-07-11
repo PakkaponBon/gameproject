@@ -4,7 +4,7 @@ extends Node
 ## Loading reloads the main scene; `pending_load` survives the reload
 ## because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 13
+const SAVE_VERSION := 14
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 
@@ -48,11 +48,14 @@ func apply_pending_load() -> void:
 	JobManager.reset()
 	GameClock.ticks = int(data.clock_ticks)
 	main.raid_director.ticks_until_raid = int(data.raid_ticks)
+	main.raid_director.raid_count = int(data.raid_count)
 	var spawner: WorldSpawner = main.spawner
 	spawner.ground_seed = int(data.ground_seed)
 	spawner.generate_ground()
 	for b: Dictionary in data.buildings:
 		main.place_building(_vec(b.cell), b.id)
+	for d: Dictionary in data.building_hp:
+		WorldGrid.building_hp[_vec(d.cell)] = float(d.hp)  # keep battle damage
 	for s: Array in data.stockpiles:
 		WorldGrid.set_stockpile(_vec(s), true)
 	for s: Array in data.safety:

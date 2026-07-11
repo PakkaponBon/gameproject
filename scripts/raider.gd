@@ -52,19 +52,48 @@ func _on_tick() -> void:
 		_attack(target)
 		return
 	move_cooldown -= 1
-	if move_cooldown > 0:
-		return
-	move_cooldown = MOVE_EVERY_TICKS
-	# Enemy grid: gates count as solid, so a gated wall keeps raiders out.
+	# Enemy grid: gates count as solid, so a gated wall blocks the path —
+	# but blocked bandits batter the nearest gate down.
 	var path: Array[Vector2i] = WorldGrid.astar_enemy.get_id_path(cell, target.cell, true)
 	if path.size() >= 2:
-		cell = path[1]
+		if move_cooldown <= 0:
+			move_cooldown = MOVE_EVERY_TICKS
+			cell = path[1]
+		return
+	var gate := _nearest_breakable()
+	if gate == WorldGrid.INVALID_CELL:
+		return  # sealed solid: walls are absolute; pace outside
+	var gd := (gate - cell).abs()
+	if gd.x + gd.y <= 1:
+		_attack_gate(gate)
+		return
+	if move_cooldown <= 0:
+		move_cooldown = MOVE_EVERY_TICKS
+		var gpath: Array[Vector2i] = WorldGrid.astar_enemy.get_id_path(cell, gate, true)
+		if gpath.size() >= 2:
+			cell = gpath[1]
 
 func _attack(pawn: Pawn) -> void:
 	if attack_cooldown > 0:
 		return
 	attack_cooldown = ATTACK_COOLDOWN_TICKS
 	pawn.take_damage(attack_damage)
+
+func _attack_gate(gate: Vector2i) -> void:
+	if attack_cooldown > 0:
+		return
+	attack_cooldown = ATTACK_COOLDOWN_TICKS
+	WorldGrid.damage_building(gate, attack_damage)
+
+func _nearest_breakable() -> Vector2i:
+	var best := WorldGrid.INVALID_CELL
+	var best_dist := INF
+	for gcell: Vector2i in WorldGrid.building_hp:
+		var dist := float((gcell - cell).length_squared())
+		if dist < best_dist:
+			best = gcell
+			best_dist = dist
+	return best
 
 func _nearest_living_pawn() -> Pawn:
 	var best: Pawn = null

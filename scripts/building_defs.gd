@@ -26,6 +26,7 @@ const DEFS := {
 		"name": "Gate",
 		"cost": {"wood": 2},
 		"refund": {"wood": 1},
+		"hp": 80.0,  # bandits can batter gates down; walls are absolute
 		"build_ticks": 30,
 		"tile": Vector2i(3, 0),
 		"ghost": Color(0.55, 0.45, 0.32),

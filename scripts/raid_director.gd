@@ -8,8 +8,11 @@ signal raid_ended
 
 const RAIDER_SCENE := preload("res://scenes/raider.tscn")
 const RAID_INTERVAL_TICKS := 1200  # ~2 minutes at 10 ticks/sec
+const BASE_BANDITS := 2  # party size = BASE + raid number, capped
+const MAX_BANDITS := 6
 
 var ticks_until_raid := RAID_INTERVAL_TICKS
+var raid_count := 0
 var spawn_parent: Node2D = null  # assigned by Main
 
 func _ready() -> void:
@@ -19,14 +22,28 @@ func _on_tick() -> void:
 	ticks_until_raid -= 1
 	if ticks_until_raid <= 0:
 		ticks_until_raid = RAID_INTERVAL_TICKS
-		_spawn_raider()
+		_spawn_raid()
 
-func _spawn_raider() -> void:
+func _spawn_raid() -> void:
+	raid_count += 1
+	var count := mini(BASE_BANDITS + raid_count, MAX_BANDITS)
+	var origin := _random_edge_cell()
+	var placed := 0
+	for offset: Vector2i in [Vector2i.ZERO, Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT,
+			Vector2i.RIGHT, Vector2i(0, 2), Vector2i(0, -2), Vector2i(2, 0), Vector2i(-2, 0)]:
+		if placed >= count:
+			break
+		var cell := origin + offset
+		if WorldGrid.in_bounds(cell) and not WorldGrid.is_wall(cell):
+			_spawn_bandit(cell)
+			placed += 1
+	raid_started.emit()
+
+func _spawn_bandit(cell: Vector2i) -> void:
 	var raider: Raider = RAIDER_SCENE.instantiate()
-	raider.position = WorldGrid.cell_to_world(_random_edge_cell())
+	raider.position = WorldGrid.cell_to_world(cell)
 	raider.gone.connect(_on_raider_gone)
 	spawn_parent.add_child(raider)
-	raid_started.emit()
 
 func _on_raider_gone() -> void:
 	# The departing raider is still in the group at this moment.

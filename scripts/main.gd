@@ -36,6 +36,7 @@ func _ready() -> void:
 	spawner.pawn_created.connect(_on_pawn_created)
 	EventBus.building_built.connect(_on_building_built)
 	EventBus.building_deconstructed.connect(_on_building_deconstructed)
+	EventBus.building_destroyed.connect(_on_building_destroyed)
 	SaveManager.main = self
 	if SaveManager.pending_load.is_empty():
 		spawner.new_game()
@@ -207,6 +208,14 @@ func mark_deconstruct(cell: Vector2i) -> void:
 	order.position = WorldGrid.cell_to_world(cell)
 	entities.add_child(order)
 	decon_orders[cell] = order
+
+## Smashed by enemies: gone, no refund.
+func _on_building_destroyed(cell: Vector2i) -> void:
+	if decon_orders.has(cell):
+		decon_orders[cell].cancel()
+		decon_orders.erase(cell)
+	WorldGrid.remove_building(cell)
+	walls.erase_cell(cell)
 
 func _on_building_deconstructed(cell: Vector2i) -> void:
 	decon_orders.erase(cell)
