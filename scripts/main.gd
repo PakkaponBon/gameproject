@@ -30,6 +30,7 @@ var _lights := {}  # cell -> PointLight2D (workstation glow)
 @onready var villager_panel: VillagerPanel = $VillagerPanel
 @onready var priority_grid: PriorityGrid = $PriorityGrid
 @onready var help_panel: HelpPanel = $HelpPanel
+@onready var build_palette: BuildPalette = $BuildPalette
 
 func _ready() -> void:
 	raid_director.spawn_parent = entities
@@ -105,12 +106,10 @@ func select(pawn: Pawn) -> void:
 	EventBus.play_sfx.emit("click")
 	villager_panel.show_pawn(selected)
 
-## Roster: first click selects, second click jumps the camera there.
+## Roster click: select AND look (Phase 14: one click does both).
 func select_or_focus(pawn: Pawn) -> void:
-	if selected == pawn:
-		$Camera.position = pawn.position
-	else:
-		select(pawn)
+	select(pawn)
+	$Camera.position = pawn.position
 
 ## Save/load: restore the selection by index into the pawns array.
 func select_pawn(index: int) -> void:
@@ -269,7 +268,7 @@ func _on_pawn_died(pawn: Pawn) -> void:
 	pawns.erase(pawn)
 	for other in pawns:
 		other.needs.mourn()  # loss is real: colony-wide mood hit
-	hud.set_event("%s has died." % pawn.name, Color(1.0, 0.4, 0.35))
+	hud.set_event("%s has died." % pawn.name, Color(1.0, 0.4, 0.35), pawn.position)
 	if pawns.is_empty():
 		selected = null
 		villager_panel.show_pawn(null)

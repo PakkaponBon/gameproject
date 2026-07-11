@@ -95,6 +95,7 @@ func _apply_tool(button_index: int, dragging := false) -> void:
 func _set_mode(new_mode: Mode) -> void:
 	mode = new_mode
 	_update_mode_label()
+	main.build_palette.show_for(mode, self)
 
 func _update_mode_label() -> void:
 	match mode:
@@ -108,6 +109,36 @@ func _update_mode_label() -> void:
 			main.hud.show_field_mode(CropDefs.get_def(current_crop))
 		Mode.SAFETY:
 			main.hud.show_safety_mode()
+
+## Why placement would fail here (Phase 14: red ghost + reason).
+func placement_reason(cell: Vector2i) -> String:
+	if not WorldGrid.in_bounds(cell):
+		return "Outside the map"
+	match mode:
+		Mode.BUILD:
+			if WorldGrid.buildings.has(cell):
+				return "Blocked: a building stands here"
+			if main.blueprints.has(cell):
+				return "Blocked: already planned"
+			if main.pawn_at(cell):
+				return "Blocked: someone is standing here"
+			var need := int(BuildingDefs.get_def(current_building).get("renown_req", 0))
+			if FactionManager.renown < need:
+				return "Needs renown %d — beat raids, resolve factions" % need
+		Mode.STOCKPILE:
+			if WorldGrid.is_wall(cell):
+				return "Blocked: wall"
+			if WorldGrid.fields.has(cell):
+				return "Blocked: field zone"
+		Mode.FIELD:
+			if WorldGrid.is_wall(cell) or WorldGrid.buildings.has(cell):
+				return "Blocked: structure"
+			if WorldGrid.stockpile_cells.has(cell):
+				return "Blocked: stockpile zone"
+		Mode.SAFETY:
+			if WorldGrid.is_wall(cell):
+				return "Blocked: wall"
+	return ""
 
 ## Ghost-preview support: is placing at this cell currently valid?
 func placement_valid(cell: Vector2i) -> bool:

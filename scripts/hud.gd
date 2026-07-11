@@ -7,8 +7,20 @@ extends CanvasLayer
 const FEED_MAX := 5
 const FEED_SECONDS := 12.0
 
+const SPRITES := preload("res://assets/sprites.png")
+const RES_ICONS := {  # id -> [sprite index, tint, tooltip]
+	"wood": [4, Color(0.78, 0.6, 0.35), "Wood — chop trees; builds nearly everything"],
+	"stone": [5, Color(0.62, 0.62, 0.66), "Stone — mine gray deposits; forges and towers"],
+	"iron_ore": [5, Color(0.72, 0.5, 0.38), "Iron ore — mine brown deposits; smelt at the forge"],
+	"iron_ingot": [6, Color(0.76, 0.76, 0.82), "Ingots — smelted ore; swords and bows"],
+	"food": [11, Color.WHITE, "Raw food — harvests and forage"],
+	"meal": [11, Color(1.15, 1.0, 0.7), "Meals — cooked at a stove; fills and lifts mood"],
+	"renown": [12, Color(0.95, 0.8, 0.35), "Renown — beat raids, resolve factions; unlocks buildings, attracts refugees"],
+}
+
 var _feed: VBoxContainer
 var _raid_arrow: Label
+var _res_counts := {}
 var _resource_cooldown := 0
 
 @onready var mode_label: Label = $ModeLabel
@@ -17,11 +29,48 @@ var _resource_cooldown := 0
 @onready var calendar_label: Label = $CalendarLabel
 
 func _ready() -> void:
+	resource_label.visible = false  # replaced by the icon row
+	var row := HBoxContainer.new()
+	row.offset_left = 8.0
+	row.offset_top = 28.0
+	row.add_theme_constant_override("separation", 10)
+	add_child(row)
+	for id: String in RES_ICONS:
+		var icon := TextureRect.new()
+		var atlas := AtlasTexture.new()
+		atlas.atlas = SPRITES
+		atlas.region = Rect2(int(RES_ICONS[id][0]) * 16, 0, 16, 16)
+		icon.texture = atlas
+		icon.modulate = RES_ICONS[id][1]
+		icon.tooltip_text = RES_ICONS[id][2]
+		icon.mouse_filter = Control.MOUSE_FILTER_STOP
+		row.add_child(icon)
+		var count := Label.new()
+		count.text = "0"
+		count.tooltip_text = RES_ICONS[id][2]
+		count.mouse_filter = Control.MOUSE_FILTER_STOP
+		row.add_child(count)
+		_res_counts[id] = count
 	_feed = VBoxContainer.new()
-	_feed.offset_left = 8.0
-	_feed.offset_top = 52.0
-	_feed.offset_right = 560.0
+	_feed.anchor_left = 1.0
+	_feed.anchor_right = 1.0
+	_feed.offset_left = -420.0
+	_feed.offset_right = -8.0
+	_feed.offset_top = 64.0
 	add_child(_feed)
+	var speed_row := HBoxContainer.new()
+	speed_row.anchor_left = 1.0
+	speed_row.anchor_right = 1.0
+	speed_row.offset_left = -180.0
+	speed_row.offset_right = -8.0
+	speed_row.offset_top = 30.0
+	add_child(speed_row)
+	_speed_button(speed_row, "||", "Pause the simulation [Space]",
+			func() -> void: GameClock.set_sim_paused(not GameClock.sim_paused))
+	_speed_button(speed_row, "1x", "Normal speed [E]",
+			func() -> void: GameClock.set_speed(1.0))
+	_speed_button(speed_row, "3x", "Fast speed [E]",
+			func() -> void: GameClock.set_speed(3.0))
 	_raid_arrow = Label.new()
 	_raid_arrow.text = "!! RAID !!"
 	_raid_arrow.modulate = Color(1.0, 0.3, 0.25)
@@ -31,19 +80,39 @@ func _ready() -> void:
 	GameClock.speed_changed.connect(_update_calendar)
 	_update_calendar()
 
-## Push a message into the feed (empty strings are ignored).
-func set_event(text: String, tint := Color.WHITE) -> void:
+## Push a message into the feed. Pass a world position to make the entry
+## clickable (jumps the camera there).
+func set_event(text: String, tint := Color.WHITE, jump := Vector2.INF) -> void:
 	if text == "":
 		return
-	var label := Label.new()
-	label.text = "> " + text
-	label.modulate = tint
-	_feed.add_child(label)
+	var entry: Control
+	if jump.is_finite():
+		var button := Button.new()
+		button.text = "> " + text
+		button.flat = true
+		button.tooltip_text = "Click to look"
+		button.pressed.connect(func() -> void:
+			(get_parent().get_node("Camera") as Camera2D).position = jump)
+		entry = button
+	else:
+		var label := Label.new()
+		label.text = "> " + text
+		entry = label
+	entry.modulate = tint
+	_feed.add_child(entry)
 	if _feed.get_child_count() > FEED_MAX:
 		_feed.get_child(0).queue_free()
 	get_tree().create_timer(FEED_SECONDS).timeout.connect(func() -> void:
-		if is_instance_valid(label):
-			label.queue_free())
+		if is_instance_valid(entry):
+			entry.queue_free())
+
+func _speed_button(row: HBoxContainer, text: String, tip: String, action: Callable) -> void:
+	var button := Button.new()
+	button.text = text
+	button.tooltip_text = tip
+	button.custom_minimum_size = Vector2(40, 26)
+	button.pressed.connect(action)
+	row.add_child(button)
 
 func set_inspect(text: String) -> void:
 	inspect_label.text = text
@@ -81,20 +150,16 @@ func _on_tick() -> void:
 	_update_resources()
 
 func _update_resources() -> void:
-	var counts := {"wood": 0, "stone": 0, "iron_ore": 0, "iron_ingot": 0}
+	var counts := {"wood": 0, "stone": 0, "iron_ore": 0, "iron_ingot": 0, "food": 0, "meal": 0}
 	for node in get_tree().get_nodes_in_group("resources"):
 		var item := node as ResourceItem
 		if counts.has(item.resource_id) and not (item.get_parent() is Pawn):
 			counts[item.resource_id] += 1
-	var raw := 0
-	var meals := 0
 	for node in get_tree().get_nodes_in_group("food"):
-		if (node as FoodItem).meal:
-			meals += 1
-		else:
-			raw += 1
-	resource_label.text = "Wood %d   Stone %d   Ore %d   Ingots %d   Food %d (+%d meals)   Renown %d" \
-			% [counts.wood, counts.stone, counts.iron_ore, counts.iron_ingot, raw, meals, FactionManager.renown]
+		counts["meal" if (node as FoodItem).meal else "food"] += 1
+	counts["renown"] = FactionManager.renown
+	for id: String in _res_counts:
+		_res_counts[id].text = str(counts[id])
 
 ## Red edge-of-screen pointer toward the nearest raider.
 func _process(_delta: float) -> void:

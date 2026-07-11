@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3 uid="uid://dqj6m2x9s4hb"]
+[gd_scene load_steps=27 format=3 uid="uid://dqj6m2x9s4hb"]
 
 [ext_resource type="Script" uid="uid://b7h4z9d6r1sc" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="TileSet" uid="uid://c5w1r8p3v0gd" path="res://assets/tileset.tres" id="2_tileset"]
@@ -25,6 +25,7 @@
 [ext_resource type="Script" uid="uid://cw1f6t9k3n7m" path="res://scripts/events_director.gd" id="25_events"]
 [ext_resource type="Script" uid="uid://dt3w7q1n8h5m" path="res://scripts/pause_menu.gd" id="8_pause"]
 [ext_resource type="Script" uid="uid://bh5w8t2c6n9k" path="res://scripts/edge_fade.gd" id="27_edge"]
+[ext_resource type="Script" uid="uid://dm3f8c1w6t2k" path="res://scripts/build_palette.gd" id="28_palette"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -126,6 +127,9 @@ script = ExtResource("20_grid")
 
 [node name="RosterBar" type="CanvasLayer" parent="."]
 script = ExtResource("21_roster")
+
+[node name="BuildPalette" type="CanvasLayer" parent="."]
+script = ExtResource("28_palette")
 
 [node name="TradePanel" type="CanvasLayer" parent="."]
 layer = 5

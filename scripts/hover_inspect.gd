@@ -6,10 +6,10 @@ extends Node
 @onready var input_ctrl: PlayerInput = main.get_node("PlayerInput")
 
 func _process(_delta: float) -> void:
-	if input_ctrl.mode != PlayerInput.Mode.COMMAND:
-		main.hud.set_inspect("")
-		return
 	var cell := input_ctrl.mouse_cell()
+	if input_ctrl.mode != PlayerInput.Mode.COMMAND:
+		main.hud.set_inspect(input_ctrl.placement_reason(cell))  # why the ghost is red
+		return
 	main.hud.set_inspect(_describe(cell) if WorldGrid.in_bounds(cell) else "")
 
 func _describe(cell: Vector2i) -> String:

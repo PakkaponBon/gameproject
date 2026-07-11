@@ -30,9 +30,13 @@ func refresh() -> void:
 		return
 	_name_label.text = String(pawn.name)
 	var trait_names: Array[String] = []
+	var lore: Array[String] = []
 	for id: String in pawn.traits:
 		trait_names.append(TraitDefs.get_def(id).name)
+		lore.append(String(TraitDefs.get_def(id).get("lore", "")))
 	_traits_label.text = ", ".join(trait_names)
+	_traits_label.tooltip_text = "\n".join(lore)
+	_traits_label.mouse_filter = Control.MOUSE_FILTER_STOP
 	_activity_label.text = pawn.activity_text()
 	_bars.hunger.value = pawn.needs.hunger
 	_bars.rest.value = pawn.needs.rest

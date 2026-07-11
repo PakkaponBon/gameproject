@@ -23,7 +23,7 @@ func _on_tick() -> void:
 	_refresh_cooldown -= 1
 	if _refresh_cooldown > 0:
 		return
-	_refresh_cooldown = 10  # once a second is plenty
+	_refresh_cooldown = 5  # twice a second, so urgency flashes read
 	_rebuild()
 
 func _rebuild() -> void:
@@ -33,7 +33,10 @@ func _rebuild() -> void:
 		var btn := Button.new()
 		btn.text = String(pawn.name)
 		btn.custom_minimum_size = Vector2(72, 28)
-		if pawn.drafted:
+		var urgent := pawn.collapsed or pawn.combat.is_wounded() or pawn.needs.is_hungry()
+		if urgent and int(Time.get_ticks_msec() / 500) % 2 == 0:
+			btn.modulate = Color(1.0, 0.35, 0.3)  # flash: needs attention
+		elif pawn.drafted:
 			btn.modulate = Color(1.0, 0.55, 0.5)
 		elif pawn.collapsed:
 			btn.modulate = Color(0.7, 0.75, 1.0)
