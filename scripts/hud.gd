@@ -24,8 +24,11 @@ func show_command_mode() -> void:
 	mode_label.text = "COMMAND — LMB select / move / attack (drafted)  [R: draft] [B/Z/F/X: modes] [Esc: menu]"
 
 func show_build_mode(def: Dictionary) -> void:
-	mode_label.text = "BUILD: %s (%d wood) — LMB place, RMB remove/cancel  [Q: next building] [B: back]" \
-			% [def.name, int(def.cost.get("wood", 0))]
+	var costs: Array[String] = []
+	for id: String in def.cost:
+		costs.append("%d %s" % [int(def.cost[id]), id])
+	mode_label.text = "BUILD: %s (%s) — LMB place, RMB remove/cancel  [Q: next building] [B: back]" \
+			% [def.name, " + ".join(costs)]
 
 func show_stockpile_mode() -> void:
 	mode_label.text = "STOCKPILE — LMB paint zone, RMB erase  [Z: back]"

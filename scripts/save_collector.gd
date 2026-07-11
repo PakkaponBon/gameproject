@@ -49,6 +49,17 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 	var decon: Array = []
 	for cell: Vector2i in main.decon_orders:
 		decon.append({"cell": _v(cell), "work": main.decon_orders[cell].job.work_ticks})
+	var craft_orders: Array = []
+	for cell: Vector2i in main.forge_keeper.orders:
+		var order: CraftOrder = main.forge_keeper.orders[cell]
+		if not is_instance_valid(order):
+			continue  # finished between keeper prune ticks
+		craft_orders.append({
+			"cell": _v(cell),
+			"recipe": order.recipe_id,
+			"delivered": order.delivered,
+			"work": order.craft_job.work_ticks if order.craft_job else -1,
+		})
 	var field_zones: Array = []
 	for cell: Vector2i in WorldGrid.fields:
 		field_zones.append({"cell": _v(cell), "crop": WorldGrid.fields[cell]})
@@ -73,6 +84,7 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 		"raiders": raiders,
 		"blueprints": blueprints,
 		"decon_orders": decon,
+		"craft_orders": craft_orders,
 		"fields": field_zones,
 		"crops": crops,
 		"pawns": main.pawns.map(_pawn_data),
@@ -106,6 +118,7 @@ static func _pawn_data(pawn: Pawn) -> Dictionary:
 		"priorities": priorities,
 		"job_cell": _v(pawn.work.job.cell) if pawn.work.job else [],
 		"job_type": int(pawn.work.job.type) if pawn.work.job else -1,
+		"job_res": pawn.work.job.resource_id if pawn.work.job else "",
 		"reserved_dest": _v(pawn.work.reserved_dest),
 		"food_cell": _v(pawn.survival.food_target.cell) if pawn.survival.food_target else [],
 		"eat_ticks": pawn.survival.eat_ticks_left,

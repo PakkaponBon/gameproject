@@ -1,15 +1,16 @@
 class_name Blueprint
 extends Node2D
-## A planned building. Registers one SUPPLY job per missing material unit;
-## once fully supplied it registers the timed BUILD job. Fires
-## EventBus.building_built when finished. Walkable until built.
+## A planned building. Registers one SUPPLY job per missing material unit
+## (multi-resource: the job carries its resource_id); once fully supplied
+## it registers the timed BUILD job. Fires EventBus.building_built when
+## finished. Walkable until built.
 
 const RESOURCE_SCENE := preload("res://scenes/resource_item.tscn")
 
 var building_id := "wall"
 var cell: Vector2i
-var required := 0
-var delivered := 0
+var required := {}  # resource id -> count
+var delivered := {}  # resource id -> count
 var supply_jobs: Array[Job] = []
 var build_job: Job = null
 
@@ -20,8 +21,8 @@ func _ready() -> void:
 	position = WorldGrid.cell_to_world(cell)
 	var def: Dictionary = BuildingDefs.get_def(building_id)
 	body.color = def.ghost  # alpha applied by _update_visual
-	required = int(def.cost.get("wood", 0))
-	if delivered >= required:
+	required = def.cost.duplicate()
+	if _fully_supplied():
 		_register_build_job()
 	else:
 		_register_supply_jobs()
@@ -32,24 +33,25 @@ func cancel() -> void:
 		JobManager.remove_job(job)
 	if build_job:
 		JobManager.remove_job(build_job)
-	# Refund what was already delivered as loose wood on the site.
-	for i in delivered:
-		var wood: ResourceItem = RESOURCE_SCENE.instantiate()
-		wood.resource_id = "wood"
-		wood.position = WorldGrid.cell_to_world(cell)
-		get_parent().add_child(wood)
+	# Refund what was already delivered as loose items on the site.
+	for id: String in delivered:
+		for i in int(delivered[id]):
+			var item: ResourceItem = RESOURCE_SCENE.instantiate()
+			item.resource_id = id
+			item.position = WorldGrid.cell_to_world(cell)
+			get_parent().add_child(item)
 	queue_free()
 
 ## Save/load: rebuild job state from saved progress.
-func restore(delivered_count: int, build_work: int) -> void:
+func restore(delivered_counts: Dictionary, build_work: int) -> void:
 	for job in supply_jobs:
 		JobManager.remove_job(job)
 	supply_jobs.clear()
 	if build_job:
 		JobManager.remove_job(build_job)
 		build_job = null
-	delivered = delivered_count
-	if delivered >= required:
+	delivered = delivered_counts
+	if _fully_supplied():
 		_register_build_job()
 		if build_work >= 0:
 			build_job.work_ticks = build_work
@@ -57,20 +59,28 @@ func restore(delivered_count: int, build_work: int) -> void:
 		_register_supply_jobs()
 	_update_visual()
 
-func _register_supply_jobs() -> void:
-	for i in required - delivered:
-		var job := Job.new()
-		job.type = Job.Type.SUPPLY
-		job.cell = cell
-		job.target = self
-		job.completed.connect(_on_material_delivered)
-		JobManager.add_job(job)
-		supply_jobs.append(job)
+func _fully_supplied() -> bool:
+	for id: String in required:
+		if int(delivered.get(id, 0)) < int(required[id]):
+			return false
+	return true
 
-func _on_material_delivered() -> void:
-	delivered += 1
+func _register_supply_jobs() -> void:
+	for id: String in required:
+		for i in int(required[id]) - int(delivered.get(id, 0)):
+			var job := Job.new()
+			job.type = Job.Type.SUPPLY
+			job.resource_id = id
+			job.cell = cell
+			job.target = self
+			job.completed.connect(_on_material_delivered.bind(id))
+			JobManager.add_job(job)
+			supply_jobs.append(job)
+
+func _on_material_delivered(id: String) -> void:
+	delivered[id] = int(delivered.get(id, 0)) + 1
 	_update_visual()
-	if delivered >= required:
+	if _fully_supplied():
 		_register_build_job()
 
 func _register_build_job() -> void:
@@ -88,5 +98,10 @@ func _on_built() -> void:
 
 func _update_visual() -> void:
 	# Placeholder feedback: the ghost gets more opaque as materials arrive.
-	var ratio := 1.0 if required == 0 else float(delivered) / float(required)
+	var total_required := 0
+	var total_delivered := 0
+	for id: String in required:
+		total_required += int(required[id])
+		total_delivered += int(delivered.get(id, 0))
+	var ratio := 1.0 if total_required == 0 else float(total_delivered) / float(total_required)
 	body.color.a = 0.35 + 0.35 * ratio

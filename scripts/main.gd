@@ -21,12 +21,14 @@ var decon_orders := {}  # cell -> DeconstructOrder
 @onready var spawner: WorldSpawner = $WorldSpawner
 @onready var raid_director: RaidDirector = $RaidDirector
 @onready var field_keeper: FieldKeeper = $FieldKeeper
+@onready var forge_keeper: ForgeKeeper = $ForgeKeeper
 @onready var pause_menu: PauseMenu = $PauseMenu
 @onready var hud: HudController = $HUD
 
 func _ready() -> void:
 	raid_director.spawn_parent = entities
 	field_keeper.spawn_parent = entities
+	forge_keeper.spawn_parent = entities
 	raid_director.raid_started.connect(func() -> void: hud.set_event("RAID — a raider approaches!"))
 	raid_director.raid_ended.connect(func() -> void: hud.set_event(""))
 	pause_menu.save_requested.connect(func() -> void: SaveManager.save_game(SaveManager.MANUAL_SAVE_PATH))
@@ -208,10 +210,11 @@ func mark_deconstruct(cell: Vector2i) -> void:
 
 func _on_building_deconstructed(cell: Vector2i) -> void:
 	decon_orders.erase(cell)
-	var refund := int(BuildingDefs.get_def(WorldGrid.buildings[cell]).refund)
+	var refund: Dictionary = BuildingDefs.get_def(WorldGrid.buildings[cell]).refund
 	WorldGrid.remove_building(cell)
 	walls.erase_cell(cell)
-	spawner.drop_resource(cell, "wood", refund)
+	for id: String in refund:
+		spawner.drop_resource(cell, id, int(refund[id]))
 
 func _set_mode(new_mode: Mode) -> void:
 	mode = new_mode

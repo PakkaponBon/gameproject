@@ -95,7 +95,7 @@ func _do_job() -> void:
 			if job.work_ticks <= 0:
 				JobManager.complete_job(job)
 				job = null
-		Job.Type.CHOP, Job.Type.BUILD, Job.Type.HARVEST:
+		Job.Type.CHOP, Job.Type.BUILD, Job.Type.HARVEST, Job.Type.CRAFT:
 			if not is_instance_valid(job.target):  # e.g. blueprint canceled, crop frosted
 				job = null
 				return
@@ -132,9 +132,9 @@ func _do_adjacent_work() -> void:
 		job = null
 
 func _ensure_fetch() -> void:
-	var item := JobManager.find_fetchable_resource(pawn.cell, "wood")
+	var item := JobManager.find_fetchable_resource(pawn.cell, job.resource_id)
 	if item == null:
-		abort()  # wood ran out since we took the job; pool filters re-grabs
+		abort()  # material ran out since we took the job; pool filters re-grabs
 		return
 	item.reserved = true
 	fetching = item

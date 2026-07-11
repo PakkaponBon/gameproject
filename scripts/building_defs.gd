@@ -5,15 +5,16 @@ extends RefCounted
 ##
 ## block_villagers / block_enemies drive the two pathing grids (a gate is
 ## open to villagers, solid to enemies). storage=true makes the cell act
-## as a stockpile once built.
+## as a stockpile once built. workstation=true lets ForgeKeeper run
+## recipes there. cost/refund are per-resource dictionaries.
 
-const ORDER := ["wall", "gate", "bed", "barn"]
+const ORDER := ["wall", "gate", "bed", "barn", "forge"]
 
 const DEFS := {
 	"wall": {
 		"name": "Wall",
 		"cost": {"wood": 1},
-		"refund": 0,
+		"refund": {},
 		"build_ticks": 20,
 		"tile": Vector2i(2, 0),
 		"ghost": Color(0.44, 0.44, 0.47),
@@ -24,7 +25,7 @@ const DEFS := {
 	"gate": {
 		"name": "Gate",
 		"cost": {"wood": 2},
-		"refund": 1,
+		"refund": {"wood": 1},
 		"build_ticks": 30,
 		"tile": Vector2i(3, 0),
 		"ghost": Color(0.55, 0.45, 0.32),
@@ -35,7 +36,7 @@ const DEFS := {
 	"bed": {
 		"name": "Bed",
 		"cost": {"wood": 2},
-		"refund": 1,
+		"refund": {"wood": 1},
 		"sleep_spot": true,
 		"build_ticks": 30,
 		"tile": Vector2i(4, 0),
@@ -47,13 +48,25 @@ const DEFS := {
 	"barn": {
 		"name": "Storage Barn",
 		"cost": {"wood": 3},
-		"refund": 2,
+		"refund": {"wood": 2},
 		"build_ticks": 40,
 		"tile": Vector2i(5, 0),
 		"ghost": Color(0.43, 0.31, 0.2),
 		"block_villagers": false,
 		"block_enemies": false,
 		"storage": true,
+	},
+	"forge": {
+		"name": "Forge",
+		"cost": {"wood": 2, "stone": 3},
+		"refund": {"wood": 1, "stone": 2},
+		"build_ticks": 50,
+		"tile": Vector2i(6, 0),
+		"ghost": Color(0.4, 0.34, 0.32),
+		"block_villagers": false,
+		"block_enemies": false,
+		"storage": false,
+		"workstation": true,
 	},
 }
 

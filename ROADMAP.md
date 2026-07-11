@@ -45,7 +45,7 @@ Rules: one phase at a time, in order. Each phase gates on its **Definition of Do
 - [x] HP / damage / armor data model; wounded state → bed rest to heal; death + grave + mood hit
 - [x] Draft mode: move/attack orders; undrafted villagers flee to safety zone
 - [x] Melee combat: unarmed + Tier 1 swords
-- [ ] Forge building + crafting job: iron ingots → swords (first crafting chain)
+- [x] Forge building + crafting job: iron ingots → swords (first crafting chain)
 - [ ] Enemy raid v0: bandits spawn at edge, attack villagers/doors; walls & gates block pathing
 - [ ] Combat skills (melee) affecting hit/damage
 - [ ] Trait data model v0: traits as resources with stat/mood modifiers; 2–3 test traits incl. Magic affinity (Phase 5 needs it; full backstory pool comes Phase 9)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://dqj6m2x9s4hb"]
+[gd_scene load_steps=12 format=3 uid="uid://dqj6m2x9s4hb"]
 
 [ext_resource type="Script" uid="uid://b7h4z9d6r1sc" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="TileSet" uid="uid://c5w1r8p3v0gd" path="res://assets/tileset.tres" id="2_tileset"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://cw8d3h6r2t5n" path="res://scripts/day_night_tint.gd" id="9_tint"]
 [ext_resource type="Script" uid="uid://bm7v4h1q8d2s" path="res://scripts/field_keeper.gd" id="10_field"]
 [ext_resource type="Script" uid="uid://dh2k7m4t9f1w" path="res://scripts/hud.gd" id="11_hud"]
+[ext_resource type="Script" uid="uid://dt6c1w9k3m8f" path="res://scripts/forge_keeper.gd" id="12_forge"]
 [ext_resource type="Script" uid="uid://dt3w7q1n8h5m" path="res://scripts/pause_menu.gd" id="8_pause"]
 
 [node name="Main" type="Node2D"]
@@ -36,6 +37,9 @@ script = ExtResource("6_raid")
 
 [node name="FieldKeeper" type="Node" parent="."]
 script = ExtResource("10_field")
+
+[node name="ForgeKeeper" type="Node" parent="."]
+script = ExtResource("12_forge")
 
 [node name="Camera" type="Camera2D" parent="."]
 position = Vector2(512, 512)

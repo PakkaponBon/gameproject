@@ -4,7 +4,9 @@ extends RefCounted
 
 signal completed
 
-enum Type { CHOP, HAUL, BUILD, SUPPLY, DECONSTRUCT, PLANT, HARVEST, FEED, MINE, EQUIP }  # SUPPLY = haul material to a blueprint; FEED = bring food to a collapsed pawn; EQUIP = claim a weapon
+enum Type { CHOP, HAUL, BUILD, SUPPLY, DECONSTRUCT, PLANT, HARVEST, FEED, MINE, EQUIP, CRAFT }  # SUPPLY = haul material to a site; FEED = bring food to a collapsed pawn; EQUIP = claim a weapon
+
+var resource_id := ""  # SUPPLY: which material this delivery is for
 
 var type: Type = Type.CHOP
 var cell: Vector2i

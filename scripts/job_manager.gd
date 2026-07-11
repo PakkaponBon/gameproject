@@ -23,8 +23,7 @@ func request_job(seeker: Pawn) -> Job:
 	var priorities := seeker.work_priorities
 	# Haul jobs are only valid while somewhere exists to put the item.
 	var storage_available := WorldGrid.get_free_stockpile_cell(from_cell) != WorldGrid.INVALID_CELL
-	var supply_checked := false
-	var supply_ok := false
+	var supply_ok := {}  # resource id -> bool, lazily computed
 	var best: Job = null
 	var best_prio := 0
 	var best_dist := INF
@@ -46,6 +45,8 @@ func request_job(seeker: Pawn) -> Job:
 			prio_type = Job.Type.CHOP
 		elif job.type == Job.Type.EQUIP:
 			prio_type = Job.Type.HAUL
+		elif job.type == Job.Type.CRAFT:
+			prio_type = Job.Type.BUILD
 		var prio: int = priorities.get(prio_type, 1)
 		if prio <= 0:
 			continue
@@ -55,11 +56,10 @@ func request_job(seeker: Pawn) -> Job:
 			if (job.target as ResourceItem).reserved:
 				continue  # claimed as blueprint material
 		if job.type == Job.Type.SUPPLY:
-			# Supply jobs are only valid while fetchable wood exists.
-			if not supply_checked:
-				supply_checked = true
-				supply_ok = find_fetchable_resource(from_cell, "wood") != null
-			if not supply_ok:
+			# Supply jobs are only valid while their material is fetchable.
+			if not supply_ok.has(job.resource_id):
+				supply_ok[job.resource_id] = find_fetchable_resource(from_cell, job.resource_id) != null
+			if not supply_ok[job.resource_id]:
 				continue
 		if job.type == Job.Type.FEED and find_fetchable_food(from_cell) == null:
 			continue

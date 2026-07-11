@@ -4,7 +4,7 @@ extends Node
 ## Loading reloads the main scene; `pending_load` survives the reload
 ## because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 12
+const SAVE_VERSION := 13
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 
@@ -77,7 +77,10 @@ func apply_pending_load() -> void:
 	for b: Dictionary in data.blueprints:
 		main.place_blueprint(_vec(b.cell), b.id)
 		var bp: Blueprint = main.blueprints[_vec(b.cell)]
-		bp.restore(int(b.delivered), int(b.work))
+		bp.restore(b.delivered, int(b.work))
+	for c: Dictionary in data.craft_orders:
+		var order: CraftOrder = main.forge_keeper.start_order(_vec(c.cell), c.recipe)
+		order.restore(c.delivered, int(c.work))
 	for d: Dictionary in data.decon_orders:
 		main.mark_deconstruct(_vec(d.cell))
 		main.decon_orders[_vec(d.cell)].restore(int(d.work))
@@ -130,10 +133,12 @@ func _restore_pawn(p: Dictionary) -> void:
 		var item: ResourceItem = main.spawner.spawn_resource(pawn.cell, p.carrying_id)
 		pawn.work.restore_carry(item, _vec(p.reserved_dest))
 	if int(p.job_type) >= 0:
-		# Entities re-registered their jobs above; re-claim ours by cell+type.
+		# Entities re-registered their jobs above; re-claim ours by
+		# cell + type (+ material for supply runs).
 		var job_cell := _vec(p.job_cell)
 		for job in JobManager.jobs:
-			if job.cell == job_cell and int(job.type) == int(p.job_type) and not job.reserved:
+			if job.cell == job_cell and int(job.type) == int(p.job_type) \
+					and job.resource_id == String(p.job_res) and not job.reserved:
 				job.reserved = true
 				pawn.work.job = job
 				break
