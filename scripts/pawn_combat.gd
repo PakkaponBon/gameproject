@@ -108,6 +108,7 @@ func ranged_tick() -> bool:
 	if attack_cooldown <= 0:
 		attack_cooldown = ATTACK_COOLDOWN_TICKS + 5
 		ammo -= 1
+		EventBus.play_sfx.emit("bow")
 		var lvl := pawn.skills.level("archery")
 		if randf() < 0.6 + 0.04 * lvl:
 			target.take_damage(float(wdef.damage) * (1.0 + 0.05 * lvl)

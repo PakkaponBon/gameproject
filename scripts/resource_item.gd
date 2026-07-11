@@ -41,6 +41,7 @@ func drop_at(drop_cell: Vector2i) -> void:
 	cell = drop_cell
 	position = WorldGrid.cell_to_world(cell)
 	_settle()
+	Fx.hop(self)
 
 func _settle() -> void:
 	# Check storage BEFORE registering, or our own presence marks the cell taken.

@@ -140,9 +140,15 @@ func find_fetchable_food(from_cell: Vector2i) -> FoodItem:
 func release_job(job: Job) -> void:
 	job.reserved = false
 
+const COMPLETE_SFX := {
+	Job.Type.CHOP: "chop", Job.Type.MINE: "mine", Job.Type.BUILD: "hammer",
+	Job.Type.CRAFT: "hammer", Job.Type.COOK: "eat", Job.Type.DECONSTRUCT: "hammer",
+}
+
 func complete_job(job: Job) -> void:
 	jobs.erase(job)
-	EventBus.play_sfx.emit("thud")
+	EventBus.play_sfx.emit(COMPLETE_SFX.get(job.type, "thud"))
+	EventBus.play_fx.emit(job.type, job.cell)
 	job.completed.emit()
 
 func _is_reachable(from_cell: Vector2i, to_cell: Vector2i) -> bool:

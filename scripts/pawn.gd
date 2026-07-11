@@ -88,6 +88,8 @@ func move_to(destination: Vector2i) -> void:
 
 func take_damage(amount: float) -> void:
 	if not dead:
+		Fx.flash(body)
+		Fx.damage_number(self, amount)
 		combat.take_damage(amount)
 
 ## Fed by a rescuer: back on your feet, hungry but alive.
@@ -202,10 +204,13 @@ func _step() -> void:
 		abort_all()
 		return
 	cell = path[1]
+	if (cell.x + cell.y) % 2 == 0:
+		EventBus.play_sfx.emit("step")  # SoundManager throttles the patter
 
 func _on_damaged() -> void:
 	if survival.sleeping:
 		survival.wake()
+	EventBus.play_sfx.emit("hurt")
 	needs.attacked()
 	stats_changed.emit()
 
@@ -287,3 +292,5 @@ func _process(delta: float) -> void:
 		var walking := position.distance_to(dest) > 1.5 or cell != target_cell
 		var frame := 14 if walking and int(Time.get_ticks_msec() / 180) % 2 == 0 else 0
 		body.region_rect.position.x = frame * 16
+		if absf(dest.x - position.x) > 0.5:
+			body.flip_h = dest.x < position.x  # face where we're headed

@@ -23,6 +23,7 @@ WorldGrid="*res://scripts/world_grid.gd"
 JobManager="*res://scripts/job_manager.gd"
 SaveManager="*res://scripts/save_manager.gd"
 FactionManager="*res://scripts/faction_manager.gd"
+SoundManager="*res://scripts/sound_manager.gd"
 
 [display]
 

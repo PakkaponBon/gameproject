@@ -38,7 +38,8 @@ func _ready() -> void:
 	kitchen_keeper.spawn_parent = entities
 	events_director.spawn_parent = entities
 	raid_director.raid_started.connect(func(fname: String) -> void:
-		hud.set_event("RAID — %s attacks!" % fname, Color(1.0, 0.4, 0.35)))
+		hud.set_event("RAID — %s attacks!" % fname, Color(1.0, 0.4, 0.35))
+		$Camera.shake(1.0, 5.0))
 	raid_director.raid_ended.connect(func() -> void:
 		FactionManager.add_renown(1)
 		hud.set_event("The raid is beaten. Word of your village spreads.", Color(0.7, 0.95, 0.7)))
@@ -46,6 +47,7 @@ func _ready() -> void:
 	pause_menu.load_requested.connect(func(path: String) -> void: SaveManager.load_game(path))
 	spawner.pawn_created.connect(_on_pawn_created)
 	EventBus.building_built.connect(_on_building_built)
+	EventBus.play_fx.connect(_on_play_fx)
 	EventBus.building_deconstructed.connect(_on_building_deconstructed)
 	EventBus.building_destroyed.connect(_on_building_destroyed)
 	EventBus.merchant_arrived.connect(func() -> void:
@@ -98,6 +100,7 @@ func select(pawn: Pawn) -> void:
 		selected.set_selected(false)
 	selected = pawn
 	selected.set_selected(true)
+	EventBus.play_sfx.emit("click")
 	villager_panel.show_pawn(selected)
 
 ## Roster: first click selects, second click jumps the camera there.
@@ -241,6 +244,7 @@ func _on_pawn_stats_changed(pawn: Pawn) -> void:
 		villager_panel.refresh()
 
 func _on_pawn_died(pawn: Pawn) -> void:
+	Fx.ash_mark(entities, pawn.position)  # tone rule: ash, not blood
 	spawner.spawn_entity(spawner.GRAVE_SCENE, pawn.cell)
 	if pawn.combat.weapon_id != "":
 		spawner.drop_resource(pawn.cell, pawn.combat.weapon_id, 1)  # gear outlives its owner
@@ -257,6 +261,19 @@ func _on_pawn_died(pawn: Pawn) -> void:
 				+ "Somewhere, the Ashen Legion never learns your names.")
 	elif selected == pawn:
 		_select_first_alive()
+
+const FX_COLORS := {
+	Job.Type.CHOP: Color(0.6, 0.45, 0.28),  # wood chips
+	Job.Type.MINE: Color(0.62, 0.62, 0.68),  # stone dust
+	Job.Type.PLANT: Color(0.42, 0.3, 0.18),  # soil puff
+	Job.Type.HARVEST: Color(0.5, 0.7, 0.35),
+	Job.Type.BUILD: Color(0.7, 0.7, 0.72),
+	Job.Type.DECONSTRUCT: Color(0.7, 0.7, 0.72),
+}
+
+func _on_play_fx(job_type: int, cell: Vector2i) -> void:
+	if FX_COLORS.has(job_type):
+		Fx.burst(entities, WorldGrid.cell_to_world(cell), FX_COLORS[job_type])
 
 func _on_building_built(cell: Vector2i, building_id: String) -> void:
 	blueprints.erase(cell)

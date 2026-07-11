@@ -21,6 +21,8 @@ func _ready() -> void:
 	GameClock.ticked.connect(_on_tick)
 
 func take_damage(amount: float) -> void:
+	Fx.flash($Body)
+	Fx.damage_number(self, amount)
 	hp -= amount
 	if hp <= 0.0:
 		queue_free()

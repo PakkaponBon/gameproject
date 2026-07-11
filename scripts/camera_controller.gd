@@ -5,10 +5,23 @@ extends Camera2D
 @export var min_zoom: float = 0.25
 @export var max_zoom: float = 4.0
 
+var _shake_time := 0.0
+var _shake_strength := 0.0
+
+## Raid punch: brief screen shake.
+func shake(duration := 1.0, strength := 5.0) -> void:
+	_shake_time = duration
+	_shake_strength = strength
+
 func _process(delta: float) -> void:
 	var dir := Input.get_vector("pan_left", "pan_right", "pan_up", "pan_down")
 	# Divide by zoom so panning feels the same speed on screen at any zoom level.
 	position += dir * pan_speed * delta / zoom.x
+	if _shake_time > 0.0:
+		_shake_time -= delta
+		offset = Vector2(randf_range(-1, 1), randf_range(-1, 1)) * _shake_strength * _shake_time
+	else:
+		offset = Vector2.ZERO
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:

@@ -56,6 +56,7 @@ func eat_tick() -> void:
 		var was_meal := food_target.meal
 		food_target.queue_free()
 		food_target = null
+		EventBus.play_sfx.emit("eat")
 		pawn.needs.eat(was_meal)
 
 ## Mental-break behavior: aimless steps.

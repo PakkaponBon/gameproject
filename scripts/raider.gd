@@ -36,6 +36,8 @@ func _ready() -> void:
 	GameClock.ticked.connect(_on_tick)
 
 func take_damage(amount: float) -> void:
+	Fx.flash($Body)
+	Fx.damage_number(self, amount)
 	hp -= maxf(amount - armor, 1.0)
 	if hp <= 0.0:
 		if faction_id != "":
@@ -146,5 +148,8 @@ func _process(delta: float) -> void:
 	var dest := WorldGrid.cell_to_world(cell)
 	position = position.lerp(dest, minf(1.0, LERP_WEIGHT * delta))
 	var walking := position.distance_to(dest) > 1.5
-	($Body as Sprite2D).region_rect.position.x = \
+	var body: Sprite2D = $Body
+	body.region_rect.position.x = \
 			(14 if walking and int(Time.get_ticks_msec() / 180) % 2 == 0 else 0) * 16
+	if absf(dest.x - position.x) > 0.5:
+		body.flip_h = dest.x < position.x

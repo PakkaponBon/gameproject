@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3 uid="uid://dqj6m2x9s4hb"]
+[gd_scene load_steps=25 format=3 uid="uid://dqj6m2x9s4hb"]
 
 [ext_resource type="Script" uid="uid://b7h4z9d6r1sc" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="TileSet" uid="uid://c5w1r8p3v0gd" path="res://assets/tileset.tres" id="2_tileset"]
@@ -23,7 +23,6 @@
 [ext_resource type="Script" uid="uid://cq9f5w1t3k8n" path="res://scripts/hover_inspect.gd" id="23_inspect"]
 [ext_resource type="Script" uid="uid://bt8w3m6c1k4f" path="res://scripts/kitchen_keeper.gd" id="24_kitchen"]
 [ext_resource type="Script" uid="uid://cw1f6t9k3n7m" path="res://scripts/events_director.gd" id="25_events"]
-[ext_resource type="Script" uid="uid://cf2n7w4t9k1c" path="res://scripts/sfx_player.gd" id="26_sfx"]
 [ext_resource type="Script" uid="uid://dt3w7q1n8h5m" path="res://scripts/pause_menu.gd" id="8_pause"]
 
 [node name="Main" type="Node2D"]
@@ -75,9 +74,6 @@ script = ExtResource("24_kitchen")
 
 [node name="EventsDirector" type="Node" parent="."]
 script = ExtResource("25_events")
-
-[node name="SfxPlayer" type="Node" parent="."]
-script = ExtResource("26_sfx")
 
 [node name="Camera" type="Camera2D" parent="."]
 position = Vector2(512, 512)

@@ -8,6 +8,7 @@ const FEED_MAX := 5
 const FEED_SECONDS := 12.0
 
 var _feed: VBoxContainer
+var _raid_arrow: Label
 var _resource_cooldown := 0
 
 @onready var mode_label: Label = $ModeLabel
@@ -21,6 +22,11 @@ func _ready() -> void:
 	_feed.offset_top = 52.0
 	_feed.offset_right = 560.0
 	add_child(_feed)
+	_raid_arrow = Label.new()
+	_raid_arrow.text = "!! RAID !!"
+	_raid_arrow.modulate = Color(1.0, 0.3, 0.25)
+	_raid_arrow.visible = false
+	add_child(_raid_arrow)
 	GameClock.ticked.connect(_on_tick)
 	GameClock.speed_changed.connect(_update_calendar)
 	_update_calendar()
@@ -89,6 +95,25 @@ func _update_resources() -> void:
 			raw += 1
 	resource_label.text = "Wood %d   Stone %d   Ore %d   Ingots %d   Food %d (+%d meals)   Renown %d" \
 			% [counts.wood, counts.stone, counts.iron_ore, counts.iron_ingot, raw, meals, FactionManager.renown]
+
+## Red edge-of-screen pointer toward the nearest raider.
+func _process(_delta: float) -> void:
+	var raiders := get_tree().get_nodes_in_group("raiders")
+	_raid_arrow.visible = not raiders.is_empty()
+	if raiders.is_empty():
+		return
+	var camera: Camera2D = get_parent().get_node("Camera")
+	var nearest: Node2D = raiders[0]
+	for node in raiders:
+		if (node as Node2D).position.distance_to(camera.position) \
+				< nearest.position.distance_to(camera.position):
+			nearest = node
+	var view := get_viewport().get_visible_rect().size
+	var dir: Vector2 = (nearest.position - camera.position)
+	if dir.length() < 8.0:
+		dir = Vector2.DOWN
+	var edge := view / 2.0 + dir.normalized() * (minf(view.x, view.y) / 2.0 - 48.0)
+	_raid_arrow.position = edge - _raid_arrow.size / 2.0
 
 func _update_calendar() -> void:
 	var tag := ""
