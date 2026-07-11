@@ -26,6 +26,7 @@ var _selected := false
 
 ## 1 = preferred, higher = later, 0 = never does this job type.
 var work_priorities := {Job.Type.CHOP: 1, Job.Type.HAUL: 1, Job.Type.BUILD: 1, Job.Type.PLANT: 1}
+var traits: Array = []  # trait ids from TraitDefs
 
 @onready var body: ColorRect = $Body
 @onready var selection_ring: ColorRect = $SelectionRing

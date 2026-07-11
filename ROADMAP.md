@@ -48,7 +48,7 @@ Rules: one phase at a time, in order. Each phase gates on its **Definition of Do
 - [x] Forge building + crafting job: iron ingots → swords (first crafting chain)
 - [x] Enemy raid v0: bandits spawn at edge, attack villagers/doors; walls & gates block pathing
 - [x] Combat skills (melee) affecting hit/damage
-- [ ] Trait data model v0: traits as resources with stat/mood modifiers; 2–3 test traits incl. Magic affinity (Phase 5 needs it; full backstory pool comes Phase 9)
+- [x] Trait data model v0: traits as resources with stat/mood modifiers; 2–3 test traits incl. Magic affinity (Phase 5 needs it; full backstory pool comes Phase 9)
 - [ ] Pause + speed controls (pause/1x/3x, basic) — required to test raids; UI polish stays in Phase 7
 
 **DoD:** Survive a 4-bandit raid using a wall choke + 3 drafted sword villagers; one villager can be wounded and recover.

@@ -120,8 +120,14 @@ func _spawn_pawns(used: Dictionary) -> void:
 		if used.has(cell):
 			continue
 		used[cell] = true
-		create_pawn(cell, "Pawn %d" % (count + 1), presets[count % presets.size()].duplicate())
+		var pawn := create_pawn(cell, "Pawn %d" % (count + 1), presets[count % presets.size()].duplicate())
+		pawn.traits = _random_traits()
 		count += 1
+
+func _random_traits() -> Array:
+	var pool := TraitDefs.ORDER.duplicate()
+	pool.shuffle()
+	return pool.slice(0, 1 + randi() % 2)  # 1-2 traits each
 
 func _scatter(scene: PackedScene, count: int, used: Dictionary) -> void:
 	var placed := 0

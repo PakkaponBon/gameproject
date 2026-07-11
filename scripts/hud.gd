@@ -61,8 +61,12 @@ func update_stats(pawn: Pawn) -> void:
 		pawn.skills.level("melee"), suffix]
 
 func update_priorities(pawn: Pawn) -> void:
-	priority_label.text = "%s — Chop: %s  Haul: %s  Build: %s  Farm: %s   [1-4: cycle priority, 0 = off]" % [
-		pawn.name,
+	var trait_names: Array[String] = []
+	for id: String in pawn.traits:
+		trait_names.append(TraitDefs.get_def(id).name)
+	var trait_text := "" if trait_names.is_empty() else " (%s)" % ", ".join(trait_names)
+	priority_label.text = "%s%s — Chop: %s  Haul: %s  Build: %s  Farm: %s   [1-4: cycle priority, 0 = off]" % [
+		pawn.name, trait_text,
 		_priority_text(pawn.work_priorities[Job.Type.CHOP]),
 		_priority_text(pawn.work_priorities[Job.Type.HAUL]),
 		_priority_text(pawn.work_priorities[Job.Type.BUILD]),

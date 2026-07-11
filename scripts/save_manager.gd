@@ -4,7 +4,7 @@ extends Node
 ## Loading reloads the main scene; `pending_load` survives the reload
 ## because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 15
+const SAVE_VERSION := 16
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 
@@ -118,6 +118,7 @@ func _restore_pawn(p: Dictionary) -> void:
 		pawn.combat.equip(p.weapon)
 	for skill_id: String in p.skills:
 		pawn.skills.xp[skill_id] = float(p.skills[skill_id])
+	pawn.traits = p.traits
 	pawn.survival.wander_cooldown = int(p.wander_cd)
 	pawn.target_cell = _vec(p.target)
 	if bool(p.collapsed):

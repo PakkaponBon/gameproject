@@ -40,7 +40,9 @@ func engage_adjacent() -> bool:
 		attack_cooldown = ATTACK_COOLDOWN_TICKS
 		var lvl := pawn.skills.level("melee")
 		if randf() < BASE_HIT_CHANCE + HIT_PER_MELEE_LEVEL * lvl:
-			raider.take_damage(attack_damage * (1.0 + DAMAGE_PER_MELEE_LEVEL * lvl))
+			var damage := attack_damage * (1.0 + DAMAGE_PER_MELEE_LEVEL * lvl) \
+					* TraitDefs.multiplier(pawn.traits, "melee_damage_mult")
+			raider.take_damage(damage)
 			pawn.skills.gain("melee", MELEE_XP_PER_HIT)  # learn by landing hits
 	return true
 

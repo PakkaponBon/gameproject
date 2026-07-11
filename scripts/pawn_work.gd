@@ -252,7 +252,7 @@ func _step_off_wall(wall_cell: Vector2i) -> void:
 ## Advance the held job by this tick's work, scaled by condition:
 ## exhaustion halves speed, low mood scales down to 60%.
 func _apply_work() -> void:
-	var speed := pawn.needs.mood_work_factor()
+	var speed := pawn.needs.mood_work_factor() * TraitDefs.multiplier(pawn.traits, "work_speed_mult")
 	if pawn.needs.is_exhausted():
 		speed *= 0.5
 	if pawn.combat.is_wounded():
