@@ -3,20 +3,22 @@ extends RefCounted
 ## Resource catalog — data over code. Adding a resource = adding an entry.
 ## node_color/node_yield only apply to resources that come from ore nodes.
 
+## sprite = cell index in assets/sprites.png (item sprites are drawn
+## light and tinted by color at runtime).
 const DEFS := {
-	"wood": {"name": "Wood", "color": Color(0.784314, 0.607843, 0.352941)},
-	"stone": {"name": "Stone", "color": Color(0.62, 0.62, 0.66),
+	"wood": {"name": "Wood", "color": Color(0.784314, 0.607843, 0.352941), "sprite": 4},
+	"stone": {"name": "Stone", "color": Color(0.62, 0.62, 0.66), "sprite": 5,
 			"node_color": Color(0.33, 0.33, 0.36), "node_yield": 3},
-	"iron_ore": {"name": "Iron Ore", "color": Color(0.72, 0.5, 0.38),
+	"iron_ore": {"name": "Iron Ore", "color": Color(0.72, 0.5, 0.38), "sprite": 5,
 			"node_color": Color(0.37, 0.29, 0.23), "node_yield": 2},
-	"iron_ingot": {"name": "Iron Ingot", "color": Color(0.76, 0.76, 0.82)},
-	"sword": {"name": "Sword", "color": Color(0.8, 0.82, 0.88)},
-	"bow": {"name": "Bow", "color": Color(0.6, 0.45, 0.3)},
-	"arrow": {"name": "Arrows", "color": Color(0.85, 0.85, 0.7), "shots": 5},
-	"herb": {"name": "Herb", "color": Color(0.35, 0.8, 0.6), "medicine": 25.0},
-	"relic_fireball": {"name": "Fireball Relic", "color": Color(0.9, 0.45, 0.2), "relic": true},
-	"relic_heal": {"name": "Healing Relic", "color": Color(0.4, 0.85, 0.5), "relic": true},
-	"relic_barrier": {"name": "Barrier Relic", "color": Color(0.5, 0.55, 0.95), "relic": true},
+	"iron_ingot": {"name": "Iron Ingot", "color": Color(0.76, 0.76, 0.82), "sprite": 6},
+	"sword": {"name": "Sword", "color": Color(0.85, 0.87, 0.95), "sprite": 7},
+	"bow": {"name": "Bow", "color": Color(0.75, 0.6, 0.4), "sprite": 8},
+	"arrow": {"name": "Arrows", "color": Color(0.9, 0.9, 0.78), "sprite": 9, "shots": 5},
+	"herb": {"name": "Herb", "color": Color(0.35, 0.8, 0.6), "sprite": 10, "medicine": 25.0},
+	"relic_fireball": {"name": "Fireball Relic", "color": Color(0.95, 0.5, 0.25), "sprite": 12, "relic": true},
+	"relic_heal": {"name": "Healing Relic", "color": Color(0.45, 0.9, 0.55), "sprite": 12, "relic": true},
+	"relic_barrier": {"name": "Barrier Relic", "color": Color(0.55, 0.6, 1.0), "sprite": 12, "relic": true},
 }
 
 static func get_def(id: String) -> Dictionary:

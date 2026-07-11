@@ -12,11 +12,13 @@ var reserved := false  # claimed as blueprint material by a supplier pawn
 
 var _home: Node = null  # container to return to after being carried
 
-@onready var body: ColorRect = $Body
+@onready var body: Sprite2D = $Body
 
 func _ready() -> void:
 	add_to_group("resources")
-	body.color = ResourceDefs.get_def(resource_id).color
+	var def := ResourceDefs.get_def(resource_id)
+	body.region_rect = Rect2(int(def.sprite) * 16, 0, 16, 16)
+	body.modulate = def.color
 	_home = get_parent()
 	cell = WorldGrid.world_to_cell(position)
 	position = WorldGrid.cell_to_world(cell)

@@ -11,9 +11,9 @@ signal died
 ## How fast the sprite eases toward its logical cell (rendering only).
 const LERP_WEIGHT := 12.0
 const DIRS: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
-const BODY_COLOR := Color(0.231373, 0.482353, 0.831373)
-const SLEEP_COLOR := Color(0.14, 0.29, 0.5)
-const COLLAPSE_COLOR := Color(0.55, 0.65, 0.85)
+const BODY_COLOR := Color(0.4, 0.62, 0.95)
+const SLEEP_COLOR := Color(0.22, 0.32, 0.5)
+const COLLAPSE_COLOR := Color(0.65, 0.72, 0.9)
 const COLLAPSE_HP_DRAIN := 0.2  # per tick: ~50s from full HP to death
 
 var cell: Vector2i
@@ -29,7 +29,7 @@ var _selected := false
 var work_priorities := {Job.Type.CHOP: 1, Job.Type.HAUL: 1, Job.Type.BUILD: 1, Job.Type.PLANT: 1}
 var traits: Array = []  # trait ids from TraitDefs
 
-@onready var body: ColorRect = $Body
+@onready var body: Sprite2D = $Body
 @onready var selection_ring: ColorRect = $SelectionRing
 @onready var needs: PawnNeeds = $Needs
 @onready var combat: PawnCombat = $Combat
@@ -71,7 +71,7 @@ func attack(raider: Raider) -> void:
 
 func set_sleep_visual(on: bool) -> void:
 	if not dead:
-		body.color = SLEEP_COLOR if on else BODY_COLOR
+		body.modulate = SLEEP_COLOR if on else BODY_COLOR
 
 func cycle_priority(type: Job.Type) -> void:
 	# 1 -> 2 -> 3 -> 0 (off) -> 1
@@ -96,7 +96,7 @@ func be_fed() -> void:
 	feed_job = null
 	needs.hunger = 50.0
 	body.rotation_degrees = 0.0
-	body.color = BODY_COLOR
+	body.modulate = BODY_COLOR
 	stats_changed.emit()
 
 ## Human-readable "what am I doing" for the villager panel.
@@ -261,9 +261,8 @@ func _register_feed_job() -> void:
 	JobManager.add_job(feed_job)
 
 func _apply_collapse_visuals() -> void:
-	body.color = COLLAPSE_COLOR
-	body.pivot_offset = body.size / 2.0
-	body.rotation_degrees = 90.0
+	body.modulate = COLLAPSE_COLOR
+	body.rotation_degrees = 90.0  # Sprite2D rotates around its center
 
 ## Death: release everything, tell the colony, and fade — Main replaces
 ## us with a grave (no lingering corpse; tone rule).

@@ -8,8 +8,8 @@ const FOOD_SCENE := preload("res://scenes/food_item.tscn")
 const RESOURCE_SCENE := preload("res://scenes/resource_item.tscn")
 const SPILL: Array[Vector2i] = [Vector2i.ZERO, Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
 const HARVEST_TICKS := 15
-const SPROUT_SIZE := 3.0
-const MATURE_SIZE := 12.0
+const SPROUT_SCALE := 0.25
+const MATURE_SCALE := 1.0
 
 var crop_id := "potato"  # set before add_child
 var cell: Vector2i
@@ -17,7 +17,7 @@ var growth_ticks := 0
 var grow_ticks_total := 1
 var harvest_job: Job = null
 
-@onready var body: ColorRect = $Body
+@onready var body: Sprite2D = $Body
 
 func _ready() -> void:
 	add_to_group("crops")
@@ -25,7 +25,7 @@ func _ready() -> void:
 	position = WorldGrid.cell_to_world(cell)
 	var def := CropDefs.get_def(crop_id)
 	grow_ticks_total = maxi(1, int(float(def.grow_days) * GameClock.TICKS_PER_DAY))
-	body.color = def.color
+	body.modulate = def.color  # plant sprite is drawn light
 	_update_visual()
 	GameClock.ticked.connect(_on_tick)
 
@@ -93,8 +93,4 @@ func _spawn_food(spot: Vector2i) -> void:
 
 func _update_visual() -> void:
 	var t := minf(float(growth_ticks) / float(grow_ticks_total), 1.0)
-	var s := lerpf(SPROUT_SIZE, MATURE_SIZE, t)
-	body.offset_left = -s / 2.0
-	body.offset_top = -s / 2.0
-	body.offset_right = s / 2.0
-	body.offset_bottom = s / 2.0
+	body.scale = Vector2.ONE * lerpf(SPROUT_SCALE, MATURE_SCALE, t)

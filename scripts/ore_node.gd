@@ -12,7 +12,7 @@ var resource_id := "stone"  # set before add_child
 var cell: Vector2i
 var job: Job
 
-@onready var body: ColorRect = $Body
+@onready var body: Sprite2D = $Body
 @onready var fleck: ColorRect = $Fleck
 
 func _ready() -> void:
@@ -20,7 +20,7 @@ func _ready() -> void:
 	cell = WorldGrid.world_to_cell(position)
 	position = WorldGrid.cell_to_world(cell)
 	var def := ResourceDefs.get_def(resource_id)
-	body.color = def.node_color
+	body.modulate = def.node_color * 1.6  # rock sprite is drawn light
 	fleck.color = def.color
 	WorldGrid.set_obstacle(cell, true)
 	job = Job.new()

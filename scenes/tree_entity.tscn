@@ -1,22 +1,12 @@
 [gd_scene format=3 uid="uid://ck3t8b5x1m6v"]
 
 [ext_resource type="Script" uid="uid://dn7w2q9f4j1h" path="res://scripts/tree_entity.gd" id="1_tree"]
+[ext_resource type="Texture2D" uid="uid://bs7k4w2naf1c" path="res://assets/sprites.png" id="2_sprites"]
 
 [node name="TreeEntity" type="Node2D"]
 script = ExtResource("1_tree")
 
-[node name="Canopy" type="ColorRect" parent="."]
-offset_left = -6.0
-offset_top = -7.0
-offset_right = 6.0
-offset_bottom = 3.0
-mouse_filter = 2
-color = Color(0.164706, 0.431373, 0.211765, 1)
-
-[node name="Trunk" type="ColorRect" parent="."]
-offset_left = -2.0
-offset_top = 3.0
-offset_right = 2.0
-offset_bottom = 7.0
-mouse_filter = 2
-color = Color(0.407843, 0.286275, 0.176471, 1)
+[node name="Body" type="Sprite2D" parent="."]
+texture = ExtResource("2_sprites")
+region_enabled = true
+region_rect = Rect2(16, 0, 16, 16)

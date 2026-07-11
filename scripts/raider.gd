@@ -28,12 +28,9 @@ func _ready() -> void:
 	if is_boss:
 		hp = 90.0
 		attack_damage = 12.0
-		var body: ColorRect = $Body
-		body.color = Color(0.35, 0.08, 0.08)
-		body.offset_left = -7.0
-		body.offset_top = -7.0
-		body.offset_right = 7.0
-		body.offset_bottom = 7.0
+		var body: Sprite2D = $Body
+		body.modulate = Color(0.4, 0.1, 0.1)
+		body.scale = Vector2(1.3, 1.3)
 	GameClock.ticked.connect(_on_tick)
 
 func take_damage(amount: float) -> void:
