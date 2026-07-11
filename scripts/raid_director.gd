@@ -35,12 +35,13 @@ func _spawn_raid() -> void:
 			break
 		var cell := origin + offset
 		if WorldGrid.in_bounds(cell) and not WorldGrid.is_wall(cell):
-			_spawn_bandit(cell)
+			_spawn_bandit(cell, placed == 0 and count >= 4)  # big raids bring a boss
 			placed += 1
 	raid_started.emit()
 
-func _spawn_bandit(cell: Vector2i) -> void:
+func _spawn_bandit(cell: Vector2i, boss := false) -> void:
 	var raider: Raider = RAIDER_SCENE.instantiate()
+	raider.is_boss = boss
 	raider.position = WorldGrid.cell_to_world(cell)
 	raider.gone.connect(_on_raider_gone)
 	spawn_parent.add_child(raider)

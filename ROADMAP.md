@@ -57,13 +57,13 @@ Rules: one phase at a time, in order. Each phase gates on its **Definition of Do
 ---
 
 ## Phase 5 — Weapon Tiers & Magic (v0.6)
-- [ ] Bows: harder recipe, Archery skill gate, arrows as ammo; watchtower building (archer slot)
-- [ ] Ranged combat AI (kite, tower priority)
-- [ ] Magic relics: item type with unique spell + long cooldown (fireball, heal, barrier minimum)
-- [ ] Magic affinity trait gates relic use; relics NOT craftable
-- [ ] Traveling merchant event v0: rare wanderer, buy/sell menu (also the trade primitive Phase 6 diplomacy reuses)
-- [ ] Relic sources v0: merchant stock + raid boss drop + debug spawn command (expeditions come in Phase 6)
-- [ ] Healing herbs job/item (non-magic healing path)
+- [x] Bows: harder recipe, Archery skill gate, arrows as ammo; watchtower building (archer slot)
+- [x] Ranged combat AI (kite, tower priority)
+- [x] Magic relics: item type with unique spell + long cooldown (fireball, heal, barrier minimum)
+- [x] Magic affinity trait gates relic use; relics NOT craftable
+- [x] Traveling merchant event v0: rare wanderer, buy/sell menu (also the trade primitive Phase 6 diplomacy reuses)
+- [x] Relic sources v0: merchant stock + raid boss drop + debug spawn command (expeditions come in Phase 6)
+- [x] Healing herbs job/item (non-magic healing path)
 
 **DoD:** A mixed squad (2 swords, 1 archer on tower, 1 relic user) beats a raid that swords alone lose.
 **Tag:** `v0.6-arsenal`

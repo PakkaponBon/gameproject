@@ -16,6 +16,7 @@ var cell: Vector2i
 var hp := HP_MAX
 var attack_damage := 8.0
 var armor := 0.0
+var is_boss := false  # set before add_child: tougher, drops a relic
 var attack_cooldown := 0
 var move_cooldown := 0
 
@@ -23,19 +24,30 @@ func _ready() -> void:
 	add_to_group("raiders")
 	cell = WorldGrid.world_to_cell(position)
 	position = WorldGrid.cell_to_world(cell)
+	if is_boss:
+		hp = 90.0
+		attack_damage = 12.0
+		var body: ColorRect = $Body
+		body.color = Color(0.35, 0.08, 0.08)
+		body.offset_left = -7.0
+		body.offset_top = -7.0
+		body.offset_right = 7.0
+		body.offset_bottom = 7.0
 	GameClock.ticked.connect(_on_tick)
 
 func take_damage(amount: float) -> void:
 	hp -= maxf(amount - armor, 1.0)
 	if hp <= 0.0:
+		if is_boss:
+			_drop_item(RelicDefs.ORDER.pick_random())  # the relic faucet
 		if randf() < SWORD_DROP_CHANCE:
-			_drop_sword()
+			_drop_item("sword")
 		gone.emit()
 		queue_free()
 
-func _drop_sword() -> void:
+func _drop_item(id: String) -> void:
 	var item: ResourceItem = RESOURCE_SCENE.instantiate()
-	item.resource_id = "sword"
+	item.resource_id = id
 	item.position = WorldGrid.cell_to_world(cell)
 	get_parent().add_child(item)
 

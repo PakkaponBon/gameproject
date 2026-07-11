@@ -37,6 +37,7 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 		raiders.append({
 			"cell": _v(raider.cell),
 			"hp": raider.hp,
+			"boss": raider.is_boss,
 			"atk_cd": raider.attack_cooldown,
 			"move_cd": raider.move_cooldown,
 		})
@@ -114,6 +115,10 @@ static func _pawn_data(pawn: Pawn) -> Dictionary:
 		"hp": pawn.combat.hp,
 		"atk_cd": pawn.combat.attack_cooldown,
 		"weapon": pawn.combat.weapon_id,
+		"ammo": pawn.combat.ammo,
+		"relic": pawn.combat.relic_id,
+		"relic_cd": pawn.combat.relic_cooldown,
+		"carrying_herb": pawn.work.carrying_herb,
 		"skills": pawn.skills.xp,
 		"traits": pawn.traits,
 		"wander_cd": pawn.survival.wander_cooldown,

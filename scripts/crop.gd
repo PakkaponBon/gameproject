@@ -5,6 +5,7 @@ extends Node2D
 ## Winter kills it via kill().
 
 const FOOD_SCENE := preload("res://scenes/food_item.tscn")
+const RESOURCE_SCENE := preload("res://scenes/resource_item.tscn")
 const SPILL: Array[Vector2i] = [Vector2i.ZERO, Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
 const HARVEST_TICKS := 15
 const SPROUT_SIZE := 3.0
@@ -79,9 +80,16 @@ func _on_harvested() -> void:
 	queue_free()
 
 func _spawn_food(spot: Vector2i) -> void:
-	var food: Node2D = FOOD_SCENE.instantiate()
-	food.position = WorldGrid.cell_to_world(spot)
-	get_parent().add_child(food)
+	var def := CropDefs.get_def(crop_id)
+	var produce: Node2D
+	if def.has("resource_output"):  # e.g. herbs yield items, not meals
+		var item: ResourceItem = RESOURCE_SCENE.instantiate()
+		item.resource_id = def.resource_output
+		produce = item
+	else:
+		produce = FOOD_SCENE.instantiate()
+	produce.position = WorldGrid.cell_to_world(spot)
+	get_parent().add_child(produce)
 
 func _update_visual() -> void:
 	var t := minf(float(growth_ticks) / float(grow_ticks_total), 1.0)

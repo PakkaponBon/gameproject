@@ -4,7 +4,7 @@ extends Node
 ## Loading reloads the main scene; `pending_load` survives the reload
 ## because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 16
+const SAVE_VERSION := 17
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 
@@ -73,7 +73,7 @@ func apply_pending_load() -> void:
 	for g: Array in data.graves:
 		spawner.spawn_entity(spawner.GRAVE_SCENE, _vec(g))
 	for r: Dictionary in data.raiders:
-		var raider: Raider = spawner.spawn_entity(spawner.RAIDER_SCENE, _vec(r.cell))
+		var raider: Raider = spawner.spawn_raider(_vec(r.cell), bool(r.boss))
 		raider.hp = float(r.hp)
 		raider.attack_cooldown = int(r.atk_cd)
 		raider.move_cooldown = int(r.move_cd)
@@ -116,6 +116,9 @@ func _restore_pawn(p: Dictionary) -> void:
 	pawn.combat.attack_cooldown = int(p.atk_cd)
 	if String(p.weapon) != "":
 		pawn.combat.equip(p.weapon)
+	pawn.combat.ammo = int(p.ammo)
+	pawn.combat.relic_id = String(p.relic)
+	pawn.combat.relic_cooldown = int(p.relic_cd)
 	for skill_id: String in p.skills:
 		pawn.skills.xp[skill_id] = float(p.skills[skill_id])
 	pawn.traits = p.traits
@@ -133,6 +136,8 @@ func _restore_pawn(p: Dictionary) -> void:
 		return  # drafted pawns hold no jobs
 	if bool(p.carrying_food):
 		pawn.work.carrying_food = true
+	if bool(p.carrying_herb):
+		pawn.work.carrying_herb = true
 	# Carrying and a job can coexist: a SUPPLY pawn carries wood toward
 	# its blueprint. Restore both independently.
 	if String(p.carrying_id) != "":
