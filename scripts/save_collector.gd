@@ -96,6 +96,7 @@ static func _pawn_data(pawn: Pawn) -> Dictionary:
 		"bed": _v(pawn.survival.bed_cell),
 		"hp": pawn.combat.hp,
 		"atk_cd": pawn.combat.attack_cooldown,
+		"weapon": pawn.combat.weapon_id,
 		"wander_cd": pawn.survival.wander_cooldown,
 		"collapsed": pawn.collapsed,
 		"drafted": pawn.drafted,

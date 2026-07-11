@@ -44,7 +44,7 @@ Rules: one phase at a time, in order. Each phase gates on its **Definition of Do
 ## Phase 4 — Combat Core (v0.5)  *(new weight starts here)*
 - [x] HP / damage / armor data model; wounded state → bed rest to heal; death + grave + mood hit
 - [x] Draft mode: move/attack orders; undrafted villagers flee to safety zone
-- [ ] Melee combat: unarmed + Tier 1 swords
+- [x] Melee combat: unarmed + Tier 1 swords
 - [ ] Forge building + crafting job: iron ingots → swords (first crafting chain)
 - [ ] Enemy raid v0: bandits spawn at edge, attack villagers/doors; walls & gates block pathing
 - [ ] Combat skills (melee) affecting hit/damage

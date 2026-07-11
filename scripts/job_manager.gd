@@ -18,7 +18,9 @@ func remove_job(job: Job) -> void:
 
 ## Best = lowest priority number first (0 disables the job type entirely),
 ## then nearest by distance. Only reachable, currently-valid jobs count.
-func request_job(from_cell: Vector2i, priorities: Dictionary) -> Job:
+func request_job(seeker: Pawn) -> Job:
+	var from_cell := seeker.cell
+	var priorities := seeker.work_priorities
 	# Haul jobs are only valid while somewhere exists to put the item.
 	var storage_available := WorldGrid.get_free_stockpile_cell(from_cell) != WorldGrid.INVALID_CELL
 	var supply_checked := false
@@ -42,6 +44,8 @@ func request_job(from_cell: Vector2i, priorities: Dictionary) -> Job:
 			prio_type = Job.Type.HAUL
 		elif job.type == Job.Type.MINE:
 			prio_type = Job.Type.CHOP
+		elif job.type == Job.Type.EQUIP:
+			prio_type = Job.Type.HAUL
 		var prio: int = priorities.get(prio_type, 1)
 		if prio <= 0:
 			continue
@@ -59,6 +63,8 @@ func request_job(from_cell: Vector2i, priorities: Dictionary) -> Job:
 				continue
 		if job.type == Job.Type.FEED and find_fetchable_food(from_cell) == null:
 			continue
+		if job.type == Job.Type.EQUIP and seeker.combat.weapon_id != "":
+			continue  # already armed
 		if best and (prio > best_prio or (prio == best_prio and float((job.cell - from_cell).length_squared()) >= best_dist)):
 			continue
 		# Solid targets (walls being torn down, ore) are worked from beside.

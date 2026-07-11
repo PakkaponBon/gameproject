@@ -20,7 +20,7 @@ func busy() -> bool:
 			or fetching_food != null or carrying_food
 
 func request_next() -> void:
-	job = JobManager.request_job(pawn.cell, pawn.work_priorities)
+	job = JobManager.request_job(pawn)
 	if job == null:
 		return
 	if job.type == Job.Type.SUPPLY:
@@ -82,6 +82,8 @@ func _do_job() -> void:
 			_ensure_fetch()  # e.g. right after load: job held, wood not yet chosen
 		Job.Type.FEED:
 			_ensure_food_fetch()
+		Job.Type.EQUIP:
+			_equip_here()
 		Job.Type.DECONSTRUCT, Job.Type.MINE:
 			_do_adjacent_work()
 		Job.Type.PLANT:
@@ -147,6 +149,18 @@ func _pick_up_fetched() -> void:
 	carrying = fetching
 	fetching = null
 	pawn.target_cell = job.cell
+
+func _equip_here() -> void:
+	var item := job.target as ResourceItem
+	# Gone, or hauled elsewhere since we set out.
+	if not is_instance_valid(item) or item.get_parent() is Pawn or item.cell != job.cell:
+		job = null
+		return
+	item.pick_up(pawn)  # clears its jobs and cell registration
+	pawn.combat.equip(item.resource_id)
+	item.queue_free()  # the weapon lives in gear now, not on the ground
+	JobManager.complete_job(job)
+	job = null
 
 func _ensure_food_fetch() -> void:
 	var food := JobManager.find_fetchable_food(pawn.cell)

@@ -223,6 +223,8 @@ func _on_pawn_stats_changed(pawn: Pawn) -> void:
 
 func _on_pawn_died(pawn: Pawn) -> void:
 	spawner.spawn_entity(spawner.GRAVE_SCENE, pawn.cell)
+	if pawn.combat.weapon_id != "":
+		spawner.drop_resource(pawn.cell, pawn.combat.weapon_id, 1)  # gear outlives its owner
 	pawns.erase(pawn)
 	for other in pawns:
 		other.needs.mourn()  # loss is real: colony-wide mood hit

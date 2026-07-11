@@ -9,6 +9,7 @@ const DEFS := {
 			"node_color": Color(0.33, 0.33, 0.36), "node_yield": 3},
 	"iron_ore": {"name": "Iron Ore", "color": Color(0.72, 0.5, 0.38),
 			"node_color": Color(0.37, 0.29, 0.23), "node_yield": 2},
+	"sword": {"name": "Sword", "color": Color(0.8, 0.82, 0.88)},
 }
 
 static func get_def(id: String) -> Dictionary:

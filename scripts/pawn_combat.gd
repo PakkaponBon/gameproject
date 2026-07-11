@@ -15,8 +15,9 @@ const HEAL_IN_BED := 0.08   # per tick while sleeping in a bed
 const HEAL_ON_GROUND := 0.02
 
 var hp := HP_MAX
-var attack_damage := 5.0  # unarmed baseline
+var attack_damage := WeaponDefs.UNARMED_DAMAGE
 var armor := 0.0
+var weapon_id := ""  # "" = unarmed
 var attack_cooldown := 0
 var attack_target: Raider = null  # draft order: pursue and engage
 
@@ -50,6 +51,10 @@ func drain(amount: float) -> void:
 
 func heal(amount: float) -> void:
 	hp = minf(hp + amount, HP_MAX)
+
+func equip(id: String) -> void:
+	weapon_id = id
+	attack_damage = float(WeaponDefs.get_def(id).damage)
 
 func is_wounded() -> bool:
 	return hp < HP_MAX * WOUNDED_BELOW

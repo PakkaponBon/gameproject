@@ -7,6 +7,8 @@ signal gone  # died or left; main uses this to clear the event banner
 
 const LERP_WEIGHT := 10.0
 const HP_MAX := 50.0
+const SWORD_DROP_CHANCE := 0.4
+const RESOURCE_SCENE := preload("res://scenes/resource_item.tscn")
 const ATTACK_COOLDOWN_TICKS := 10
 const MOVE_EVERY_TICKS := 2  # half pawn speed so pawns can disengage
 
@@ -26,8 +28,16 @@ func _ready() -> void:
 func take_damage(amount: float) -> void:
 	hp -= maxf(amount - armor, 1.0)
 	if hp <= 0.0:
+		if randf() < SWORD_DROP_CHANCE:
+			_drop_sword()
 		gone.emit()
 		queue_free()
+
+func _drop_sword() -> void:
+	var item: ResourceItem = RESOURCE_SCENE.instantiate()
+	item.resource_id = "sword"
+	item.position = WorldGrid.cell_to_world(cell)
+	get_parent().add_child(item)
 
 func _on_tick() -> void:
 	if attack_cooldown > 0:

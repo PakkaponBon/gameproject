@@ -51,9 +51,10 @@ func update_stats(pawn: Pawn) -> void:
 		suffix = "  (MENTAL BREAK)"
 	elif pawn.combat.is_wounded():
 		suffix = "  (WOUNDED)"
-	stats_label.text = "%s — hunger %d  rest %d  mood %d  hp %d%s" % [
+	var weapon := pawn.combat.weapon_id if pawn.combat.weapon_id != "" else "unarmed"
+	stats_label.text = "%s — hunger %d  rest %d  mood %d  hp %d [%s]%s" % [
 		pawn.name, roundi(pawn.needs.hunger), roundi(pawn.needs.rest),
-		roundi(pawn.needs.mood), roundi(pawn.combat.hp), suffix]
+		roundi(pawn.needs.mood), roundi(pawn.combat.hp), weapon, suffix]
 
 func update_priorities(pawn: Pawn) -> void:
 	priority_label.text = "%s — Chop: %s  Haul: %s  Build: %s  Farm: %s   [1-4: cycle priority, 0 = off]" % [

@@ -7,6 +7,7 @@ extends Node2D
 var resource_id := "wood"  # set before add_child
 var cell: Vector2i
 var haul_job: Job = null
+var equip_job: Job = null  # weapons only: claimable by weaponless villagers
 var reserved := false  # claimed as blueprint material by a supplier pawn
 
 var _home: Node = null  # container to return to after being carried
@@ -26,6 +27,9 @@ func pick_up(carrier: Node2D) -> void:
 	if haul_job:
 		JobManager.remove_job(haul_job)
 		haul_job = null
+	if equip_job:
+		JobManager.remove_job(equip_job)
+		equip_job = null
 	reparent(carrier)
 	position = Vector2(0, -10)
 
@@ -42,6 +46,8 @@ func _settle() -> void:
 	WorldGrid.register_item(cell, self)
 	if not stored:
 		_register_haul_job()
+	if WeaponDefs.DEFS.has(resource_id):
+		_register_equip_job()
 
 func _register_haul_job() -> void:
 	haul_job = Job.new()
@@ -49,3 +55,10 @@ func _register_haul_job() -> void:
 	haul_job.cell = cell
 	haul_job.target = self
 	JobManager.add_job(haul_job)
+
+func _register_equip_job() -> void:
+	equip_job = Job.new()
+	equip_job.type = Job.Type.EQUIP
+	equip_job.cell = cell
+	equip_job.target = self
+	JobManager.add_job(equip_job)
