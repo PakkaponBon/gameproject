@@ -36,7 +36,7 @@ func _refugee_arrives() -> void:
 	var edge := Vector2i(randi() % WorldGrid.MAP_SIZE.x, 0)
 	if WorldGrid.is_wall(edge):
 		edge = WorldGrid.MAP_SIZE / 2
-	var pawn := main.spawner.create_pawn(edge, main.spawner.unused_name(),
+	var pawn: Pawn = main.spawner.create_pawn(edge, main.spawner.unused_name(),
 			{Job.Type.CHOP: 1, Job.Type.HAUL: 1, Job.Type.BUILD: 1, Job.Type.PLANT: 1})
 	var pool := TraitDefs.BACKSTORIES.duplicate()
 	pawn.traits = [pool.pick_random()]
