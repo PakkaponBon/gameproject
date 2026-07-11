@@ -72,12 +72,17 @@ func _build_ui() -> void:
 	_name_label = _label(box)
 	_traits_label = _label(box)
 	_activity_label = _label(box)
-	for key in ["hunger", "rest", "mood", "hp"]:
+	var bar_tints := {
+		"hunger": Color(0.9, 0.65, 0.3), "rest": Color(0.5, 0.65, 0.9),
+		"mood": Color(0.9, 0.85, 0.4), "hp": Color(0.9, 0.4, 0.4),
+	}
+	for key: String in bar_tints:
 		box.add_child(_label_for(key))
 		var bar := ProgressBar.new()
 		bar.max_value = 100.0
 		bar.show_percentage = false
 		bar.custom_minimum_size = Vector2(0, 10)
+		bar.modulate = bar_tints[key]
 		box.add_child(bar)
 		_bars[key] = bar
 	_gear_label = _label(box)
@@ -92,12 +97,14 @@ func _build_ui() -> void:
 		box.add_child(btn)
 		_priority_buttons[type] = btn
 	_draft_button = Button.new()
+	_draft_button.tooltip_text = "Drafted villagers follow your orders and ignore work/needs."
 	_draft_button.pressed.connect(func() -> void:
 		pawn.set_drafted(not pawn.drafted)
 		refresh())
 	box.add_child(_draft_button)
 	_drop_button = Button.new()
 	_drop_button.text = "Drop weapon"
+	_drop_button.tooltip_text = "Leave the weapon here so another villager can claim it."
 	_drop_button.pressed.connect(func() -> void:
 		pawn.combat.unequip()
 		refresh())

@@ -39,7 +39,8 @@ func _rebuild() -> void:
 			btn.modulate = Color(0.7, 0.75, 1.0)
 		elif pawn.combat.is_wounded():
 			btn.modulate = Color(1.0, 0.85, 0.5)
-		btn.pressed.connect(func() -> void: main.select(pawn))
+		btn.tooltip_text = "Click: select (again: jump camera). Right-click: draft."
+		btn.pressed.connect(func() -> void: main.select_or_focus(pawn))
 		btn.gui_input.connect(func(event: InputEvent) -> void:
 			if event is InputEventMouseButton and event.pressed \
 					and event.button_index == MOUSE_BUTTON_RIGHT:

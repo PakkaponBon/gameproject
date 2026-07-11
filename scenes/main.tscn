@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://dqj6m2x9s4hb"]
+[gd_scene load_steps=23 format=3 uid="uid://dqj6m2x9s4hb"]
 
 [ext_resource type="Script" uid="uid://b7h4z9d6r1sc" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="TileSet" uid="uid://c5w1r8p3v0gd" path="res://assets/tileset.tres" id="2_tileset"]
@@ -19,6 +19,8 @@
 [ext_resource type="Script" uid="uid://bw4h7t2m9c1k" path="res://scripts/villager_panel.gd" id="19_villager"]
 [ext_resource type="Script" uid="uid://dk8f3w6n2t5c" path="res://scripts/priority_grid.gd" id="20_grid"]
 [ext_resource type="Script" uid="uid://cn5t9k2w7f4h" path="res://scripts/roster_bar.gd" id="21_roster"]
+[ext_resource type="Script" uid="uid://bm6k2t9w4c7f" path="res://scripts/help_panel.gd" id="22_help"]
+[ext_resource type="Script" uid="uid://cq9f5w1t3k8n" path="res://scripts/hover_inspect.gd" id="23_inspect"]
 [ext_resource type="Script" uid="uid://dt3w7q1n8h5m" path="res://scripts/pause_menu.gd" id="8_pause"]
 
 [node name="Main" type="Node2D"]
@@ -43,6 +45,12 @@ script = ExtResource("17_input")
 
 [node name="GhostPreview" type="Node2D" parent="."]
 script = ExtResource("18_ghost")
+
+[node name="HoverInspect" type="Node" parent="."]
+script = ExtResource("23_inspect")
+
+[node name="HelpPanel" type="CanvasLayer" parent="."]
+script = ExtResource("22_help")
 
 [node name="WorldSpawner" type="Node" parent="."]
 script = ExtResource("7_spawner")
@@ -78,6 +86,15 @@ offset_left = 8.0
 offset_top = 28.0
 offset_right = 600.0
 offset_bottom = 51.0
+
+[node name="InspectLabel" type="Label" parent="HUD"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -70.0
+offset_right = 700.0
+offset_bottom = -48.0
+theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 1)
 
 [node name="CalendarLabel" type="Label" parent="HUD"]
 anchor_left = 1.0

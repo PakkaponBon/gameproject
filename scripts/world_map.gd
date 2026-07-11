@@ -63,11 +63,14 @@ func _build_faction_row(id: String) -> HBoxContainer:
 	widgets["status"] = status
 	widgets["gift"] = _add_button(row, "Gift (%d wood)" % FactionManager.GIFT_WOOD,
 			func() -> void: FactionManager.send_gift(id))
+	widgets["gift"].tooltip_text = "Spend stored wood to warm their attitude. Greedy factions love it."
 	widgets["envoy"] = _add_button(row, "Envoy",
 			func() -> void: FactionManager.send_envoy(id))
+	widgets["envoy"].tooltip_text = "Free goodwill, once per day per faction. Honorable factions respect it."
 	widgets["tribute"] = _add_button(row, "Pay Tribute",
 			func() -> void: FactionManager.pay_tribute(id))
-	widgets["expedition"] = _add_button(row, "Attack!",
+	widgets["tribute"].tooltip_text = "Pay %d wood to answer their demand before it sours relations." % FactionManager.TRIBUTE_WOOD
+	widgets["expedition"] = _add_confirm_button(row, "Attack!",
 			func() -> void: FactionManager.send_expedition(id))
 	_rows[id] = widgets
 	return row
@@ -79,7 +82,7 @@ func _build_ruins_row() -> HBoxContainer:
 	label.text = "Ruins of the Old City — relics sleep in the ash"
 	label.custom_minimum_size = Vector2(516, 0)
 	row.add_child(label)
-	_ruins_button = _add_button(row, "Expedition",
+	_ruins_button = _add_confirm_button(row, "Expedition",
 			func() -> void: FactionManager.send_expedition("ruins"))
 	return row
 
@@ -100,6 +103,26 @@ func _add_button(row: HBoxContainer, text: String, action: Callable) -> Button:
 	row.add_child(button)
 	return button
 
+## Two-click safety for expeditions: villagers leave the map for a day.
+func _add_confirm_button(row: HBoxContainer, text: String, action: Callable) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.set_meta("base_text", text)
+	button.tooltip_text = "Sends your best 3 armed villagers away for a day. Casualties are possible."
+	button.pressed.connect(func() -> void:
+		if button.get_meta("armed", false):
+			button.set_meta("armed", false)
+			action.call()
+		else:
+			button.set_meta("armed", true)
+			button.text = "Confirm?")
+	row.add_child(button)
+	return button
+
+func _reset_confirm(button: Button) -> void:
+	button.set_meta("armed", false)
+	button.text = button.get_meta("base_text")
+
 func _refresh() -> void:
 	if not visible:
 		return
@@ -118,7 +141,9 @@ func _refresh() -> void:
 		w.tribute.visible = open and FactionManager.demand_pending(id)
 		w.expedition.visible = open
 		w.expedition.disabled = FactionManager.expedition_active()
+		_reset_confirm(w.expedition)
 	_ruins_button.disabled = FactionManager.expedition_active()
+	_reset_confirm(_ruins_button)
 	if FactionManager.expedition_active():
 		_expedition_label.text = "Expedition in the field — back at dawn."
 	else:

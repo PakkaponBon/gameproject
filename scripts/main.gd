@@ -26,20 +26,23 @@ var decon_orders := {}  # cell -> DeconstructOrder
 @onready var hud: HudController = $HUD
 @onready var villager_panel: VillagerPanel = $VillagerPanel
 @onready var priority_grid: PriorityGrid = $PriorityGrid
+@onready var help_panel: HelpPanel = $HelpPanel
 
 func _ready() -> void:
 	raid_director.spawn_parent = entities
 	field_keeper.spawn_parent = entities
 	forge_keeper.spawn_parent = entities
 	trade_director.spawn_parent = entities
-	raid_director.raid_started.connect(func(fname: String) -> void: hud.set_event("RAID — %s attacks!" % fname))
+	raid_director.raid_started.connect(func(fname: String) -> void:
+		hud.set_event("RAID — %s attacks!" % fname, Color(1.0, 0.4, 0.35)))
 	pause_menu.save_requested.connect(func() -> void: SaveManager.save_game(SaveManager.MANUAL_SAVE_PATH))
 	pause_menu.load_requested.connect(func(path: String) -> void: SaveManager.load_game(path))
 	spawner.pawn_created.connect(_on_pawn_created)
 	EventBus.building_built.connect(_on_building_built)
 	EventBus.building_deconstructed.connect(_on_building_deconstructed)
 	EventBus.building_destroyed.connect(_on_building_destroyed)
-	EventBus.merchant_arrived.connect(func() -> void: hud.set_event("A traveling merchant has arrived"))
+	EventBus.merchant_arrived.connect(func() -> void:
+		hud.set_event("A traveling merchant has arrived", Color(0.95, 0.85, 0.45)))
 	SaveManager.main = self
 	FactionManager.main = self
 	FactionManager.announced.connect(hud.set_event)
@@ -65,7 +68,8 @@ func _new_game() -> void:
 			"Smoke behind you, ash on the wind. Three of you made it out —\n"
 			+ "a wagon, tools, seed, and the road.\n\n"
 			+ "The meadow ahead is quiet. Build. Endure.\n"
-			+ "And one day, answer those who lit the fire.")
+			+ "And one day, answer those who lit the fire.\n\n"
+			+ "(Press H anytime for the controls.)")
 
 # --- world API (called by PlayerInput / SaveManager / FactionManager) -------
 
@@ -88,6 +92,13 @@ func select(pawn: Pawn) -> void:
 	selected = pawn
 	selected.set_selected(true)
 	villager_panel.show_pawn(selected)
+
+## Roster: first click selects, second click jumps the camera there.
+func select_or_focus(pawn: Pawn) -> void:
+	if selected == pawn:
+		$Camera.position = pawn.position
+	else:
+		select(pawn)
 
 ## Save/load: restore the selection by index into the pawns array.
 func select_pawn(index: int) -> void:
@@ -224,11 +235,14 @@ func _on_pawn_died(pawn: Pawn) -> void:
 	pawns.erase(pawn)
 	for other in pawns:
 		other.needs.mourn()  # loss is real: colony-wide mood hit
-	hud.set_event("%s has died." % pawn.name)
+	hud.set_event("%s has died." % pawn.name, Color(1.0, 0.4, 0.35))
 	if pawns.is_empty():
 		selected = null
 		villager_panel.show_pawn(null)
-		hud.set_event("ALL COLONISTS ARE DEAD")
+		story_panel.show_ending("THE HEARTH GOES COLD",
+				"The last of you is gone. The meadow keeps the graves,\n"
+				+ "and the wind keeps the rest.\n\n"
+				+ "Somewhere, the Ashen Legion never learns your names.")
 	elif selected == pawn:
 		_select_first_alive()
 
@@ -243,7 +257,7 @@ func _on_building_destroyed(cell: Vector2i) -> void:
 		decon_orders.erase(cell)
 	WorldGrid.remove_building(cell)
 	walls.erase_cell(cell)
-	hud.set_event("A gate has been smashed!")
+	hud.set_event("A gate has been smashed!", Color(1.0, 0.6, 0.3))
 
 func _on_building_deconstructed(cell: Vector2i) -> void:
 	decon_orders.erase(cell)
