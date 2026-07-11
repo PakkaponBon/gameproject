@@ -1,6 +1,6 @@
 # ROADMAP.md — Ashfall: Skeleton → v1.0
 
-Current state: **v0.6-arsenal** (combat core + weapon tiers: draft mode, bandit raids with bosses, swords/bows/relics, forge crafting, merchant trade, herbs).
+Current state: **v0.7-realm** (the arc: 5-faction world map, diplomacy to alliance, expeditions, faction raids with allies, victory event, city-fall intro).
 
 Rules: one phase at a time, in order. Each phase gates on its **Definition of Done (DoD)**. Git tag per phase. From Phase 1 on, every new system ships with save/load. Not required by a DoD → IDEAS.md.
 
