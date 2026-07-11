@@ -11,6 +11,7 @@ extends CanvasLayer
 
 func _ready() -> void:
 	GameClock.ticked.connect(_update_calendar)
+	GameClock.speed_changed.connect(_update_calendar)
 	_update_calendar()
 
 func set_event(text: String) -> void:
@@ -77,4 +78,9 @@ func _priority_text(value: int) -> String:
 	return "off" if value == 0 else str(value)
 
 func _update_calendar() -> void:
-	calendar_label.text = GameClock.calendar_text()
+	var speed_tag := ""
+	if GameClock.sim_paused:
+		speed_tag = "  || PAUSED"
+	elif GameClock.speed != 1.0:
+		speed_tag = "  >> x%d" % int(GameClock.speed)
+	calendar_label.text = GameClock.calendar_text() + speed_tag

@@ -6,6 +6,7 @@ extends Node
 signal ticked
 signal day_started(day: int)
 signal season_changed(season: int)
+signal speed_changed  # sim pause or speed multiplier flipped
 
 const TICKS_PER_SECOND := 10.0
 const TICKS_PER_DAY := 3000  # 5 real minutes per in-game day
@@ -14,13 +15,27 @@ const SEASON_NAMES := ["Spring", "Summer", "Autumn", "Winter"]
 const NIGHT_START := 0.75  # last quarter of each day is night
 
 var ticks := 0  # total simulation ticks; persisted in saves
+var sim_paused := false  # tactical pause: sim frozen, player still plans
+var speed := 1.0
+
+var _timer: Timer
 
 func _ready() -> void:
-	var timer := Timer.new()
-	timer.wait_time = 1.0 / TICKS_PER_SECOND
-	timer.autostart = true
-	timer.timeout.connect(_on_timeout)
-	add_child(timer)
+	_timer = Timer.new()
+	_timer.wait_time = 1.0 / TICKS_PER_SECOND
+	_timer.autostart = true
+	_timer.timeout.connect(_on_timeout)
+	add_child(_timer)
+
+func set_sim_paused(on: bool) -> void:
+	sim_paused = on
+	_timer.paused = on
+	speed_changed.emit()
+
+func set_speed(mult: float) -> void:
+	speed = mult
+	_timer.wait_time = 1.0 / (TICKS_PER_SECOND * mult)
+	speed_changed.emit()
 
 func _on_timeout() -> void:
 	ticks += 1

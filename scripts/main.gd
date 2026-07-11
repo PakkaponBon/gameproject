@@ -90,6 +90,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		if selected and not selected.dead:
 			selected.set_drafted(not selected.drafted)
 			hud.update_stats(selected)
+	elif event.is_action_pressed("toggle_pause"):
+		GameClock.set_sim_paused(not GameClock.sim_paused)
+	elif event.is_action_pressed("toggle_speed"):
+		GameClock.set_speed(3.0 if GameClock.speed == 1.0 else 1.0)
 	elif event.is_action_pressed("cycle_farm_priority"):
 		_cycle_selected_priority(Job.Type.PLANT)
 	elif event.is_action_pressed("cycle_chop_priority"):
