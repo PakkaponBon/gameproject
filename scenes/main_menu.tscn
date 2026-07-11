@@ -41,6 +41,10 @@ text = "New Game"
 unique_name_in_owner = true
 text = "Load Game"
 
+[node name="DifficultyButton" type="Button" parent="VBox"]
+unique_name_in_owner = true
+text = "Difficulty: Normal"
+
 [node name="QuitButton" type="Button" parent="VBox"]
 unique_name_in_owner = true
 text = "Quit"

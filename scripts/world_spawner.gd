@@ -22,6 +22,8 @@ const GRAVE_SCENE := preload("res://scenes/grave.tscn")
 const PAWN_SCENE := preload("res://scenes/pawn.tscn")
 const PAWN_COUNT := 3
 const PAWN_SPAWN_RADIUS := 5  # around map center
+const NAMES := ["Alda", "Bren", "Cort", "Dara", "Edwin", "Fenna", "Garet",
+		"Hilda", "Ivo", "Joss", "Kessa", "Lorn", "Mera", "Noll", "Osric"]
 
 var ground_seed := 0
 
@@ -127,14 +129,28 @@ func _spawn_pawns(used: Dictionary) -> void:
 		if used.has(cell):
 			continue
 		used[cell] = true
-		var pawn := create_pawn(cell, "Pawn %d" % (count + 1), presets[count % presets.size()].duplicate())
+		var pawn := create_pawn(cell, unused_name(), presets[count % presets.size()].duplicate())
 		# Each founding survivor carries a scar from the fall + a quirk.
-		pawn.traits = [TraitDefs.BACKSTORIES[count % TraitDefs.BACKSTORIES.size()]]
+		var pool := TraitDefs.BACKSTORIES.duplicate()
+		pool.shuffle()
+		pawn.traits = [pool[count % pool.size()]]
 		pawn.traits.append_array(_random_traits().slice(0, 1))
 		# Varied starting talent — most colonies roll at least one archer.
 		pawn.skills.xp["melee"] = float(randi_range(0, 150))
 		pawn.skills.xp["archery"] = float(randi_range(0, 450))
 		count += 1
+
+## A name no living villager carries.
+func unused_name() -> String:
+	var taken := {}
+	for node in get_tree().get_nodes_in_group("pawns"):
+		taken[String(node.name)] = true
+	var pool := NAMES.duplicate()
+	pool.shuffle()
+	for candidate: String in pool:
+		if not taken.has(candidate):
+			return candidate
+	return "Wanderer %d" % randi_range(2, 99)
 
 func _random_traits() -> Array:
 	var pool := TraitDefs.ORDER.duplicate()

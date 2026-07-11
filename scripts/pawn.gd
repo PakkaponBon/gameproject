@@ -274,9 +274,16 @@ func _die() -> void:
 		feed_job = null
 	clear_treat_job()
 	abort_all()
+	EventBus.play_sfx.emit("death")
 	died.emit()
 	queue_free()
 
 func _process(delta: float) -> void:
-	# Rendering only: ease the visual position toward the logical grid cell.
-	position = position.lerp(WorldGrid.cell_to_world(cell), minf(1.0, LERP_WEIGHT * delta))
+	# Rendering only: ease the visual position toward the logical grid cell,
+	# and alternate walk frames while moving.
+	var dest := WorldGrid.cell_to_world(cell)
+	position = position.lerp(dest, minf(1.0, LERP_WEIGHT * delta))
+	if not dead and not collapsed:
+		var walking := position.distance_to(dest) > 1.5 or cell != target_cell
+		var frame := 14 if walking and int(Time.get_ticks_msec() / 180) % 2 == 0 else 0
+		body.region_rect.position.x = frame * 16

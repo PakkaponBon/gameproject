@@ -48,6 +48,7 @@ func _spawn_raid() -> void:
 			placed += 1
 	if count >= ALLY_HELP_AT and FactionManager.has_ally():
 		_spawn_allies()
+	EventBus.play_sfx.emit("horn")
 	raid_started.emit(FactionDefs.get_def(faction_id).name)
 
 func _spawn_bandit(cell: Vector2i, faction_id: String, boss := false) -> void:

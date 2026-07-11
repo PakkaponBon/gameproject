@@ -82,9 +82,14 @@ func mood_work_factor() -> float:
 		return 1.0
 	return lerpf(MOOD_MIN_WORK_FACTOR, 1.0, mood / MOOD_SLOW_BELOW)
 
-func eat() -> void:
-	hunger = HUNGER_MAX
-	mood = minf(mood + 5.0, MOOD_MAX)
+## Meals fill completely and lift spirits; raw food just staves it off.
+func eat(meal := false) -> void:
+	if meal:
+		hunger = HUNGER_MAX
+		mood = minf(mood + 12.0, MOOD_MAX)
+	else:
+		hunger = minf(hunger + 65.0, HUNGER_MAX)
+		mood = minf(mood + 3.0, MOOD_MAX)
 	changed.emit()
 
 func attacked() -> void:

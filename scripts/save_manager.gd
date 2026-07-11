@@ -4,7 +4,7 @@ extends Node
 ## Loading reloads the main scene; `pending_load` survives the reload
 ## because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 18
+const SAVE_VERSION := 19
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 
@@ -70,8 +70,11 @@ func apply_pending_load() -> void:
 	for o: Dictionary in data.ore_nodes:
 		var ore: OreNode = spawner.spawn_ore(_vec(o.cell), o.id)
 		ore.restore(int(o.work))
-	for f: Array in data.food:
-		spawner.spawn_entity(spawner.FOOD_SCENE, _vec(f))
+	for f: Dictionary in data.food:
+		var food: FoodItem = spawner.FOOD_SCENE.instantiate()
+		food.meal = bool(f.meal)
+		food.position = WorldGrid.cell_to_world(_vec(f.cell))
+		main.entities.add_child(food)
 	for g: Array in data.graves:
 		spawner.spawn_entity(spawner.GRAVE_SCENE, _vec(g))
 	for r: Dictionary in data.raiders:

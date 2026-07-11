@@ -20,6 +20,7 @@ const KILL_ATTRITION := 2.0  # faction strength lost per bandit slain
 var factions := {}  # id -> {strength, attitude, resolved, envoy_ready, demand_deadline}
 var expedition := {}  # {} when none; else target/return_tick/party/power
 var victory_shown := false
+var renown := 0  # village fame: unlocks buildings, attracts refugees
 var main: Node2D = null  # current Main scene; re-registers itself each load
 
 func _ready() -> void:
@@ -40,15 +41,23 @@ func reset() -> void:
 		}
 	expedition = {}
 	victory_shown = false
+	renown = 0
+	factions_changed.emit()
+
+func add_renown(amount: int) -> void:
+	renown += amount
 	factions_changed.emit()
 
 func serialize() -> Dictionary:
-	return {"factions": factions, "expedition": expedition, "victory_shown": victory_shown}
+	return {"factions": factions, "expedition": expedition,
+			"victory_shown": victory_shown, "renown": renown, "hard": Balance.hard}
 
 func deserialize(data: Dictionary) -> void:
 	factions = data.factions
 	expedition = data.expedition
 	victory_shown = bool(data.victory_shown)
+	renown = int(data.renown)
+	Balance.hard = bool(data.hard)
 	factions_changed.emit()
 
 # --- diplomacy --------------------------------------------------------------
@@ -121,6 +130,7 @@ func damage_strength(id: String, amount: float) -> void:
 	f.strength = maxf(float(f.strength) - amount, 0.0)
 	if float(f.strength) <= 0.0 and f.resolved == "":
 		f.resolved = "destroyed"
+		renown += 5
 		announced.emit("%s is broken! Their stores are absorbed into the village." % _fname(id))
 		if is_instance_valid(main):
 			var center: Vector2i = WorldGrid.MAP_SIZE / 2
@@ -268,6 +278,7 @@ func _shift_attitude(id: String, amount: float) -> void:
 	f.attitude = clampf(float(f.attitude) + amount, -100.0, 100.0)
 	if float(f.attitude) >= ALLIANCE_AT and f.resolved == "":
 		f.resolved = "allied"
+		renown += 5
 		announced.emit("%s pledges alliance! Their warriors will answer big raids." % _fname(id))
 		_check_victory()
 	factions_changed.emit()

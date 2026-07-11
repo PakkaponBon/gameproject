@@ -8,3 +8,4 @@ signal building_destroyed(cell: Vector2i)  # smashed by enemies: no refund
 signal crop_harvested(cell: Vector2i)
 signal merchant_arrived
 signal merchant_left
+signal play_sfx(id: String)

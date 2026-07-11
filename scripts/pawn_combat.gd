@@ -54,6 +54,7 @@ func engage_adjacent() -> bool:
 			var damage := attack_damage * (1.0 + DAMAGE_PER_MELEE_LEVEL * lvl) \
 					* TraitDefs.multiplier(pawn.traits, "melee_damage_mult")
 			raider.take_damage(damage)
+			EventBus.play_sfx.emit("hit")
 			pawn.skills.gain("melee", MELEE_XP_PER_HIT)  # learn by landing hits
 	return true
 
@@ -129,6 +130,7 @@ func relic_tick() -> void:
 			var d := (raider.cell - target.cell).abs()
 			if d.x + d.y <= int(def.radius):
 				raider.take_damage(float(def.damage))
+		EventBus.play_sfx.emit("spell")
 		relic_cooldown = int(def.cooldown)
 	elif def.has("heal"):  # mend the most wounded villager nearby
 		var worst: Pawn = null
@@ -141,6 +143,7 @@ func relic_tick() -> void:
 				worst = other
 		if worst:
 			worst.combat.heal(float(def.heal))
+			EventBus.play_sfx.emit("spell")
 			relic_cooldown = int(def.cooldown)
 	elif def.has("armor"):  # barrier: shield nearby villagers during raids
 		if not raid_active():
@@ -150,6 +153,7 @@ func relic_tick() -> void:
 			var d := (other.cell - pawn.cell).abs()
 			if not other.dead and d.x + d.y <= int(def.radius):
 				other.combat.apply_barrier(float(def.armor), int(def.duration))
+		EventBus.play_sfx.emit("spell")
 		relic_cooldown = int(def.cooldown)
 
 func apply_barrier(amount: float, ticks: int) -> void:

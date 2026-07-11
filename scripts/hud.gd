@@ -80,9 +80,15 @@ func _update_resources() -> void:
 		var item := node as ResourceItem
 		if counts.has(item.resource_id) and not (item.get_parent() is Pawn):
 			counts[item.resource_id] += 1
-	var food := get_tree().get_nodes_in_group("food").size()
-	resource_label.text = "Wood %d   Stone %d   Ore %d   Ingots %d   Food %d" \
-			% [counts.wood, counts.stone, counts.iron_ore, counts.iron_ingot, food]
+	var raw := 0
+	var meals := 0
+	for node in get_tree().get_nodes_in_group("food"):
+		if (node as FoodItem).meal:
+			meals += 1
+		else:
+			raw += 1
+	resource_label.text = "Wood %d   Stone %d   Ore %d   Ingots %d   Food %d (+%d meals)   Renown %d" \
+			% [counts.wood, counts.stone, counts.iron_ore, counts.iron_ingot, raw, meals, FactionManager.renown]
 
 func _update_calendar() -> void:
 	var tag := ""

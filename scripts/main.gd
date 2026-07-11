@@ -19,6 +19,8 @@ var decon_orders := {}  # cell -> DeconstructOrder
 @onready var field_keeper: FieldKeeper = $FieldKeeper
 @onready var forge_keeper: ForgeKeeper = $ForgeKeeper
 @onready var trade_director: TradeDirector = $TradeDirector
+@onready var kitchen_keeper: KitchenKeeper = $KitchenKeeper
+@onready var events_director: EventsDirector = $EventsDirector
 @onready var trade_panel: TradePanel = $TradePanel
 @onready var world_map: WorldMap = $WorldMap
 @onready var story_panel: StoryPanel = $StoryPanel
@@ -33,8 +35,13 @@ func _ready() -> void:
 	field_keeper.spawn_parent = entities
 	forge_keeper.spawn_parent = entities
 	trade_director.spawn_parent = entities
+	kitchen_keeper.spawn_parent = entities
+	events_director.spawn_parent = entities
 	raid_director.raid_started.connect(func(fname: String) -> void:
 		hud.set_event("RAID — %s attacks!" % fname, Color(1.0, 0.4, 0.35)))
+	raid_director.raid_ended.connect(func() -> void:
+		FactionManager.add_renown(1)
+		hud.set_event("The raid is beaten. Word of your village spreads.", Color(0.7, 0.95, 0.7)))
 	pause_menu.save_requested.connect(func() -> void: SaveManager.save_game(SaveManager.MANUAL_SAVE_PATH))
 	pause_menu.load_requested.connect(func(path: String) -> void: SaveManager.load_game(path))
 	spawner.pawn_created.connect(_on_pawn_created)
@@ -130,6 +137,11 @@ func place_building(cell: Vector2i, id: String) -> void:
 func place_blueprint(cell: Vector2i, id: String) -> void:
 	if not WorldGrid.in_bounds(cell) or WorldGrid.buildings.has(cell) \
 			or blueprints.has(cell) or pawn_at(cell):
+		return
+	var need := int(BuildingDefs.get_def(id).get("renown_req", 0))
+	if FactionManager.renown < need:
+		hud.set_event("%s needs renown %d (beat raids, resolve factions)." \
+				% [BuildingDefs.get_def(id).name, need])
 		return
 	var bp: Blueprint = BLUEPRINT_SCENE.instantiate()
 	bp.building_id = id

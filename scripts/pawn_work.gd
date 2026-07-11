@@ -112,7 +112,7 @@ func _do_job() -> void:
 			if job.work_ticks <= 0:
 				JobManager.complete_job(job)
 				job = null
-		Job.Type.CHOP, Job.Type.BUILD, Job.Type.HARVEST, Job.Type.CRAFT:
+		Job.Type.CHOP, Job.Type.BUILD, Job.Type.HARVEST, Job.Type.CRAFT, Job.Type.COOK:
 			if not is_instance_valid(job.target):  # e.g. blueprint canceled, crop frosted
 				job = null
 				return

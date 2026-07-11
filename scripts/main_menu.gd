@@ -8,4 +8,11 @@ func _ready() -> void:
 	%LoadGameButton.pressed.connect(func() -> void:
 		SaveManager.load_game(SaveManager.MANUAL_SAVE_PATH))
 	%QuitButton.pressed.connect(func() -> void: get_tree().quit())
+	%DifficultyButton.pressed.connect(func() -> void:
+		Balance.hard = not Balance.hard
+		_update_difficulty())
 	%LoadGameButton.disabled = not FileAccess.file_exists(SaveManager.MANUAL_SAVE_PATH)
+	_update_difficulty()
+
+func _update_difficulty() -> void:
+	%DifficultyButton.text = "Difficulty: %s" % ("Hard" if Balance.hard else "Normal")

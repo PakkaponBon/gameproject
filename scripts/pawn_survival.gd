@@ -53,9 +53,10 @@ func eat_tick() -> void:
 		return
 	eat_ticks_left -= 1
 	if eat_ticks_left <= 0:
+		var was_meal := food_target.meal
 		food_target.queue_free()
 		food_target = null
-		pawn.needs.eat()
+		pawn.needs.eat(was_meal)
 
 ## Mental-break behavior: aimless steps.
 func wander() -> void:

@@ -37,7 +37,7 @@ func request_job(seeker: Pawn) -> Job:
 			prio_type = Job.Type.HAUL
 		elif job.type == Job.Type.DECONSTRUCT:
 			prio_type = Job.Type.BUILD
-		elif job.type == Job.Type.HARVEST:
+		elif job.type == Job.Type.HARVEST or job.type == Job.Type.COOK:
 			prio_type = Job.Type.PLANT
 		elif job.type == Job.Type.FEED:
 			prio_type = Job.Type.HAUL
@@ -142,6 +142,7 @@ func release_job(job: Job) -> void:
 
 func complete_job(job: Job) -> void:
 	jobs.erase(job)
+	EventBus.play_sfx.emit("thud")
 	job.completed.emit()
 
 func _is_reachable(from_cell: Vector2i, to_cell: Vector2i) -> bool:

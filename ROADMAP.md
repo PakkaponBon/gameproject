@@ -107,11 +107,11 @@ Rules: one phase at a time, in order. Each phase gates on its **Definition of Do
 ---
 
 ## Phase 9 — Content & Balance (v0.85)
-- [ ] Cooking (meals > raw), 2–3 more events (frost snap, refugee arrival, tribute ultimatum)
-- [ ] Villager variety: names, portraits, full backstory trait pool
-- [ ] Renown progression: unlock buildings, attract villagers
-- [ ] Balance: weapon tier curve, faction difficulty curve, economy math pass
-- [ ] Difficulty settings: normal + hard (data multipliers only)
+- [x] Cooking (meals > raw), 2–3 more events (frost snap, refugee arrival, tribute ultimatum)
+- [x] Villager variety: names, ~~portraits~~ *(portraits need human art — Phase 10 leftover)*, full backstory trait pool
+- [x] Renown progression: unlock buildings, attract villagers
+- [x] Balance: weapon tier curve, faction difficulty curve, economy math pass
+- [x] Difficulty settings: normal + hard (data multipliers only)
 
 **DoD:** Two campaigns (diplomat run vs conqueror run) feel like different games.
 **Tag:** `v0.85-content`

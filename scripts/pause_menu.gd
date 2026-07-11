@@ -13,6 +13,12 @@ func _ready() -> void:
 	%SaveButton.pressed.connect(_on_save)
 	%LoadButton.pressed.connect(func() -> void: load_requested.emit(SaveManager.MANUAL_SAVE_PATH))
 	%LoadAutosaveButton.pressed.connect(func() -> void: load_requested.emit(SaveManager.AUTOSAVE_PATH))
+	%FullscreenButton.pressed.connect(func() -> void:
+		var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if fs
+				else DisplayServer.WINDOW_MODE_FULLSCREEN))
+	%VolumeSlider.value_changed.connect(func(value: float) -> void:
+		AudioServer.set_bus_volume_db(0, linear_to_db(maxf(value / 100.0, 0.001))))
 	%MenuButton.pressed.connect(func() -> void:
 		get_tree().paused = false
 		get_tree().change_scene_to_file("res://scenes/main_menu.tscn"))

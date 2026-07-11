@@ -31,6 +31,8 @@ func _ready() -> void:
 		var body: Sprite2D = $Body
 		body.modulate = Color(0.4, 0.1, 0.1)
 		body.scale = Vector2(1.3, 1.3)
+	hp *= Balance.enemy_hp_mult()
+	attack_damage *= Balance.enemy_damage_mult()
 	GameClock.ticked.connect(_on_tick)
 
 func take_damage(amount: float) -> void:
@@ -97,6 +99,7 @@ func _attack_defender(target: Variant) -> void:
 		return
 	attack_cooldown = ATTACK_COOLDOWN_TICKS
 	target.take_damage(attack_damage)
+	EventBus.play_sfx.emit("hit")
 
 func _nearest_ally() -> Ally:
 	var best: Ally = null
@@ -139,5 +142,9 @@ func _nearest_living_pawn() -> Pawn:
 	return best
 
 func _process(delta: float) -> void:
-	# Rendering only: ease the visual position toward the logical grid cell.
-	position = position.lerp(WorldGrid.cell_to_world(cell), minf(1.0, LERP_WEIGHT * delta))
+	# Rendering only: ease toward the logical cell; walk frames while moving.
+	var dest := WorldGrid.cell_to_world(cell)
+	position = position.lerp(dest, minf(1.0, LERP_WEIGHT * delta))
+	var walking := position.distance_to(dest) > 1.5
+	($Body as Sprite2D).region_rect.position.x = \
+			(14 if walking and int(Time.get_ticks_msec() / 180) % 2 == 0 else 0) * 16
