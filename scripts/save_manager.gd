@@ -4,7 +4,10 @@ extends Node
 ## Loading reloads the main scene; `pending_load` survives the reload
 ## because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 19
+const SAVE_VERSION := 20
+## Keys a save must carry; anything less is corrupt, and corrupt saves
+## get an error message — never a crash to desktop.
+const REQUIRED_KEYS := ["clock_ticks", "ground_seed", "buildings", "pawns", "realm", "items", "fields"]
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 
@@ -32,9 +35,13 @@ func load_game(path: String) -> bool:
 		push_warning("No save file at %s" % path)
 		return false
 	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if data == null or int(data.get("version", -1)) != SAVE_VERSION:
+	if data == null or not (data is Dictionary) or int(data.get("version", -1)) != SAVE_VERSION:
 		push_error("Save file is corrupt or has an incompatible version")
 		return false
+	for key: String in REQUIRED_KEYS:
+		if not data.has(key):
+			push_error("Save file is damaged (missing '%s') — refusing to load" % key)
+			return false
 	pending_load = data
 	get_tree().paused = false
 	# Works both in-game and from the main menu.

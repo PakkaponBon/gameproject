@@ -22,7 +22,7 @@ const GRAVE_SCENE := preload("res://scenes/grave.tscn")
 const CRITTER_SCENE := preload("res://scenes/critter.tscn")
 const SPRITES := preload("res://assets/sprites.png")
 const DECOR_SPRITES := [19, 20, 21, 22]  # flower, pebbles, bush, mushroom
-const DECOR_COUNT := 70
+const DECOR_COUNT := 260  # density pass: almost no empty clusters
 const CRITTER_COUNT := 4
 const PAWN_SCENE := preload("res://scenes/pawn.tscn")
 const PAWN_COUNT := 3
@@ -45,6 +45,29 @@ func new_game() -> void:
 	_scatter(FOOD_SCENE, FOOD_COUNT, used)
 	_scatter_ore("stone", STONE_NODES, used)
 	_scatter_ore("iron_ore", IRON_NODES, used)
+	_guarantee_start_resources(used)
+
+## Mapgen constraint (POLISH.md): wood and stone always near the wagon.
+func _guarantee_start_resources(used: Dictionary) -> void:
+	var center := WorldGrid.MAP_SIZE / 2
+	var placed := {"tree": 0, "stone": 0, "iron": 0}
+	var want := {"tree": 6, "stone": 2, "iron": 1}
+	for attempt in 400:
+		if placed.tree >= want.tree and placed.stone >= want.stone and placed.iron >= want.iron:
+			return
+		var cell := center + Vector2i(randi_range(-9, 9), randi_range(-9, 9))
+		if used.has(cell) or not WorldGrid.in_bounds(cell) or WorldGrid.is_wall(cell):
+			continue
+		used[cell] = true
+		if placed.tree < want.tree:
+			spawn_entity(TREE_SCENE, cell)
+			placed.tree += 1
+		elif placed.stone < want.stone:
+			spawn_ore(cell, "stone")
+			placed.stone += 1
+		else:
+			spawn_ore(cell, "iron_ore")
+			placed.iron += 1
 
 func generate_ground() -> void:
 	var noise := FastNoiseLite.new()
@@ -69,6 +92,27 @@ func _scatter_decor() -> void:
 		sprite.region_enabled = true
 		sprite.region_rect = Rect2(DECOR_SPRITES[rng.randi() % DECOR_SPRITES.size()] * 16, 0, 16, 16)
 		var cell := Vector2i(rng.randi() % WorldGrid.MAP_SIZE.x, rng.randi() % WorldGrid.MAP_SIZE.y)
+		sprite.position = WorldGrid.cell_to_world(cell)
+		ground.add_child(sprite)
+	_place_landmarks(rng)
+
+## 2-3 oversized features per map: a great tree, standing stones, a ruin.
+## Pure set dressing — breaks the grid feel, gives the map identity.
+func _place_landmarks(rng: RandomNumberGenerator) -> void:
+	var specs := [
+		{"region": Rect2(16, 0, 16, 16), "scale": 3.0, "tint": Color(0.85, 0.95, 0.85)},   # great tree
+		{"region": Rect2(272, 0, 16, 16), "scale": 2.2, "tint": Color(0.8, 0.8, 0.9)},     # standing stone
+		{"region": Rect2(208, 0, 16, 16), "scale": 2.5, "tint": Color(0.75, 0.75, 0.8)},   # old ruin marker
+	]
+	for spec: Dictionary in specs:
+		var sprite := Sprite2D.new()
+		sprite.texture = SPRITES
+		sprite.region_enabled = true
+		sprite.region_rect = spec.region
+		sprite.scale = Vector2.ONE * float(spec.scale)
+		sprite.modulate = spec.tint
+		var cell := Vector2i(6 + rng.randi() % (WorldGrid.MAP_SIZE.x - 12),
+				6 + rng.randi() % (WorldGrid.MAP_SIZE.y - 12))
 		sprite.position = WorldGrid.cell_to_world(cell)
 		ground.add_child(sprite)
 
@@ -141,7 +185,7 @@ func create_pawn(cell: Vector2i, pawn_name: String, priorities: Dictionary) -> P
 	pawn.name = pawn_name
 	pawn.position = WorldGrid.cell_to_world(cell)
 	pawn.work_priorities = priorities
-	main.add_child(pawn)  # child of Main so pawns draw above Entities
+	entities.add_child(pawn)  # y-sorted with trees and props
 	pawn_created.emit(pawn)
 	return pawn
 

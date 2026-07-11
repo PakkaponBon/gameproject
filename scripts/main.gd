@@ -76,12 +76,28 @@ func _new_game() -> void:
 	GameClock.set_speed(1.0)
 	GameClock.set_sim_paused(false)
 	spawner.new_game()
-	story_panel.show_story("THE CITY FELL",
-			"Smoke behind you, ash on the wind. Three of you made it out —\n"
-			+ "a wagon, tools, seed, and the road.\n\n"
-			+ "The meadow ahead is quiet. Build. Endure.\n"
-			+ "And one day, answer those who lit the fire.\n\n"
-			+ "(Press H anytime for the controls.)")
+	story_panel.show_pages([
+		{"title": "VHAL BURNED", "body":
+			"The city of Vhal stood a thousand years.\n"
+			+ "It took one night to fall.\n\n"
+			+ "The Ashen Legion came with fire,\n"
+			+ "and the bells rang until they melted."},
+		{"title": "THE ROAD OUT", "body":
+			"Three of you slipped through the smoke —\n"
+			+ "a wagon, tools, seed, and each other.\n\n"
+			+ "Everyone carries something from that night.\n"
+			+ "None of it as heavy as what they left."},
+		{"title": "THE MEADOW", "body":
+			"Beyond the hills: a quiet meadow.\n"
+			+ "Wood, stone, water.\n\n"
+			+ "A place to build. A place to endure.\n"
+			+ "A place to remember."},
+		{"title": "ONE DAY", "body":
+			"Grow food. Raise walls. Arm your people.\n"
+			+ "Five powers surround you — win them or break them.\n\n"
+			+ "And when you are strong enough... answer Vhal.\n\n"
+			+ "(Press H anytime for the controls.)"},
+	])
 
 # --- world API (called by PlayerInput / SaveManager / FactionManager) -------
 

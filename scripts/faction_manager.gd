@@ -50,14 +50,14 @@ func add_renown(amount: int) -> void:
 
 func serialize() -> Dictionary:
 	return {"factions": factions, "expedition": expedition,
-			"victory_shown": victory_shown, "renown": renown, "hard": Balance.hard}
+			"victory_shown": victory_shown, "renown": renown, "difficulty": Balance.mode}
 
 func deserialize(data: Dictionary) -> void:
 	factions = data.factions
 	expedition = data.expedition
 	victory_shown = bool(data.victory_shown)
 	renown = int(data.renown)
-	Balance.hard = bool(data.hard)
+	Balance.mode = String(data.difficulty)
 	factions_changed.emit()
 
 # --- diplomacy --------------------------------------------------------------

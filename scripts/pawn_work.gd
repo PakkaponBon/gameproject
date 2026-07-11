@@ -234,7 +234,7 @@ func _drop_herb_in_hand() -> void:
 	var item: ResourceItem = RESOURCE_SCENE.instantiate()
 	item.resource_id = "herb"
 	item.position = WorldGrid.cell_to_world(pawn.cell)
-	pawn.get_parent().get_node("Entities").add_child(item)
+	pawn.get_parent().add_child(item)  # pawns live in Entities now
 
 func _ensure_food_fetch() -> void:
 	var food := JobManager.find_fetchable_food(pawn.cell)
@@ -271,7 +271,7 @@ func _drop_food_in_hand() -> void:
 	carrying_food = false
 	var food: Node2D = FOOD_SCENE.instantiate()
 	food.position = WorldGrid.cell_to_world(pawn.cell)
-	pawn.get_parent().get_node("Entities").add_child(food)
+	pawn.get_parent().add_child(food)  # pawns live in Entities now
 
 func _deliver_to_site() -> void:
 	if not is_instance_valid(job.target):

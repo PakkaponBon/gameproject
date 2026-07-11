@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3 uid="uid://dqj6m2x9s4hb"]
+[gd_scene load_steps=29 format=3 uid="uid://dqj6m2x9s4hb"]
 
 [ext_resource type="Script" uid="uid://b7h4z9d6r1sc" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="TileSet" uid="uid://c5w1r8p3v0gd" path="res://assets/tileset.tres" id="2_tileset"]
@@ -26,6 +26,8 @@
 [ext_resource type="Script" uid="uid://dt3w7q1n8h5m" path="res://scripts/pause_menu.gd" id="8_pause"]
 [ext_resource type="Script" uid="uid://bh5w8t2c6n9k" path="res://scripts/edge_fade.gd" id="27_edge"]
 [ext_resource type="Script" uid="uid://dm3f8c1w6t2k" path="res://scripts/build_palette.gd" id="28_palette"]
+[ext_resource type="Script" uid="uid://ct5k9w2f7n3m" path="res://scripts/hint_director.gd" id="29_hints"]
+[ext_resource type="Script" uid="uid://bf7c2t8k4w1n" path="res://scripts/objective_tracker.gd" id="30_goals"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -43,6 +45,7 @@ tile_set = ExtResource("2_tileset")
 script = ExtResource("5_zone")
 
 [node name="Entities" type="Node2D" parent="."]
+y_sort_enabled = true
 
 [node name="EdgeFade" type="Node2D" parent="."]
 script = ExtResource("27_edge")
@@ -130,6 +133,12 @@ script = ExtResource("21_roster")
 
 [node name="BuildPalette" type="CanvasLayer" parent="."]
 script = ExtResource("28_palette")
+
+[node name="HintDirector" type="Node" parent="."]
+script = ExtResource("29_hints")
+
+[node name="ObjectiveTracker" type="CanvasLayer" parent="."]
+script = ExtResource("30_goals")
 
 [node name="TradePanel" type="CanvasLayer" parent="."]
 layer = 5
@@ -221,6 +230,10 @@ custom_minimum_size = Vector2(480, 120)
 [node name="StoryContinueButton" type="Button" parent="StoryPanel/StoryBox/VBox"]
 unique_name_in_owner = true
 text = "Continue"
+
+[node name="StorySkipButton" type="Button" parent="StoryPanel/StoryBox/VBox"]
+unique_name_in_owner = true
+text = "Skip"
 
 [node name="PauseMenu" type="CanvasLayer" parent="."]
 layer = 10

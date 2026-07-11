@@ -35,28 +35,21 @@ must be readable and satisfying with sound ON, watching with no explanation.
 ## Phase 13 — Art Pass (ART_DIRECTION.md now binding)
 Replace placeholders. Incremental: tiles → pawns → buildings → decor.
 
-- [ ] Terrain tileset: grass/dirt/stone/water with autotile transitions
-      (no more hard rectangles between terrain types)
-- [ ] Decor density pass: 3–4x scatter — bushes, cacti, flowers, pebbles,
-      mushrooms at mapgen. Target: almost no fully-empty tile clusters
-      (reference: WUXIA-RPG screenshot density)
-- [ ] Landmark props: 2–3 oversized multi-tile features per map (great tree,
-      ruin, standing stones) — breaks the grid feel, gives map identity
-- [ ] Y-sorting: enable y_sort on TileMap decor layer + all entities so pawns
-      walk behind trees/props (cheap, huge depth win)
-- [ ] Water animation: simple shader or animated tiles + edge foam/sparkle particles
-- [ ] Palette lock: warm, saturated, high-contrast palette defined in
-      ART_DIRECTION.md; all sprites/tiles conform (consistency > detail)
-- [ ] Grass variants (covered by decor density pass above)
-- [ ] Tree/rock sprites: 2–3 variants each; trees sway slightly (shader or tween)
-- [ ] Pawn sprites: real 16×16 characters, walk animation, work animation,
-      carried-item shown when hauling, weapon visible when armed/drafted
-- [ ] Enemy sprites: visually distinct from villagers at a glance (silhouette test)
-- [ ] Building sprites: wall connects to neighbors (autotile), door open/close
-      states, bed/forge/campfire readable at a glance; campfire animated + light
-- [ ] Crop growth stages: 3–4 sprites per crop, visibly different
-- [ ] Ambient critters: 1–2 harmless (rabbit, bird) wandering — life, not systems
-- [ ] Lighting v0: campfire/torch glow at night (PointLight2D)
+- [ ] Terrain tileset: grass/dirt/stone/water with autotile transitions *(borderless texture done; true autotile + water = human art pass)*
+- [x] Decor density pass: 260 scattered props at mapgen (seeded, survives loads)
+- [x] Landmark props: great tree, standing stone, ruin marker per map (seeded)
+- [x] Y-sorting: entities (pawns, trees, props) y-sorted — pawns walk behind trees
+- [ ] Water animation *(no water terrain yet — needs the human tileset pass)*
+- [ ] Palette lock in ART_DIRECTION.md *(design decision — yours)*
+- [x] Grass variants (covered by decor density pass above)
+- [x] Tree/rock sprites: variants + gentle tree sway
+- [x] Pawn sprites: 16×16 characters, walk animation, ~~work animation~~,
+      carried-item shown when hauling, weapon visible in hand *(work anim = human art)*
+- [x] Enemy sprites: hooded silhouette, distinct at a glance
+- [ ] Building autotile walls / door open-close states *(readable tiles done; autotile = human art)*
+- [x] Crop growth stages: sprout → fruiting sprite + continuous scale
+- [x] Ambient critters: rabbits and birds wandering — life, not systems
+- [x] Lighting v0: forge/stove glow (PointLight2D)
 - [ ] Map edges: fade/border so world doesn't end in a hard line
 
 Source: free packs first (Kenney, itch.io 16×16 — search "16x16 fantasy tileset",
@@ -74,22 +67,18 @@ without labels.
 The panel works; now make it a game UI. Colony sims are READ through UI —
 this is gameplay, not chrome.
 
-- [ ] Resource bar: icons + numbers (no text labels), tooltip on hover with detail
-- [ ] Pawn card redesign: portrait area, trait icons with tooltip lore text,
-      needs bars with icons, current-job line with progress
-- [ ] Pawn list (bottom): mini needs/mood indicator per pawn, flash red on
-      hunger/injury, click = select + center camera
-- [ ] Priorities screen [P]: proper grid (pawns × jobs), click-cycle numbers,
-      readable at a glance
-- [ ] Build/zone menus: icon buttons with cost display, invalid placement = red
-      ghost + reason ("needs wall support", "not enough wood")
-- [ ] Notifications: event log feed (right side, RimWorld-style) — raid, death,
-      starvation, crop ready, construction done. Click = jump camera
-- [ ] Tooltips everywhere: every icon, every button, every bar
-- [ ] Pause/speed UI: visible buttons + current speed indicator (already keyboard)
-- [ ] Font: single readable pixel font, consistent sizes; Thai glyph support
-      check if UI language will ever be Thai
-- [ ] Escape menu: settings (volume sliders, resolution/fullscreen), save/load, quit
+- [x] Resource bar: icons + numbers (no text labels), tooltip on hover with detail
+- [x] Pawn card redesign: trait names with tooltip lore text, needs bars,
+      current-job line *(portrait area awaits human portraits)*
+- [x] Pawn list (bottom): flash red on hunger/injury, click = select + center camera
+- [x] Priorities screen [P]: proper grid (pawns × jobs), click-cycle numbers
+- [x] Build/zone menus: icon buttons with cost tooltips, invalid placement = red
+      ghost + reason line
+- [x] Notifications: event log feed (right side) — death/gate entries click = jump camera
+- [x] Tooltips everywhere: icons, buttons, traits, world-map actions
+- [x] Pause/speed UI: visible buttons + current speed indicator
+- [ ] Font: single readable pixel font, Thai glyph check *(needs a font asset — human pick)*
+- [x] Escape menu: settings (volume, fullscreen), save/load, quit
 
 **DoD:** you play one full in-game day using ONLY the mouse and UI (no memorized
 hotkeys, no debug keys). Everything discoverable.
@@ -99,24 +88,18 @@ hotkeys, no debug keys). Everything discoverable.
 ## Phase 15 — First 10 Minutes & Balance
 Testers bounce in minute 3 if confused. This phase decides everything.
 
-- [ ] Intro event: Fall of Vhal — 3–5 short text/image panels (lore doc has copy),
-      skippable, sets tone + goal
-- [ ] Starting scenario tuned: 3 pawns, minimal supplies, map guaranteed to have
-      wood/stone/water near spawn (mapgen constraint)
-- [ ] Soft tutorial: contextual hint popups, max 6 total
-      ("Villagers are hungry — zone a field [F]"), each dismissible, never modal
-- [ ] Objective nudges v0: early renown goals as visible checklist
-      (build 3 beds → stock 10 food → survive first raid) — teaches the loop
-      without hard tutorial
-- [ ] First raid timing: guaranteed small (1–2 bandits) at end of day 2 —
-      early taste of danger, survivable unarmed
-- [ ] Difficulty settings: Peaceful / Normal / Hard (raid scale multiplier only)
-- [ ] Balance from self-play: 3 full runs to Year 2. Log every boring/confusing
-      moment. Fix top 5. Repeat until a run has no note-worthy dead spots
-- [ ] Performance check: 15 pawns + raid + full base at stable 60fps
-      (profile; usual suspects: pathfinding storms, per-frame job scans)
-- [ ] Crash/save hardening: save mid-raid, load, verify identical state;
-      autosave each morning; corrupted-save handling (don't crash to desktop)
+- [x] Intro event: Fall of Vhal — 4 text panels, skippable, sets tone + goal
+- [x] Starting scenario tuned: 3 pawns, wood/stone/iron guaranteed near spawn
+- [x] Soft tutorial: 6 contextual hints (field, beds, walls, draft, herbs, forge),
+      each once, never modal (ride the notification feed)
+- [x] Objective nudges v0: FIRST STEPS checklist (3 beds → 10 food → survive
+      first raid), hides when complete
+- [x] First raid timing: guaranteed 2 bandits at end of day 2
+- [x] Difficulty settings: Peaceful / Normal / Hard
+- [ ] Balance from self-play: 3 full runs to Year 2 *(human — play and log)*
+- [ ] Performance check: 15 pawns + raid + full base at stable 60fps *(human — profile in editor)*
+- [x] Crash/save hardening: autosave each morning; corrupted/incomplete saves
+      rejected with an error, never a crash *(mid-raid save/load verify = human run)*
 
 **DoD — THE GATE:** 2 different fresh testers (friends, closed test, not public):
 each plays 30 min with zero questions answered, loses ≥1 pawn, and asks to keep

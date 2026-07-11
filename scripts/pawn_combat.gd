@@ -85,7 +85,7 @@ func unequip() -> void:
 	var item: ResourceItem = preload("res://scenes/resource_item.tscn").instantiate()
 	item.resource_id = weapon_id
 	item.position = WorldGrid.cell_to_world(pawn.cell)
-	pawn.get_parent().get_node("Entities").add_child(item)
+	pawn.get_parent().add_child(item)  # pawns live in Entities now
 	weapon_id = ""
 	attack_damage = WeaponDefs.UNARMED_DAMAGE
 	pawn.update_held()
