@@ -17,6 +17,7 @@ var hp := HP_MAX
 var attack_damage := 8.0
 var armor := 0.0
 var is_boss := false  # set before add_child: tougher, drops a relic
+var faction_id := ""  # who sent this bandit (attrition on death)
 var attack_cooldown := 0
 var move_cooldown := 0
 
@@ -38,6 +39,8 @@ func _ready() -> void:
 func take_damage(amount: float) -> void:
 	hp -= maxf(amount - armor, 1.0)
 	if hp <= 0.0:
+		if faction_id != "":
+			FactionManager.on_bandit_killed(faction_id)
 		if is_boss:
 			_drop_item(RelicDefs.ORDER.pick_random())  # the relic faucet
 		if randf() < SWORD_DROP_CHANCE:
@@ -54,19 +57,26 @@ func _drop_item(id: String) -> void:
 func _on_tick() -> void:
 	if attack_cooldown > 0:
 		attack_cooldown -= 1
-	var target := _nearest_living_pawn()
+	# Fight whatever defender is closest — villager or allied warrior.
+	# Variant on purpose: Pawn and Ally share cell/take_damage by shape.
+	var target: Variant = _nearest_living_pawn()
+	var ally := _nearest_ally()
+	if ally != null and (target == null \
+			or (ally.cell - cell).length_squared() < (target.cell - cell).length_squared()):
+		target = ally
 	if target == null:
 		gone.emit()  # no one left to fight
 		queue_free()
 		return
-	var d := (target.cell - cell).abs()
+	var target_cell: Vector2i = target.cell
+	var d := (target_cell - cell).abs()
 	if d.x + d.y <= 1:
-		_attack(target)
+		_attack_defender(target)
 		return
 	move_cooldown -= 1
 	# Enemy grid: gates count as solid, so a gated wall blocks the path —
 	# but blocked bandits batter the nearest gate down.
-	var path: Array[Vector2i] = WorldGrid.astar_enemy.get_id_path(cell, target.cell, true)
+	var path: Array[Vector2i] = WorldGrid.astar_enemy.get_id_path(cell, target_cell, true)
 	if path.size() >= 2:
 		if move_cooldown <= 0:
 			move_cooldown = MOVE_EVERY_TICKS
@@ -85,11 +95,22 @@ func _on_tick() -> void:
 		if gpath.size() >= 2:
 			cell = gpath[1]
 
-func _attack(pawn: Pawn) -> void:
+func _attack_defender(target: Variant) -> void:
 	if attack_cooldown > 0:
 		return
 	attack_cooldown = ATTACK_COOLDOWN_TICKS
-	pawn.take_damage(attack_damage)
+	target.take_damage(attack_damage)
+
+func _nearest_ally() -> Ally:
+	var best: Ally = null
+	var best_dist := INF
+	for node in get_tree().get_nodes_in_group("allies"):
+		var ally := node as Ally
+		var dist := float((ally.cell - cell).length_squared())
+		if dist < best_dist:
+			best = ally
+			best_dist = dist
+	return best
 
 func _attack_gate(gate: Vector2i) -> void:
 	if attack_cooldown > 0:

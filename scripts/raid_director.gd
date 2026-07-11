@@ -3,13 +3,14 @@ extends Node
 ## Spawns a raider at a map edge on a fixed cadence and reports whether
 ## a raid is in progress. Scene-local to Main, not an autoload.
 
-signal raid_started
+signal raid_started(faction_name: String)
 signal raid_ended
 
 const RAIDER_SCENE := preload("res://scenes/raider.tscn")
+const ALLY_SCENE := preload("res://scenes/ally.tscn")
 const RAID_INTERVAL_TICKS := 1200  # ~2 minutes at 10 ticks/sec
-const BASE_BANDITS := 2  # party size = BASE + raid number, capped
-const MAX_BANDITS := 6
+const ALLY_HELP_AT := 4  # allied warriors join defenses this size and up
+const ALLY_COUNT := 2
 
 var ticks_until_raid := RAID_INTERVAL_TICKS
 var raid_count := 0
@@ -25,8 +26,12 @@ func _on_tick() -> void:
 		_spawn_raid()
 
 func _spawn_raid() -> void:
+	# Raids come from a hostile faction; a realm at peace sends none.
+	var faction_id := FactionManager.pick_raid_faction()
+	if faction_id == "":
+		return
 	raid_count += 1
-	var count := mini(BASE_BANDITS + raid_count, MAX_BANDITS)
+	var count := FactionManager.raid_size(faction_id)
 	var origin := _random_edge_cell()
 	var placed := 0
 	for offset: Vector2i in [Vector2i.ZERO, Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT,
@@ -35,16 +40,29 @@ func _spawn_raid() -> void:
 			break
 		var cell := origin + offset
 		if WorldGrid.in_bounds(cell) and not WorldGrid.is_wall(cell):
-			_spawn_bandit(cell, placed == 0 and count >= 4)  # big raids bring a boss
+			_spawn_bandit(cell, faction_id, placed == 0 and count >= 4)  # big raids bring a boss
 			placed += 1
-	raid_started.emit()
+	if count >= ALLY_HELP_AT and FactionManager.has_ally():
+		_spawn_allies()
+	raid_started.emit(FactionDefs.get_def(faction_id).name)
 
-func _spawn_bandit(cell: Vector2i, boss := false) -> void:
+func _spawn_bandit(cell: Vector2i, faction_id: String, boss := false) -> void:
 	var raider: Raider = RAIDER_SCENE.instantiate()
 	raider.is_boss = boss
+	raider.faction_id = faction_id
 	raider.position = WorldGrid.cell_to_world(cell)
 	raider.gone.connect(_on_raider_gone)
 	spawn_parent.add_child(raider)
+
+func _spawn_allies() -> void:
+	var center := WorldGrid.MAP_SIZE / 2
+	for i in ALLY_COUNT:
+		var cell := center + Vector2i(randi_range(-6, 6), randi_range(-6, 6))
+		if not WorldGrid.in_bounds(cell) or WorldGrid.is_wall(cell):
+			cell = center
+		var ally: Ally = ALLY_SCENE.instantiate()
+		ally.position = WorldGrid.cell_to_world(cell)
+		spawn_parent.add_child(ally)
 
 func _on_raider_gone() -> void:
 	# The departing raider is still in the group at this moment.
