@@ -8,11 +8,13 @@ signal raid_ended
 
 const RAIDER_SCENE := preload("res://scenes/raider.tscn")
 const ALLY_SCENE := preload("res://scenes/ally.tscn")
-const RAID_INTERVAL_TICKS := 1200  # ~2 minutes at 10 ticks/sec
+const RAID_INTERVAL_TICKS := 2000  # ~3.3 minutes at 10 ticks/sec
+const GRACE_TICKS := 3000  # the first day is for building, not bleeding
+const EARLY_RAIDS := 3  # the first few raids come from the weakest enemy
 const ALLY_HELP_AT := 4  # allied warriors join defenses this size and up
 const ALLY_COUNT := 2
 
-var ticks_until_raid := RAID_INTERVAL_TICKS
+var ticks_until_raid := RAID_INTERVAL_TICKS + GRACE_TICKS
 var raid_count := 0
 var spawn_parent: Node2D = null  # assigned by Main
 
@@ -27,11 +29,13 @@ func _on_tick() -> void:
 
 func _spawn_raid() -> void:
 	# Raids come from a hostile faction; a realm at peace sends none.
-	var faction_id := FactionManager.pick_raid_faction()
+	var faction_id := FactionManager.pick_raid_faction(raid_count < EARLY_RAIDS)
 	if faction_id == "":
 		return
 	raid_count += 1
-	var count := FactionManager.raid_size(faction_id)
+	# Escalate with survival: the party can't outsize 2 + raids survived,
+	# so raid one is 3 bandits even if the Ashen Legion sends it.
+	var count := mini(FactionManager.raid_size(faction_id), 2 + raid_count)
 	var origin := _random_edge_cell()
 	var placed := 0
 	for offset: Vector2i in [Vector2i.ZERO, Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT,

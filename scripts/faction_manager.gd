@@ -90,12 +90,18 @@ func demand_pending(id: String) -> bool:
 
 # --- raids ------------------------------------------------------------------
 
-func pick_raid_faction() -> String:
+func pick_raid_faction(prefer_weak := false) -> String:
 	var hostile: Array[String] = []
 	for id: String in factions:
 		if factions[id].resolved == "" and float(factions[id].attitude) < 0.0:
 			hostile.append(id)
-	return "" if hostile.is_empty() else hostile.pick_random()
+	if hostile.is_empty():
+		return ""
+	if prefer_weak:  # early game: the local bandits probe first
+		hostile.sort_custom(func(a: String, b: String) -> bool:
+			return float(factions[a].strength) < float(factions[b].strength))
+		return hostile[0]
+	return hostile.pick_random()
 
 func raid_size(id: String) -> int:
 	return clampi(2 + int(float(factions[id].strength) / 25.0), 2, 8)
