@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://dqj6m2x9s4hb"]
+[gd_scene load_steps=21 format=3 uid="uid://dqj6m2x9s4hb"]
 
 [ext_resource type="Script" uid="uid://b7h4z9d6r1sc" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="TileSet" uid="uid://c5w1r8p3v0gd" path="res://assets/tileset.tres" id="2_tileset"]
@@ -14,6 +14,11 @@
 [ext_resource type="Script" uid="uid://dm2t6k9f3c7w" path="res://scripts/trade_panel.gd" id="14_panel"]
 [ext_resource type="Script" uid="uid://cf5t8n2w6k1r" path="res://scripts/world_map.gd" id="15_map"]
 [ext_resource type="Script" uid="uid://bh3m7q1v5c9f" path="res://scripts/story_panel.gd" id="16_story"]
+[ext_resource type="Script" uid="uid://ct2n8w5k1f7m" path="res://scripts/player_input.gd" id="17_input"]
+[ext_resource type="Script" uid="uid://bq7c4m1t8k3n" path="res://scripts/ghost_preview.gd" id="18_ghost"]
+[ext_resource type="Script" uid="uid://bw4h7t2m9c1k" path="res://scripts/villager_panel.gd" id="19_villager"]
+[ext_resource type="Script" uid="uid://dk8f3w6n2t5c" path="res://scripts/priority_grid.gd" id="20_grid"]
+[ext_resource type="Script" uid="uid://cn5t9k2w7f4h" path="res://scripts/roster_bar.gd" id="21_roster"]
 [ext_resource type="Script" uid="uid://dt3w7q1n8h5m" path="res://scripts/pause_menu.gd" id="8_pause"]
 
 [node name="Main" type="Node2D"]
@@ -32,6 +37,12 @@ tile_set = ExtResource("2_tileset")
 script = ExtResource("5_zone")
 
 [node name="Entities" type="Node2D" parent="."]
+
+[node name="PlayerInput" type="Node" parent="."]
+script = ExtResource("17_input")
+
+[node name="GhostPreview" type="Node2D" parent="."]
+script = ExtResource("18_ghost")
 
 [node name="WorldSpawner" type="Node" parent="."]
 script = ExtResource("7_spawner")
@@ -62,17 +73,11 @@ offset_top = 8.0
 offset_right = 700.0
 offset_bottom = 31.0
 
-[node name="StatsLabel" type="Label" parent="HUD"]
+[node name="ResourceLabel" type="Label" parent="HUD"]
 offset_left = 8.0
 offset_top = 28.0
 offset_right = 600.0
 offset_bottom = 51.0
-
-[node name="PriorityLabel" type="Label" parent="HUD"]
-offset_left = 8.0
-offset_top = 48.0
-offset_right = 600.0
-offset_bottom = 71.0
 
 [node name="CalendarLabel" type="Label" parent="HUD"]
 anchor_left = 1.0
@@ -84,12 +89,14 @@ offset_bottom = 31.0
 grow_horizontal = 0
 horizontal_alignment = 2
 
-[node name="EventLabel" type="Label" parent="HUD"]
-offset_left = 8.0
-offset_top = 68.0
-offset_right = 600.0
-offset_bottom = 91.0
-theme_override_colors/font_color = Color(1, 0.35, 0.35, 1)
+[node name="VillagerPanel" type="CanvasLayer" parent="."]
+script = ExtResource("19_villager")
+
+[node name="PriorityGrid" type="CanvasLayer" parent="."]
+script = ExtResource("20_grid")
+
+[node name="RosterBar" type="CanvasLayer" parent="."]
+script = ExtResource("21_roster")
 
 [node name="TradePanel" type="CanvasLayer" parent="."]
 layer = 5
@@ -225,6 +232,10 @@ text = "Load Save"
 [node name="LoadAutosaveButton" type="Button" parent="PauseMenu/Panel/VBox"]
 unique_name_in_owner = true
 text = "Load Autosave"
+
+[node name="MenuButton" type="Button" parent="PauseMenu/Panel/VBox"]
+unique_name_in_owner = true
+text = "Main Menu"
 
 [node name="QuitButton" type="Button" parent="PauseMenu/Panel/VBox"]
 unique_name_in_owner = true

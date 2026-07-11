@@ -86,11 +86,11 @@ Rules: one phase at a time, in order. Each phase gates on its **Definition of Do
 ---
 
 ## Phase 7 — UI & Game Feel (v0.75)
-- [ ] Villager panel (needs, mood, skills, gear, job); work priority grid
-- [ ] Squad/draft UI, gear assignment UI
-- [ ] World map UI polish: faction cards, attitude bars, expedition planner
-- [ ] Resource + calendar HUD; pause/1x/3x; notifications feed; main menu
-- [ ] Placement previews, selection highlights, threat warnings
+- [x] Villager panel (needs, mood, skills, gear, job); work priority grid
+- [x] Squad/draft UI, gear assignment UI
+- [x] World map UI polish: faction cards, attitude bars, expedition planner
+- [x] Resource + calendar HUD; pause/1x/3x; notifications feed; main menu
+- [x] Placement previews, selection highlights, threat warnings
 
 **DoD:** A friend plays 30 minutes — builds, fights a raid, sends an envoy — without asking how.
 **Tag:** `v0.75-playable`

@@ -76,6 +76,17 @@ func equip(id: String) -> void:
 	weapon_id = id
 	attack_damage = float(WeaponDefs.get_def(id).damage)
 
+## Drop the weapon at our feet (gear reassignment via the panel).
+func unequip() -> void:
+	if weapon_id == "":
+		return
+	var item: ResourceItem = preload("res://scenes/resource_item.tscn").instantiate()
+	item.resource_id = weapon_id
+	item.position = WorldGrid.cell_to_world(pawn.cell)
+	pawn.get_parent().get_node("Entities").add_child(item)
+	weapon_id = ""
+	attack_damage = WeaponDefs.UNARMED_DAMAGE
+
 func is_ranged() -> bool:
 	return weapon_id != "" and bool(WeaponDefs.get_def(weapon_id).get("ranged", false))
 

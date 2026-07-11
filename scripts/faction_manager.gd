@@ -155,6 +155,15 @@ func send_expedition(target: String) -> void:
 	announced.emit("The expedition marches out (%d strong). They return in a day." % datas.size())
 	factions_changed.emit()
 
+## Who would march if an expedition left now (world map preview).
+func party_preview() -> String:
+	if not is_instance_valid(main):
+		return ""
+	var names: Array[String] = []
+	for pawn in _pick_party():
+		names.append(String(pawn.name))
+	return ", ".join(names)
+
 func _pick_party() -> Array[Pawn]:
 	var armed: Array[Pawn] = []
 	for pawn: Pawn in main.pawns:

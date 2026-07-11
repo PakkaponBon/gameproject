@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://bc9r5t2w7m4k"]
+
+[ext_resource type="Script" uid="uid://dh6w1k4c8t2f" path="res://scripts/main_menu.gd" id="1_menu"]
+
+[node name="MainMenu" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.07, 0.05, 0.08, 1)
+
+[node name="VBox" type="VBoxContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -120.0
+offset_right = 120.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="VBox"]
+text = "A S H F A L L"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="VBox"]
+text = "Born from ashes. Rebuild the village. Rule the world."
+horizontal_alignment = 1
+
+[node name="NewGameButton" type="Button" parent="VBox"]
+unique_name_in_owner = true
+text = "New Game"
+
+[node name="LoadGameButton" type="Button" parent="VBox"]
+unique_name_in_owner = true
+text = "Load Game"
+
+[node name="QuitButton" type="Button" parent="VBox"]
+unique_name_in_owner = true
+text = "Quit"

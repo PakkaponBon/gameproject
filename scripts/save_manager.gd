@@ -37,7 +37,8 @@ func load_game(path: String) -> bool:
 		return false
 	pending_load = data
 	get_tree().paused = false
-	get_tree().reload_current_scene()
+	# Works both in-game and from the main menu.
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
 	return true
 
 ## Called by Main._ready in the freshly reloaded scene.

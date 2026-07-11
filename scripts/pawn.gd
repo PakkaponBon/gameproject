@@ -99,6 +99,30 @@ func be_fed() -> void:
 	body.color = BODY_COLOR
 	stats_changed.emit()
 
+## Human-readable "what am I doing" for the villager panel.
+func activity_text() -> String:
+	if dead:
+		return "Dead"
+	if collapsed:
+		return "Collapsed — starving!"
+	if drafted:
+		return "Drafted — awaiting orders" if combat.attack_target == null else "Drafted — attacking"
+	if survival.sleeping:
+		return "Sleeping"
+	if survival.food_target:
+		return "Getting food"
+	if needs.on_break:
+		return "Mental break"
+	if work.carrying_food:
+		return "Rescuing with food"
+	if work.carrying_herb:
+		return "Treating a wound"
+	if work.carrying:
+		return "Hauling %s" % ResourceDefs.get_def(work.carrying.resource_id).name
+	if work.job:
+		return (Job.Type.keys()[work.job.type] as String).capitalize()
+	return "Idle"
+
 ## Leaving on expedition: release every claim cleanly before removal.
 func prepare_depart() -> void:
 	survival.wake()

@@ -13,6 +13,9 @@ func _ready() -> void:
 	%SaveButton.pressed.connect(_on_save)
 	%LoadButton.pressed.connect(func() -> void: load_requested.emit(SaveManager.MANUAL_SAVE_PATH))
 	%LoadAutosaveButton.pressed.connect(func() -> void: load_requested.emit(SaveManager.AUTOSAVE_PATH))
+	%MenuButton.pressed.connect(func() -> void:
+		get_tree().paused = false
+		get_tree().change_scene_to_file("res://scenes/main_menu.tscn"))
 	%QuitButton.pressed.connect(func() -> void: get_tree().quit())
 
 func _unhandled_input(event: InputEvent) -> void:
