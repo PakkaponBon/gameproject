@@ -55,11 +55,15 @@ func update_stats(pawn: Pawn) -> void:
 		suffix = "  (MENTAL BREAK)"
 	elif pawn.combat.is_wounded():
 		suffix = "  (WOUNDED)"
-	var weapon := pawn.combat.weapon_id if pawn.combat.weapon_id != "" else "unarmed"
-	stats_label.text = "%s — hunger %d  rest %d  mood %d  hp %d [%s, melee %d]%s" % [
+	var gear := pawn.combat.weapon_id if pawn.combat.weapon_id != "" else "unarmed"
+	if pawn.combat.is_ranged():
+		gear += " x%d" % pawn.combat.ammo
+	if pawn.combat.relic_id != "":
+		gear += ", " + RelicDefs.get_def(pawn.combat.relic_id).name
+	stats_label.text = "%s — hunger %d  rest %d  mood %d  hp %d [%s | melee %d, arch %d]%s" % [
 		pawn.name, roundi(pawn.needs.hunger), roundi(pawn.needs.rest),
-		roundi(pawn.needs.mood), roundi(pawn.combat.hp), weapon,
-		pawn.skills.level("melee"), suffix]
+		roundi(pawn.needs.mood), roundi(pawn.combat.hp), gear,
+		pawn.skills.level("melee"), pawn.skills.level("archery"), suffix]
 
 func update_priorities(pawn: Pawn) -> void:
 	var trait_names: Array[String] = []

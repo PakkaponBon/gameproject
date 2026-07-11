@@ -20,6 +20,7 @@ var cell: Vector2i
 var target_cell: Vector2i
 var collapsed := false  # starved: prone, helpless, bleeding out
 var feed_job: Job = null
+var treat_job: Job = null  # wounded: a helper can bring herbs
 var drafted := false  # player-controlled: no jobs, no auto needs-seeking
 var dead := false
 var _selected := false
@@ -121,7 +122,12 @@ func _on_tick() -> void:
 		combat.drain(COLLAPSE_HP_DRAIN)  # defeated -> _die
 		return
 	combat.tick()
-	# Melee is survival: an adjacent raider preempts (and wakes) everything.
+	combat.relic_tick()
+	_update_treat_job()
+	# Archers shoot from range; melee is survival when enemies close in.
+	if combat.ranged_tick():
+		survival.wake()
+		return
 	if combat.engage_adjacent():
 		survival.wake()
 		return
@@ -197,6 +203,23 @@ func _collapse() -> void:
 	_register_feed_job()
 	stats_changed.emit()
 
+## Herb treatment: a wounded villager invites help; healed = job gone.
+func _update_treat_job() -> void:
+	if combat.is_wounded() and treat_job == null:
+		treat_job = Job.new()
+		treat_job.type = Job.Type.TREAT
+		treat_job.cell = cell
+		treat_job.target = self
+		JobManager.add_job(treat_job)
+	elif treat_job and not combat.is_wounded():
+		JobManager.remove_job(treat_job)
+		treat_job = null
+
+func clear_treat_job() -> void:
+	if treat_job:
+		JobManager.remove_job(treat_job)
+		treat_job = null
+
 func _register_feed_job() -> void:
 	feed_job = Job.new()
 	feed_job.type = Job.Type.FEED
@@ -218,6 +241,7 @@ func _die() -> void:
 	if feed_job:
 		JobManager.remove_job(feed_job)
 		feed_job = null
+	clear_treat_job()
 	abort_all()
 	died.emit()
 	queue_free()

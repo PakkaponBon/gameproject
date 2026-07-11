@@ -85,15 +85,20 @@ func _register_craft_job() -> void:
 	JobManager.add_job(craft_job)
 
 func _on_crafted() -> void:
-	var output: String = RecipeDefs.get_def(recipe_id).output
+	var def := RecipeDefs.get_def(recipe_id)
+	var output: String = def.output
+	var remaining := int(def.get("output_count", 1))
 	for offset in SPILL:
+		if remaining <= 0:
+			break
 		var spot := cell + offset
 		if offset != Vector2i.ZERO and WorldGrid.in_bounds(spot) \
 				and not WorldGrid.is_wall(spot) and not WorldGrid.items.has(spot):
 			_spawn_item(output, spot)
-			queue_free()
-			return
-	_spawn_item(output, cell)  # fallback: on the station itself
+			remaining -= 1
+	while remaining > 0:  # fallback: on the station itself
+		_spawn_item(output, cell)
+		remaining -= 1
 	queue_free()
 
 func _spawn_item(id: String, spot: Vector2i) -> void:

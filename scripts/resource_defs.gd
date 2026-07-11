@@ -11,6 +11,12 @@ const DEFS := {
 			"node_color": Color(0.37, 0.29, 0.23), "node_yield": 2},
 	"iron_ingot": {"name": "Iron Ingot", "color": Color(0.76, 0.76, 0.82)},
 	"sword": {"name": "Sword", "color": Color(0.8, 0.82, 0.88)},
+	"bow": {"name": "Bow", "color": Color(0.6, 0.45, 0.3)},
+	"arrow": {"name": "Arrows", "color": Color(0.85, 0.85, 0.7), "shots": 5},
+	"herb": {"name": "Herb", "color": Color(0.35, 0.8, 0.6), "medicine": 25.0},
+	"relic_fireball": {"name": "Fireball Relic", "color": Color(0.9, 0.45, 0.2), "relic": true},
+	"relic_heal": {"name": "Healing Relic", "color": Color(0.4, 0.85, 0.5), "relic": true},
+	"relic_barrier": {"name": "Barrier Relic", "color": Color(0.5, 0.55, 0.95), "relic": true},
 }
 
 static func get_def(id: String) -> Dictionary:

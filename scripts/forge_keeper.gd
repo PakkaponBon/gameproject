@@ -47,7 +47,11 @@ func _is_workstation(cell: Vector2i) -> bool:
 
 func _pick_recipe() -> String:
 	for id: String in RecipeDefs.ORDER:
-		if _inputs_available(RecipeDefs.get_def(id).inputs):
+		var def := RecipeDefs.get_def(id)
+		# Don't overproduce: skip recipes whose output is already stocked up.
+		if _count_free(def.output) >= int(def.get("max_stock", 999)):
+			continue
+		if _inputs_available(def.inputs):
 			return id
 	return ""
 

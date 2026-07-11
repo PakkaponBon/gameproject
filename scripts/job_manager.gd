@@ -43,7 +43,8 @@ func request_job(seeker: Pawn) -> Job:
 			prio_type = Job.Type.HAUL
 		elif job.type == Job.Type.MINE:
 			prio_type = Job.Type.CHOP
-		elif job.type == Job.Type.EQUIP:
+		elif job.type == Job.Type.EQUIP or job.type == Job.Type.AMMO \
+				or job.type == Job.Type.RELIC or job.type == Job.Type.TREAT:
 			prio_type = Job.Type.HAUL
 		elif job.type == Job.Type.CRAFT:
 			prio_type = Job.Type.BUILD
@@ -63,8 +64,19 @@ func request_job(seeker: Pawn) -> Job:
 				continue
 		if job.type == Job.Type.FEED and find_fetchable_food(from_cell) == null:
 			continue
-		if job.type == Job.Type.EQUIP and seeker.combat.weapon_id != "":
-			continue  # already armed
+		if job.type == Job.Type.EQUIP:
+			if seeker.combat.weapon_id != "":
+				continue  # already armed
+			var wdef: Dictionary = WeaponDefs.get_def((job.target as ResourceItem).resource_id)
+			if wdef.has("skill") and seeker.skills.level(wdef.skill) < int(wdef.skill_min):
+				continue  # not trained enough for this weapon
+		if job.type == Job.Type.AMMO and (not seeker.combat.is_ranged() or seeker.combat.ammo >= 5):
+			continue
+		if job.type == Job.Type.RELIC and (seeker.combat.relic_id != "" \
+				or not TraitDefs.has_flag(seeker.traits, "magic")):
+			continue  # relics answer only to the gifted
+		if job.type == Job.Type.TREAT and find_fetchable_resource(from_cell, "herb") == null:
+			continue
 		if best and (prio > best_prio or (prio == best_prio and float((job.cell - from_cell).length_squared()) >= best_dist)):
 			continue
 		# Solid targets (walls being torn down, ore) are worked from beside.

@@ -8,7 +8,7 @@ extends RefCounted
 ## as a stockpile once built. workstation=true lets ForgeKeeper run
 ## recipes there. cost/refund are per-resource dictionaries.
 
-const ORDER := ["wall", "gate", "bed", "barn", "forge"]
+const ORDER := ["wall", "gate", "bed", "barn", "forge", "watchtower"]
 
 const DEFS := {
 	"wall": {
@@ -68,6 +68,18 @@ const DEFS := {
 		"block_enemies": false,
 		"storage": false,
 		"workstation": true,
+	},
+	"watchtower": {
+		"name": "Watchtower",
+		"cost": {"wood": 3, "stone": 2},
+		"refund": {"wood": 1, "stone": 1},
+		"build_ticks": 60,
+		"tile": Vector2i(7, 0),
+		"ghost": Color(0.6, 0.6, 0.66),
+		"block_villagers": false,
+		"block_enemies": true,  # bandits can't climb it
+		"storage": false,
+		"range_bonus": 3,  # archer standing here shoots further
 	},
 }
 

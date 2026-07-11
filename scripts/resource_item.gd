@@ -47,7 +47,11 @@ func _settle() -> void:
 	if not stored:
 		_register_haul_job()
 	if WeaponDefs.DEFS.has(resource_id):
-		_register_equip_job()
+		_register_claim_job(Job.Type.EQUIP)
+	elif ResourceDefs.get_def(resource_id).has("shots"):
+		_register_claim_job(Job.Type.AMMO)
+	elif ResourceDefs.get_def(resource_id).get("relic", false):
+		_register_claim_job(Job.Type.RELIC)
 
 func _register_haul_job() -> void:
 	haul_job = Job.new()
@@ -56,9 +60,9 @@ func _register_haul_job() -> void:
 	haul_job.target = self
 	JobManager.add_job(haul_job)
 
-func _register_equip_job() -> void:
+func _register_claim_job(type: Job.Type) -> void:
 	equip_job = Job.new()
-	equip_job.type = Job.Type.EQUIP
+	equip_job.type = type
 	equip_job.cell = cell
 	equip_job.target = self
 	JobManager.add_job(equip_job)

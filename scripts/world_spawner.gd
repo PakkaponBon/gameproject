@@ -61,6 +61,13 @@ func spawn_resource(cell: Vector2i, id: String) -> ResourceItem:
 	entities.add_child(item)
 	return item
 
+func spawn_raider(cell: Vector2i, boss: bool) -> Raider:
+	var raider: Raider = RAIDER_SCENE.instantiate()
+	raider.is_boss = boss
+	raider.position = WorldGrid.cell_to_world(cell)
+	entities.add_child(raider)
+	return raider
+
 func spawn_ore(cell: Vector2i, id: String) -> OreNode:
 	var node: OreNode = ORE_SCENE.instantiate()
 	node.resource_id = id
@@ -122,6 +129,9 @@ func _spawn_pawns(used: Dictionary) -> void:
 		used[cell] = true
 		var pawn := create_pawn(cell, "Pawn %d" % (count + 1), presets[count % presets.size()].duplicate())
 		pawn.traits = _random_traits()
+		# Varied starting talent — most colonies roll at least one archer.
+		pawn.skills.xp["melee"] = float(randi_range(0, 150))
+		pawn.skills.xp["archery"] = float(randi_range(0, 450))
 		count += 1
 
 func _random_traits() -> Array:

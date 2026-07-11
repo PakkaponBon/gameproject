@@ -4,12 +4,15 @@ extends Node
 ## chop/haul/supply/build behaviors. Movement and needs live on the pawn.
 
 const FOOD_SCENE := preload("res://scenes/food_item.tscn")
+const RESOURCE_SCENE := preload("res://scenes/resource_item.tscn")
 
 var job: Job = null
 var carrying: ResourceItem = null
 var fetching: ResourceItem = null  # supply leg 1: walking to pick this up
 var fetching_food: FoodItem = null  # feed leg 1
 var carrying_food := false  # feed leg 2: meal in hand
+var fetching_herb: ResourceItem = null  # treat leg 1
+var carrying_herb := false  # treat leg 2
 var reserved_dest := WorldGrid.INVALID_CELL  # claimed stockpile cell while hauling
 var work_progress := 0.0  # fractional work from speed modifiers
 
@@ -17,7 +20,8 @@ var work_progress := 0.0  # fractional work from speed modifiers
 
 func busy() -> bool:
 	return job != null or carrying != null or fetching != null \
-			or fetching_food != null or carrying_food
+			or fetching_food != null or carrying_food \
+			or fetching_herb != null or carrying_herb
 
 func request_next() -> void:
 	job = JobManager.request_job(pawn)
@@ -27,6 +31,8 @@ func request_next() -> void:
 		_ensure_fetch()
 	elif job.type == Job.Type.FEED:
 		_ensure_food_fetch()
+	elif job.type == Job.Type.TREAT:
+		_ensure_herb_fetch()
 	elif job.type == Job.Type.DECONSTRUCT or job.type == Job.Type.MINE:
 		_approach_work_spot()
 	else:
@@ -39,6 +45,10 @@ func on_arrived() -> void:
 		_pick_up_food()
 	elif carrying_food:
 		_deliver_food()
+	elif fetching_herb:
+		_pick_up_herb()
+	elif carrying_herb:
+		_deliver_herb()
 	elif carrying:
 		if job and job.type == Job.Type.SUPPLY:
 			_deliver_to_site()
@@ -60,6 +70,11 @@ func abort() -> void:
 	fetching_food = null
 	if carrying_food:
 		_drop_food_in_hand()
+	if is_instance_valid(fetching_herb):
+		fetching_herb.reserved = false
+	fetching_herb = null
+	if carrying_herb:
+		_drop_herb_in_hand()
 	if carrying:
 		carrying.drop_at(pawn.cell)  # drop_at clears its reservation
 		carrying = null
@@ -82,8 +97,10 @@ func _do_job() -> void:
 			_ensure_fetch()  # e.g. right after load: job held, wood not yet chosen
 		Job.Type.FEED:
 			_ensure_food_fetch()
-		Job.Type.EQUIP:
-			_equip_here()
+		Job.Type.TREAT:
+			_ensure_herb_fetch()
+		Job.Type.EQUIP, Job.Type.AMMO, Job.Type.RELIC:
+			_claim_here()
 		Job.Type.DECONSTRUCT, Job.Type.MINE:
 			_do_adjacent_work()
 		Job.Type.PLANT:
@@ -150,17 +167,74 @@ func _pick_up_fetched() -> void:
 	fetching = null
 	pawn.target_cell = job.cell
 
-func _equip_here() -> void:
+## EQUIP/AMMO/RELIC: pick the item off the ground into gear.
+func _claim_here() -> void:
 	var item := job.target as ResourceItem
 	# Gone, or hauled elsewhere since we set out.
 	if not is_instance_valid(item) or item.get_parent() is Pawn or item.cell != job.cell:
 		job = null
 		return
 	item.pick_up(pawn)  # clears its jobs and cell registration
-	pawn.combat.equip(item.resource_id)
-	item.queue_free()  # the weapon lives in gear now, not on the ground
+	match job.type:
+		Job.Type.EQUIP:
+			pawn.combat.equip(item.resource_id)
+		Job.Type.AMMO:
+			pawn.combat.ammo += int(ResourceDefs.get_def(item.resource_id).shots)
+		Job.Type.RELIC:
+			pawn.combat.relic_id = item.resource_id
+	item.queue_free()  # lives in gear now, not on the ground
 	JobManager.complete_job(job)
 	job = null
+
+func _ensure_herb_fetch() -> void:
+	var herb := JobManager.find_fetchable_resource(pawn.cell, "herb")
+	if herb == null:
+		abort()
+		return
+	herb.reserved = true
+	fetching_herb = herb
+	pawn.target_cell = herb.cell
+
+func _pick_up_herb() -> void:
+	if job == null or not is_instance_valid(fetching_herb):
+		fetching_herb = null
+		abort()
+		return
+	fetching_herb.pick_up(pawn)
+	fetching_herb.queue_free()  # into our hands
+	fetching_herb = null
+	carrying_herb = true
+	_chase_patient()
+
+func _deliver_herb() -> void:
+	if job == null:
+		_drop_herb_in_hand()
+		return
+	var patient := job.target as Pawn
+	if not is_instance_valid(patient) or patient.dead:
+		job = null
+		_drop_herb_in_hand()
+		return
+	# Patients move (bed rest, work); keep chasing until we share a cell.
+	if pawn.cell != patient.cell:
+		_chase_patient()
+		return
+	carrying_herb = false
+	patient.combat.heal(float(ResourceDefs.get_def("herb").medicine))
+	patient.clear_treat_job()
+	job = null
+
+func _chase_patient() -> void:
+	var patient := job.target as Pawn
+	if is_instance_valid(patient):
+		pawn.target_cell = patient.cell
+
+func _drop_herb_in_hand() -> void:
+	carrying_herb = false
+	var item: ResourceItem = RESOURCE_SCENE.instantiate()
+	item.resource_id = "herb"
+	item.position = WorldGrid.cell_to_world(pawn.cell)
+	pawn.get_parent().get_node("Entities").add_child(item)
 
 func _ensure_food_fetch() -> void:
 	var food := JobManager.find_fetchable_food(pawn.cell)
