@@ -4,11 +4,13 @@ extends Node
 ## beds and sleeping. Stats live in PawnNeeds; movement on the pawn.
 
 const EAT_TICKS := 10
+const WANDER_EVERY_TICKS := 3
 
 var food_target: FoodItem = null
 var eat_ticks_left := 0
 var sleeping := false
 var bed_cell := WorldGrid.INVALID_CELL  # claimed bed (or target while walking)
+var wander_cooldown := 0
 
 @onready var pawn: Pawn = get_parent()
 
@@ -54,6 +56,17 @@ func eat_tick() -> void:
 		food_target.queue_free()
 		food_target = null
 		pawn.needs.eat()
+
+## Mental-break behavior: aimless steps.
+func wander() -> void:
+	wander_cooldown -= 1
+	if wander_cooldown > 0:
+		return
+	wander_cooldown = WANDER_EVERY_TICKS
+	var next: Vector2i = pawn.cell + Pawn.DIRS.pick_random()
+	if WorldGrid.in_bounds(next) and not WorldGrid.is_wall(next):
+		pawn.cell = next
+		pawn.target_cell = next
 
 func fall_asleep() -> void:
 	sleeping = true

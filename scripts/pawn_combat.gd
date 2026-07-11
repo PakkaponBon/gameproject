@@ -18,6 +18,7 @@ var hp := HP_MAX
 var attack_damage := 5.0  # unarmed baseline
 var armor := 0.0
 var attack_cooldown := 0
+var attack_target: Raider = null  # draft order: pursue and engage
 
 @onready var pawn: Pawn = get_parent()
 
@@ -55,6 +56,37 @@ func is_wounded() -> bool:
 
 func fully_recovered() -> bool:
 	return hp >= HP_MAX * RECOVERED_AT
+
+## One drafted tick: pursue the attack order, or execute move orders.
+## engage_adjacent (run before this) lands the hits.
+func drafted_tick() -> void:
+	if attack_target and not is_instance_valid(attack_target):
+		attack_target = null  # target down; hold position
+	if attack_target:
+		var path: Array[Vector2i] = WorldGrid.astar.get_id_path(pawn.cell, attack_target.cell, true)
+		if path.size() >= 2:
+			pawn.cell = path[1]
+		pawn.target_cell = pawn.cell
+	elif pawn.cell != pawn.target_cell:
+		pawn.step()
+
+func raid_active() -> bool:
+	return not get_tree().get_nodes_in_group("raiders").is_empty()
+
+func sheltering() -> bool:
+	return raid_active() and WorldGrid.safety_cells.has(pawn.cell)
+
+## Undrafted raid response: run for the nearest safety cell.
+func flee_if_raid() -> void:
+	if not raid_active() or WorldGrid.safety_cells.is_empty() or pawn.survival.food_target:
+		return
+	if WorldGrid.safety_cells.has(pawn.cell) or WorldGrid.safety_cells.has(pawn.target_cell):
+		return
+	var spot := WorldGrid.nearest_safety_cell(pawn.cell)
+	if spot == WorldGrid.INVALID_CELL:
+		return
+	pawn.abort_all(false)  # drop work and bed claims; keep an eating trip
+	pawn.target_cell = spot
 
 func _adjacent_raider() -> Raider:
 	for node in get_tree().get_nodes_in_group("raiders"):

@@ -1,7 +1,8 @@
 extends Node
-## Autoload: serializes the whole session to versioned JSON and rebuilds it
-## on load. Loading reloads the main scene; `pending_load` survives the
-## reload because this is an autoload, and the fresh Main applies it.
+## Autoload: versioned JSON save/load. Collection lives in SaveCollector;
+## this side owns file IO, autosave, and rebuilding the world on load.
+## Loading reloads the main scene; `pending_load` survives the reload
+## because this is an autoload, and the fresh Main applies it.
 
 const SAVE_VERSION := 11
 const MANUAL_SAVE_PATH := "user://save.json"
@@ -24,7 +25,7 @@ func save_game(path: String) -> void:
 	if file == null:
 		push_error("Cannot write save file: %s" % path)
 		return
-	file.store_string(JSON.stringify(_collect()))
+	file.store_string(JSON.stringify(SaveCollector.collect(main, SAVE_VERSION)))
 
 func load_game(path: String) -> bool:
 	if not FileAccess.file_exists(path):
@@ -38,116 +39,6 @@ func load_game(path: String) -> bool:
 	get_tree().paused = false
 	get_tree().reload_current_scene()
 	return true
-
-# --- saving ---------------------------------------------------------------
-
-func _collect() -> Dictionary:
-	var built: Array = []
-	for cell: Vector2i in WorldGrid.buildings:
-		built.append({"cell": _v(cell), "id": WorldGrid.buildings[cell]})
-	var trees: Array = []
-	for node in get_tree().get_nodes_in_group("trees"):
-		var tree := node as TreeEntity
-		trees.append({"cell": _v(tree.cell), "work": tree.job.work_ticks})
-	var loose_items: Array = []
-	for node in get_tree().get_nodes_in_group("resources"):
-		var item := node as ResourceItem
-		if item.get_parent() is Pawn:
-			continue  # carried items are saved with their pawn
-		loose_items.append({"cell": _v(item.cell), "id": item.resource_id})
-	var ore_nodes: Array = []
-	for node in get_tree().get_nodes_in_group("ore_nodes"):
-		var ore := node as OreNode
-		ore_nodes.append({"cell": _v(ore.cell), "id": ore.resource_id, "work": ore.job.work_ticks})
-	var food: Array = []
-	for node in get_tree().get_nodes_in_group("food"):
-		food.append(_v((node as FoodItem).cell))
-	var graves: Array = []
-	for node in get_tree().get_nodes_in_group("graves"):
-		graves.append(_v((node as Grave).cell))
-	var raiders: Array = []
-	for node in get_tree().get_nodes_in_group("raiders"):
-		var raider := node as Raider
-		raiders.append({
-			"cell": _v(raider.cell),
-			"hp": raider.hp,
-			"atk_cd": raider.attack_cooldown,
-			"move_cd": raider.move_cooldown,
-		})
-	var blueprints: Array = []
-	for cell: Vector2i in main.blueprints:
-		var bp: Blueprint = main.blueprints[cell]
-		blueprints.append({
-			"cell": _v(cell),
-			"id": bp.building_id,
-			"delivered": bp.delivered,
-			"work": bp.build_job.work_ticks if bp.build_job else -1,
-		})
-	var decon: Array = []
-	for cell: Vector2i in main.decon_orders:
-		decon.append({"cell": _v(cell), "work": main.decon_orders[cell].job.work_ticks})
-	var field_zones: Array = []
-	for cell: Vector2i in WorldGrid.fields:
-		field_zones.append({"cell": _v(cell), "crop": WorldGrid.fields[cell]})
-	var crops: Array = []
-	for node in get_tree().get_nodes_in_group("crops"):
-		var crop := node as Crop
-		crops.append({"cell": _v(crop.cell), "id": crop.crop_id, "growth": crop.growth_ticks})
-	var camera: Camera2D = main.get_node("Camera")
-	return {
-		"version": SAVE_VERSION,
-		"clock_ticks": GameClock.ticks,
-		"raid_ticks": main.raid_director.ticks_until_raid,
-		"ground_seed": main.spawner.ground_seed,
-		"buildings": built,
-		"stockpiles": WorldGrid.stockpile_cells.keys().map(_v),
-		"safety": WorldGrid.safety_cells.keys().map(_v),
-		"trees": trees,
-		"items": loose_items,
-		"ore_nodes": ore_nodes,
-		"food": food,
-		"graves": graves,
-		"raiders": raiders,
-		"blueprints": blueprints,
-		"decon_orders": decon,
-		"fields": field_zones,
-		"crops": crops,
-		"pawns": main.pawns.map(_pawn_data),
-		"selected": main.pawns.find(main.selected),
-		"camera": {"pos": [camera.position.x, camera.position.y], "zoom": camera.zoom.x},
-	}
-
-func _pawn_data(pawn: Pawn) -> Dictionary:
-	var priorities := {}
-	for type: int in pawn.work_priorities:
-		priorities[str(type)] = pawn.work_priorities[type]
-	return {
-		"name": String(pawn.name),
-		"cell": _v(pawn.cell),
-		"target": _v(pawn.target_cell),
-		"hunger": pawn.needs.hunger,
-		"rest": pawn.needs.rest,
-		"mood": pawn.needs.mood,
-		"on_break": pawn.needs.on_break,
-		"sleeping": pawn.survival.sleeping,
-		"bed": _v(pawn.survival.bed_cell),
-		"hp": pawn.combat.hp,
-		"atk_cd": pawn.combat.attack_cooldown,
-		"wander_cd": pawn.wander_cooldown,
-		"collapsed": pawn.collapsed,
-		"drafted": pawn.drafted,
-		"attack_cell": _v(pawn.attack_target.cell) if is_instance_valid(pawn.attack_target) else [],
-		"carrying_food": pawn.work.carrying_food,
-		"carrying_id": pawn.work.carrying.resource_id if pawn.work.carrying else "",
-		"priorities": priorities,
-		"job_cell": _v(pawn.work.job.cell) if pawn.work.job else [],
-		"job_type": int(pawn.work.job.type) if pawn.work.job else -1,
-		"reserved_dest": _v(pawn.work.reserved_dest),
-		"food_cell": _v(pawn.survival.food_target.cell) if pawn.survival.food_target else [],
-		"eat_ticks": pawn.survival.eat_ticks_left,
-	}
-
-# --- loading ---------------------------------------------------------------
 
 ## Called by Main._ready in the freshly reloaded scene.
 func apply_pending_load() -> void:
@@ -217,7 +108,7 @@ func _restore_pawn(p: Dictionary) -> void:
 		pawn.survival.restore_sleep()
 	pawn.combat.hp = float(p.hp)
 	pawn.combat.attack_cooldown = int(p.atk_cd)
-	pawn.wander_cooldown = int(p.wander_cd)
+	pawn.survival.wander_cooldown = int(p.wander_cd)
 	pawn.target_cell = _vec(p.target)
 	if bool(p.collapsed):
 		pawn.restore_collapse()  # re-registers its FEED job
@@ -227,7 +118,7 @@ func _restore_pawn(p: Dictionary) -> void:
 		pawn.target_cell = _vec(p.target)  # set_drafted resets it
 		var attack_cell: Array = p.attack_cell
 		if not attack_cell.is_empty():
-			pawn.attack_target = _raider_at(_vec(attack_cell))
+			pawn.combat.attack_target = _raider_at(_vec(attack_cell))
 		return  # drafted pawns hold no jobs
 	if bool(p.carrying_food):
 		pawn.work.carrying_food = true
@@ -263,11 +154,6 @@ func _relink_food(pawn: Pawn, food_cell: Vector2i, eat_ticks: int) -> void:
 			pawn.survival.food_target = food
 			pawn.survival.eat_ticks_left = eat_ticks
 			return
-
-# --- helpers ---------------------------------------------------------------
-
-func _v(v: Vector2i) -> Array:
-	return [v.x, v.y]
 
 func _vec(a: Array) -> Vector2i:
 	return Vector2i(int(a[0]), int(a[1]))

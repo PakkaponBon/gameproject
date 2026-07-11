@@ -104,7 +104,7 @@ func _do_job() -> void:
 				JobManager.complete_job(job)
 				job = null
 				if was_build:
-					pawn.step_off_wall(work_cell)
+					_step_off_wall(work_cell)
 
 func _approach_work_spot() -> void:
 	var spot := JobManager.nearest_work_spot(pawn.cell, job.cell)
@@ -223,6 +223,17 @@ func _deliver_to_stockpile() -> void:
 		WorldGrid.reserve_storage(dest)
 		reserved_dest = dest
 		pawn.target_cell = dest
+
+## After finishing a build, don't stand inside the new wall.
+func _step_off_wall(wall_cell: Vector2i) -> void:
+	if not WorldGrid.is_wall(pawn.cell):
+		return
+	for dir in Pawn.DIRS:
+		var next := wall_cell + dir
+		if WorldGrid.in_bounds(next) and not WorldGrid.is_wall(next):
+			pawn.cell = next
+			pawn.target_cell = next
+			return
 
 ## Advance the held job by this tick's work, scaled by condition:
 ## exhaustion halves speed, low mood scales down to 60%.
