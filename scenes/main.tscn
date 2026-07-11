@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://dqj6m2x9s4hb"]
+[gd_scene load_steps=26 format=3 uid="uid://dqj6m2x9s4hb"]
 
 [ext_resource type="Script" uid="uid://b7h4z9d6r1sc" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="TileSet" uid="uid://c5w1r8p3v0gd" path="res://assets/tileset.tres" id="2_tileset"]
@@ -24,6 +24,7 @@
 [ext_resource type="Script" uid="uid://bt8w3m6c1k4f" path="res://scripts/kitchen_keeper.gd" id="24_kitchen"]
 [ext_resource type="Script" uid="uid://cw1f6t9k3n7m" path="res://scripts/events_director.gd" id="25_events"]
 [ext_resource type="Script" uid="uid://dt3w7q1n8h5m" path="res://scripts/pause_menu.gd" id="8_pause"]
+[ext_resource type="Script" uid="uid://bh5w8t2c6n9k" path="res://scripts/edge_fade.gd" id="27_edge"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -41,6 +42,9 @@ tile_set = ExtResource("2_tileset")
 script = ExtResource("5_zone")
 
 [node name="Entities" type="Node2D" parent="."]
+
+[node name="EdgeFade" type="Node2D" parent="."]
+script = ExtResource("27_edge")
 
 [node name="PlayerInput" type="Node" parent="."]
 script = ExtResource("17_input")

@@ -9,5 +9,5 @@ script = ExtResource("1_raider")
 [node name="Body" type="Sprite2D" parent="."]
 texture = ExtResource("2_sprites")
 region_enabled = true
-region_rect = Rect2(0, 0, 16, 16)
+region_rect = Rect2(240, 0, 16, 16)
 modulate = Color(0.55, 0.22, 0.2, 1)

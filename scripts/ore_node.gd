@@ -20,6 +20,8 @@ func _ready() -> void:
 	cell = WorldGrid.world_to_cell(position)
 	position = WorldGrid.cell_to_world(cell)
 	var def := ResourceDefs.get_def(resource_id)
+	if randf() < 0.4:  # jagged variant
+		body.region_rect = Rect2(272, 0, 16, 16)
 	body.modulate = def.node_color * 1.6  # rock sprite is drawn light
 	fleck.color = def.color
 	WorldGrid.set_obstacle(cell, true)

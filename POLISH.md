@@ -13,19 +13,19 @@ Achieved twice with different testers → ready for itch.io.
 ## Phase 12 — Juice & Game Feel
 Make every action FELT. No art changes yet — feedback layer only.
 
-- [x] Hit feedback: white flash on damaged entity + floating damage number
-- [x] Death feedback: pawn death pause-frame + sound + ~~blood~~ **ash decal** *(tone rule: no gore per GAME_DESIGN)*
-- [x] Work particles: wood chips (chop), stone dust (mine), soil puff (farm)
-- [x] Item pickup/drop: small bounce/arc animation, not teleport
-- [x] Pawn movement: 2-frame walk cycle minimum, face movement direction
-- [x] Sound pass v0: chop, mine, build hammer, eat, footsteps (soft), sword hit,
+- [ ] Hit feedback: white flash on damaged entity + floating damage number
+- [ ] Death feedback: pawn death pause-frame + sound + blood decal (small, tasteful)
+- [ ] Work particles: wood chips (chop), stone dust (mine), soil puff (farm)
+- [ ] Item pickup/drop: small bounce/arc animation, not teleport
+- [ ] Pawn movement: 2-frame walk cycle minimum, face movement direction
+- [ ] Sound pass v0: chop, mine, build hammer, eat, footsteps (soft), sword hit,
       bow release, pawn hurt, pawn death, raid horn, UI clicks
-      *(synthesized procedurally, not downloaded; SoundManager autoload, pitch ±10%)*
-- [x] Ambient loop: birds at day, crickets at night, wind
-- [x] Day/night visual tint via CanvasModulate (dawn gold → day → dusk orange → night blue)
-- [x] Raid feel: warning horn + 1s screen shake on raid spawn, red edge-of-screen
+      (freesound.org / Kenney audio; SoundManager autoload, pitch randomize ±10%)
+- [ ] Ambient loop: birds at day, crickets at night, wind
+- [ ] Day/night visual tint via CanvasModulate (dawn gold → day → dusk orange → night blue)
+- [ ] Raid feel: warning horn + 1s screen shake on raid spawn, red edge-of-screen
       indicator pointing at spawn direction
-- [x] Selection feedback: pawn selected = outline/ring + soft click sound
+- [ ] Selection feedback: pawn selected = outline/ring + soft click sound
 
 **DoD:** capture a 60s gameplay clip. Chopping, a raid arriving, and a fight
 must be readable and satisfying with sound ON, watching with no explanation.
@@ -37,8 +37,17 @@ Replace placeholders. Incremental: tiles → pawns → buildings → decor.
 
 - [ ] Terrain tileset: grass/dirt/stone/water with autotile transitions
       (no more hard rectangles between terrain types)
-- [ ] Grass variants + decor scatter: flowers, pebbles, bushes, mushrooms —
-      procedural scatter at mapgen. Kills the "empty green field" look
+- [ ] Decor density pass: 3–4x scatter — bushes, cacti, flowers, pebbles,
+      mushrooms at mapgen. Target: almost no fully-empty tile clusters
+      (reference: WUXIA-RPG screenshot density)
+- [ ] Landmark props: 2–3 oversized multi-tile features per map (great tree,
+      ruin, standing stones) — breaks the grid feel, gives map identity
+- [ ] Y-sorting: enable y_sort on TileMap decor layer + all entities so pawns
+      walk behind trees/props (cheap, huge depth win)
+- [ ] Water animation: simple shader or animated tiles + edge foam/sparkle particles
+- [ ] Palette lock: warm, saturated, high-contrast palette defined in
+      ART_DIRECTION.md; all sprites/tiles conform (consistency > detail)
+- [ ] Grass variants (covered by decor density pass above)
 - [ ] Tree/rock sprites: 2–3 variants each; trees sway slightly (shader or tween)
 - [ ] Pawn sprites: real 16×16 characters, walk animation, work animation,
       carried-item shown when hauling, weapon visible when armed/drafted
@@ -50,8 +59,10 @@ Replace placeholders. Incremental: tiles → pawns → buildings → decor.
 - [ ] Lighting v0: campfire/torch glow at night (PointLight2D)
 - [ ] Map edges: fade/border so world doesn't end in a hard line
 
-Source: free packs first (Kenney, itch.io 16×16 — check licenses, credit file),
-replace with custom art incrementally. Do NOT hand-draw everything before testing.
+Source: free packs first (Kenney, itch.io 16×16 — search "16x16 fantasy tileset",
+Sprout Lands / Cup Nooble style matches the reference look; check licenses,
+credit file), replace with custom art incrementally. Do NOT hand-draw everything
+before testing.
 
 **DoD:** side-by-side screenshot old vs new posted somewhere public (devlog).
 A stranger can identify: villager vs enemy, each building's purpose, crop maturity —

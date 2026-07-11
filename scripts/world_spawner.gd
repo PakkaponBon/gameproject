@@ -19,6 +19,11 @@ const STONE_NODES := 12
 const IRON_NODES := 8
 const RAIDER_SCENE := preload("res://scenes/raider.tscn")
 const GRAVE_SCENE := preload("res://scenes/grave.tscn")
+const CRITTER_SCENE := preload("res://scenes/critter.tscn")
+const SPRITES := preload("res://assets/sprites.png")
+const DECOR_SPRITES := [19, 20, 21, 22]  # flower, pebbles, bush, mushroom
+const DECOR_COUNT := 70
+const CRITTER_COUNT := 4
 const PAWN_SCENE := preload("res://scenes/pawn.tscn")
 const PAWN_COUNT := 3
 const PAWN_SPAWN_RADIUS := 5  # around map center
@@ -49,6 +54,33 @@ func generate_ground() -> void:
 		for y in WorldGrid.MAP_SIZE.y:
 			var tile := DIRT if noise.get_noise_2d(x, y) > 0.25 else GRASS
 			ground.set_cell(Vector2i(x, y), SOURCE_ID, tile)
+	_scatter_decor()
+
+## Cosmetic scatter (flowers, pebbles, bushes, mushrooms). Seeded from the
+## terrain, so loads regenerate the exact same meadow — nothing to save.
+func _scatter_decor() -> void:
+	for child in ground.get_children():
+		child.queue_free()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = ground_seed + 7
+	for i in DECOR_COUNT:
+		var sprite := Sprite2D.new()
+		sprite.texture = SPRITES
+		sprite.region_enabled = true
+		sprite.region_rect = Rect2(DECOR_SPRITES[rng.randi() % DECOR_SPRITES.size()] * 16, 0, 16, 16)
+		var cell := Vector2i(rng.randi() % WorldGrid.MAP_SIZE.x, rng.randi() % WorldGrid.MAP_SIZE.y)
+		sprite.position = WorldGrid.cell_to_world(cell)
+		ground.add_child(sprite)
+
+func spawn_critters() -> void:
+	for i in CRITTER_COUNT:
+		var critter: Critter = CRITTER_SCENE.instantiate()
+		var body: Sprite2D = critter.get_node("Body")
+		if i % 2 == 1:  # every other one is a bird
+			body.region_rect = Rect2(384, 0, 16, 16)
+		critter.position = WorldGrid.cell_to_world(
+				Vector2i(randi() % WorldGrid.MAP_SIZE.x, randi() % WorldGrid.MAP_SIZE.y))
+		entities.add_child(critter)
 
 func spawn_entity(scene: PackedScene, cell: Vector2i) -> Node2D:
 	var node: Node2D = scene.instantiate()

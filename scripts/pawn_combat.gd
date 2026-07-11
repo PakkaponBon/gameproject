@@ -76,6 +76,7 @@ func heal(amount: float) -> void:
 func equip(id: String) -> void:
 	weapon_id = id
 	attack_damage = float(WeaponDefs.get_def(id).damage)
+	pawn.update_held()
 
 ## Drop the weapon at our feet (gear reassignment via the panel).
 func unequip() -> void:
@@ -87,6 +88,7 @@ func unequip() -> void:
 	pawn.get_parent().get_node("Entities").add_child(item)
 	weapon_id = ""
 	attack_damage = WeaponDefs.UNARMED_DAMAGE
+	pawn.update_held()
 
 func is_ranged() -> bool:
 	return weapon_id != "" and bool(WeaponDefs.get_def(weapon_id).get("ranged", false))

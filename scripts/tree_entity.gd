@@ -14,6 +14,16 @@ func _ready() -> void:
 	add_to_group("trees")
 	cell = WorldGrid.world_to_cell(position)
 	position = WorldGrid.cell_to_world(cell)
+	var body: Sprite2D = $Body
+	if randf() < 0.35:  # pine variant
+		body.region_rect = Rect2(256, 0, 16, 16)
+	# Gentle sway, offset so the forest doesn't move in lockstep.
+	var tween := create_tween().set_loops()
+	var period := randf_range(1.8, 2.6)
+	tween.tween_property(body, "rotation", 0.035, period) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(body, "rotation", -0.035, period) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	job = Job.new()
 	job.type = Job.Type.CHOP
 	job.target = self

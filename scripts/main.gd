@@ -11,6 +11,7 @@ var pawns: Array[Pawn] = []
 var selected: Pawn = null
 var blueprints := {}  # cell -> Blueprint
 var decon_orders := {}  # cell -> DeconstructOrder
+var _lights := {}  # cell -> PointLight2D (workstation glow)
 
 @onready var walls: TileMapLayer = $Walls
 @onready var entities: Node2D = $Entities
@@ -60,6 +61,7 @@ func _ready() -> void:
 		_new_game()
 	else:
 		SaveManager.apply_pending_load()
+	spawner.spawn_critters()
 	if selected == null:
 		_select_first_alive()
 	$PlayerInput._update_mode_label()
@@ -135,7 +137,23 @@ func pawn_at(cell: Vector2i) -> Pawn:
 ## Instantly realize a finished (or loaded) building at a cell.
 func place_building(cell: Vector2i, id: String) -> void:
 	WorldGrid.register_building(cell, id)
-	walls.set_cell(cell, SOURCE_ID, BuildingDefs.get_def(id).tile)
+	var def: Dictionary = BuildingDefs.get_def(id)
+	walls.set_cell(cell, SOURCE_ID, def.tile)
+	# Fire-warmed workstations glow at night.
+	if def.get("workstation", false) or def.get("kitchen", false):
+		var light := PointLight2D.new()
+		light.texture = preload("res://assets/light.png")
+		light.position = WorldGrid.cell_to_world(cell)
+		light.color = Color(1.0, 0.7, 0.4)
+		light.energy = 0.9
+		light.texture_scale = 1.4
+		entities.add_child(light)
+		_lights[cell] = light
+
+func _remove_light(cell: Vector2i) -> void:
+	if _lights.has(cell):
+		_lights[cell].queue_free()
+		_lights.erase(cell)
 
 func place_blueprint(cell: Vector2i, id: String) -> void:
 	if not WorldGrid.in_bounds(cell) or WorldGrid.buildings.has(cell) \
@@ -286,13 +304,15 @@ func _on_building_destroyed(cell: Vector2i) -> void:
 		decon_orders.erase(cell)
 	WorldGrid.remove_building(cell)
 	walls.erase_cell(cell)
-	hud.set_event("A gate has been smashed!", Color(1.0, 0.6, 0.3))
+	_remove_light(cell)
+	hud.set_event("A gate has been smashed!", Color(1.0, 0.6, 0.3), WorldGrid.cell_to_world(cell))
 
 func _on_building_deconstructed(cell: Vector2i) -> void:
 	decon_orders.erase(cell)
 	var refund: Dictionary = BuildingDefs.get_def(WorldGrid.buildings[cell]).refund
 	WorldGrid.remove_building(cell)
 	walls.erase_cell(cell)
+	_remove_light(cell)
 	for id: String in refund:
 		spawner.drop_resource(cell, id, int(refund[id]))
 

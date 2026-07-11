@@ -30,6 +30,7 @@ var work_priorities := {Job.Type.CHOP: 1, Job.Type.HAUL: 1, Job.Type.BUILD: 1, J
 var traits: Array = []  # trait ids from TraitDefs
 
 @onready var body: Sprite2D = $Body
+@onready var held: Sprite2D = $Held
 @onready var selection_ring: ColorRect = $SelectionRing
 @onready var needs: PawnNeeds = $Needs
 @onready var combat: PawnCombat = $Combat
@@ -68,6 +69,13 @@ func set_drafted(on: bool) -> void:
 func attack(raider: Raider) -> void:
 	if drafted:
 		combat.attack_target = raider
+
+## Show the equipped weapon in hand.
+func update_held() -> void:
+	held.visible = combat.weapon_id != ""
+	if held.visible:
+		var idx := int(ResourceDefs.get_def(combat.weapon_id).sprite)
+		held.region_rect = Rect2(idx * 16, 0, 16, 16)
 
 func set_sleep_visual(on: bool) -> void:
 	if not dead:

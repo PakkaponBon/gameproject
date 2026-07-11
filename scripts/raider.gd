@@ -147,9 +147,6 @@ func _process(delta: float) -> void:
 	# Rendering only: ease toward the logical cell; walk frames while moving.
 	var dest := WorldGrid.cell_to_world(cell)
 	position = position.lerp(dest, minf(1.0, LERP_WEIGHT * delta))
-	var walking := position.distance_to(dest) > 1.5
-	var body: Sprite2D = $Body
-	body.region_rect.position.x = \
-			(14 if walking and int(Time.get_ticks_msec() / 180) % 2 == 0 else 0) * 16
+	# Hooded silhouette (one frame); still faces its direction of travel.
 	if absf(dest.x - position.x) > 0.5:
-		body.flip_h = dest.x < position.x
+		($Body as Sprite2D).flip_h = dest.x < position.x

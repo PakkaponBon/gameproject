@@ -94,3 +94,5 @@ func _spawn_food(spot: Vector2i) -> void:
 func _update_visual() -> void:
 	var t := minf(float(growth_ticks) / float(grow_ticks_total), 1.0)
 	body.scale = Vector2.ONE * lerpf(SPROUT_SCALE, MATURE_SCALE, t)
+	# Stage change: sprout sprite -> fuller fruiting sprite past halfway.
+	body.region_rect.position.x = (288.0 if t >= 0.5 else 48.0)
