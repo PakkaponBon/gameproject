@@ -22,7 +22,7 @@ func _ready() -> void:
 	position = WorldGrid.cell_to_world(cell)
 	_settle()
 
-func pick_up(carrier: Node2D) -> void:
+func pick_up(carrier: Node) -> void:  # pawns carry; managers consume
 	WorldGrid.unregister_item(cell)
 	if haul_job:
 		JobManager.remove_job(haul_job)
