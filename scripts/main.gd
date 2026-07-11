@@ -22,6 +22,8 @@ var decon_orders := {}  # cell -> DeconstructOrder
 @onready var raid_director: RaidDirector = $RaidDirector
 @onready var field_keeper: FieldKeeper = $FieldKeeper
 @onready var forge_keeper: ForgeKeeper = $ForgeKeeper
+@onready var trade_director: TradeDirector = $TradeDirector
+@onready var trade_panel: TradePanel = $TradePanel
 @onready var pause_menu: PauseMenu = $PauseMenu
 @onready var hud: HudController = $HUD
 
@@ -29,6 +31,9 @@ func _ready() -> void:
 	raid_director.spawn_parent = entities
 	field_keeper.spawn_parent = entities
 	forge_keeper.spawn_parent = entities
+	trade_director.spawn_parent = entities
+	EventBus.merchant_arrived.connect(func() -> void: hud.set_event("A traveling merchant has arrived"))
+	EventBus.merchant_left.connect(func() -> void: hud.set_event(""))
 	raid_director.raid_started.connect(func() -> void: hud.set_event("RAID — a raider approaches!"))
 	raid_director.raid_ended.connect(func() -> void: hud.set_event(""))
 	pause_menu.save_requested.connect(func() -> void: SaveManager.save_game(SaveManager.MANUAL_SAVE_PATH))
@@ -94,6 +99,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		GameClock.set_sim_paused(not GameClock.sim_paused)
 	elif event.is_action_pressed("toggle_speed"):
 		GameClock.set_speed(3.0 if GameClock.speed == 1.0 else 1.0)
+	elif event.is_action_pressed("debug_spawn_relic"):
+		spawner.spawn_resource(_mouse_cell(), RelicDefs.ORDER.pick_random())
 	elif event.is_action_pressed("cycle_farm_priority"):
 		_cycle_selected_priority(Job.Type.PLANT)
 	elif event.is_action_pressed("cycle_chop_priority"):
@@ -127,8 +134,11 @@ func _apply_tool(button_index: int, dragging := false) -> void:
 			if button_index == MOUSE_BUTTON_LEFT:
 				var clicked := _pawn_at(cell)
 				var raider := _raider_at(cell)
+				var merchant := _merchant_at(cell)
 				if clicked:
 					_select(clicked)
+				elif merchant:
+					trade_panel.open(merchant)
 				elif raider and selected and selected.drafted:
 					selected.attack(raider)
 				elif selected:
@@ -170,6 +180,13 @@ func _raider_at(cell: Vector2i) -> Raider:
 		var raider := node as Raider
 		if raider.cell == cell:
 			return raider
+	return null
+
+func _merchant_at(cell: Vector2i) -> Merchant:
+	for node in get_tree().get_nodes_in_group("merchants"):
+		var merchant := node as Merchant
+		if merchant.cell == cell:
+			return merchant
 	return null
 
 func _select_first_alive() -> void:

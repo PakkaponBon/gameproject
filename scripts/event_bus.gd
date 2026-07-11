@@ -6,3 +6,5 @@ signal building_built(cell: Vector2i, building_id: String)
 signal building_deconstructed(cell: Vector2i)
 signal building_destroyed(cell: Vector2i)  # smashed by enemies: no refund
 signal crop_harvested(cell: Vector2i)
+signal merchant_arrived
+signal merchant_left

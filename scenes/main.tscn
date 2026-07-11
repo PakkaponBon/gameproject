@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://dqj6m2x9s4hb"]
+[gd_scene load_steps=14 format=3 uid="uid://dqj6m2x9s4hb"]
 
 [ext_resource type="Script" uid="uid://b7h4z9d6r1sc" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="TileSet" uid="uid://c5w1r8p3v0gd" path="res://assets/tileset.tres" id="2_tileset"]
@@ -10,6 +10,8 @@
 [ext_resource type="Script" uid="uid://bm7v4h1q8d2s" path="res://scripts/field_keeper.gd" id="10_field"]
 [ext_resource type="Script" uid="uid://dh2k7m4t9f1w" path="res://scripts/hud.gd" id="11_hud"]
 [ext_resource type="Script" uid="uid://dt6c1w9k3m8f" path="res://scripts/forge_keeper.gd" id="12_forge"]
+[ext_resource type="Script" uid="uid://bn9h5c2t7w4k" path="res://scripts/trade_director.gd" id="13_trade"]
+[ext_resource type="Script" uid="uid://dm2t6k9f3c7w" path="res://scripts/trade_panel.gd" id="14_panel"]
 [ext_resource type="Script" uid="uid://dt3w7q1n8h5m" path="res://scripts/pause_menu.gd" id="8_pause"]
 
 [node name="Main" type="Node2D"]
@@ -40,6 +42,9 @@ script = ExtResource("10_field")
 
 [node name="ForgeKeeper" type="Node" parent="."]
 script = ExtResource("12_forge")
+
+[node name="TradeDirector" type="Node" parent="."]
+script = ExtResource("13_trade")
 
 [node name="Camera" type="Camera2D" parent="."]
 position = Vector2(512, 512)
@@ -83,6 +88,57 @@ offset_top = 68.0
 offset_right = 600.0
 offset_bottom = 91.0
 theme_override_colors/font_color = Color(1, 0.35, 0.35, 1)
+
+[node name="TradePanel" type="CanvasLayer" parent="."]
+layer = 5
+script = ExtResource("14_panel")
+
+[node name="TradeBox" type="PanelContainer" parent="TradePanel"]
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -140.0
+offset_right = -12.0
+offset_bottom = 140.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="TradePanel/TradeBox"]
+theme_override_constants/separation = 8
+
+[node name="TradeTitle" type="Label" parent="TradePanel/TradeBox/VBox"]
+text = "TRAVELING MERCHANT"
+horizontal_alignment = 1
+
+[node name="TradeStockLabel" type="Label" parent="TradePanel/TradeBox/VBox"]
+unique_name_in_owner = true
+text = "Colony wood: 0"
+
+[node name="BuySwordButton" type="Button" parent="TradePanel/TradeBox/VBox"]
+unique_name_in_owner = true
+text = "Buy Sword — 8 wood"
+
+[node name="BuyArrowsButton" type="Button" parent="TradePanel/TradeBox/VBox"]
+unique_name_in_owner = true
+text = "Buy Arrows — 3 wood"
+
+[node name="BuyRelicButton" type="Button" parent="TradePanel/TradeBox/VBox"]
+unique_name_in_owner = true
+text = "Buy Relic — 25 wood"
+
+[node name="SellStoneButton" type="Button" parent="TradePanel/TradeBox/VBox"]
+unique_name_in_owner = true
+text = "Sell 5 Stone — 3 wood"
+
+[node name="SellOreButton" type="Button" parent="TradePanel/TradeBox/VBox"]
+unique_name_in_owner = true
+text = "Sell 2 Iron Ore — 3 wood"
+
+[node name="CloseTradeButton" type="Button" parent="TradePanel/TradeBox/VBox"]
+unique_name_in_owner = true
+text = "Close"
 
 [node name="PauseMenu" type="CanvasLayer" parent="."]
 layer = 10
