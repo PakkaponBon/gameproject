@@ -71,14 +71,14 @@ Rules: one phase at a time, in order. Each phase gates on its **Definition of Do
 ---
 
 ## Phase 6 — Factions & World Map (v0.7)  *(the arc)*
-- [ ] World map screen: 5 factions with strength, attitude, personality
-- [ ] Diplomacy: envoys, gifts, trade, tribute demands; attitude max → alliance
-- [ ] Faction raids scale with their strength/attitude; allies send help to big defenses
-- [ ] Expeditions: send an armed party (they leave the map for N days) → auto-resolve from strength+gear+luck → loot/relics/casualties
-- [ ] Ruin sites on world map (relic faucet)
-- [ ] Faction destruction (strength zero) + absorption tribute
-- [ ] Victory check: all 5 resolved → Ruler of the Realm event + epilogue, sandbox continues
-- [ ] Opening event: city-fall intro, 3 survivors with backstory traits
+- [x] World map screen: 5 factions with strength, attitude, personality
+- [x] Diplomacy: envoys, gifts, trade, tribute demands; attitude max → alliance
+- [x] Faction raids scale with their strength/attitude; allies send help to big defenses
+- [x] Expeditions: send an armed party (they leave the map for N days) → auto-resolve from strength+gear+luck → loot/relics/casualties
+- [x] Ruin sites on world map (relic faucet)
+- [x] Faction destruction (strength zero) + absorption tribute
+- [x] Victory check: all 5 resolved → Ruler of the Realm event + epilogue, sandbox continues
+- [x] Opening event: city-fall intro, 3 survivors with backstory traits
 
 **DoD:** A full campaign is completable both ways: ally at least 2 factions, destroy at least 2, beat faction #5, see the crown screen.
 **Tag:** `v0.7-realm`

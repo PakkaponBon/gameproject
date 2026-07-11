@@ -99,6 +99,14 @@ func be_fed() -> void:
 	body.color = BODY_COLOR
 	stats_changed.emit()
 
+## Leaving on expedition: release every claim cleanly before removal.
+func prepare_depart() -> void:
+	survival.wake()
+	clear_treat_job()
+	abort_all()
+	drafted = false
+	combat.attack_target = null
+
 ## Save/load: restore a collapsed pawn (re-registers its FEED job).
 func restore_collapse() -> void:
 	collapsed = true

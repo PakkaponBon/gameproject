@@ -128,7 +128,9 @@ func _spawn_pawns(used: Dictionary) -> void:
 			continue
 		used[cell] = true
 		var pawn := create_pawn(cell, "Pawn %d" % (count + 1), presets[count % presets.size()].duplicate())
-		pawn.traits = _random_traits()
+		# Each founding survivor carries a scar from the fall + a quirk.
+		pawn.traits = [TraitDefs.BACKSTORIES[count % TraitDefs.BACKSTORIES.size()]]
+		pawn.traits.append_array(_random_traits().slice(0, 1))
 		# Varied starting talent — most colonies roll at least one archer.
 		pawn.skills.xp["melee"] = float(randi_range(0, 150))
 		pawn.skills.xp["archery"] = float(randi_range(0, 450))

@@ -38,6 +38,7 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 			"cell": _v(raider.cell),
 			"hp": raider.hp,
 			"boss": raider.is_boss,
+			"faction": raider.faction_id,
 			"atk_cd": raider.attack_cooldown,
 			"move_cd": raider.move_cooldown,
 		})
@@ -77,6 +78,7 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 		"clock_ticks": GameClock.ticks,
 		"raid_ticks": main.raid_director.ticks_until_raid,
 		"raid_count": main.raid_director.raid_count,
+		"realm": FactionManager.serialize(),
 		"building_hp": damaged,
 		"ground_seed": main.spawner.ground_seed,
 		"buildings": built,

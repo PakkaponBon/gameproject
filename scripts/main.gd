@@ -24,6 +24,8 @@ var decon_orders := {}  # cell -> DeconstructOrder
 @onready var forge_keeper: ForgeKeeper = $ForgeKeeper
 @onready var trade_director: TradeDirector = $TradeDirector
 @onready var trade_panel: TradePanel = $TradePanel
+@onready var world_map: WorldMap = $WorldMap
+@onready var story_panel: StoryPanel = $StoryPanel
 @onready var pause_menu: PauseMenu = $PauseMenu
 @onready var hud: HudController = $HUD
 
@@ -34,7 +36,7 @@ func _ready() -> void:
 	trade_director.spawn_parent = entities
 	EventBus.merchant_arrived.connect(func() -> void: hud.set_event("A traveling merchant has arrived"))
 	EventBus.merchant_left.connect(func() -> void: hud.set_event(""))
-	raid_director.raid_started.connect(func() -> void: hud.set_event("RAID — a raider approaches!"))
+	raid_director.raid_started.connect(func(fname: String) -> void: hud.set_event("RAID — %s attacks!" % fname))
 	raid_director.raid_ended.connect(func() -> void: hud.set_event(""))
 	pause_menu.save_requested.connect(func() -> void: SaveManager.save_game(SaveManager.MANUAL_SAVE_PATH))
 	pause_menu.load_requested.connect(func(path: String) -> void: SaveManager.load_game(path))
@@ -43,8 +45,17 @@ func _ready() -> void:
 	EventBus.building_deconstructed.connect(_on_building_deconstructed)
 	EventBus.building_destroyed.connect(_on_building_destroyed)
 	SaveManager.main = self
+	FactionManager.main = self
+	FactionManager.announced.connect(hud.set_event)
+	FactionManager.realm_ruled.connect(_on_realm_ruled)
 	if SaveManager.pending_load.is_empty():
+		FactionManager.reset()
 		spawner.new_game()
+		story_panel.show_story("THE CITY FELL",
+				"Smoke behind you, ash on the wind. Three of you made it out —\n"
+				+ "a wagon, tools, seed, and the road.\n\n"
+				+ "The meadow ahead is quiet. Build. Endure.\n"
+				+ "And one day, answer those who lit the fire.")
 	else:
 		SaveManager.apply_pending_load()
 	if selected == null:
@@ -101,6 +112,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		GameClock.set_speed(3.0 if GameClock.speed == 1.0 else 1.0)
 	elif event.is_action_pressed("debug_spawn_relic"):
 		spawner.spawn_resource(_mouse_cell(), RelicDefs.ORDER.pick_random())
+	elif event.is_action_pressed("toggle_world_map"):
+		world_map.toggle()
 	elif event.is_action_pressed("cycle_farm_priority"):
 		_cycle_selected_priority(Job.Type.PLANT)
 	elif event.is_action_pressed("cycle_chop_priority"):
@@ -229,6 +242,52 @@ func mark_deconstruct(cell: Vector2i) -> void:
 	order.position = WorldGrid.cell_to_world(cell)
 	entities.add_child(order)
 	decon_orders[cell] = order
+
+## Expedition glue: villagers leave the map as data and come home changed.
+func remove_pawn_for_expedition(pawn: Pawn) -> void:
+	pawn.prepare_depart()
+	pawns.erase(pawn)
+	if selected == pawn:
+		selected = null
+		if pawns.is_empty():
+			hud.clear_selection()
+		else:
+			_select_first_alive()
+	pawn.queue_free()
+
+func return_expedition_member(pdata: Dictionary) -> void:
+	var cell := _free_cell_near(WorldGrid.MAP_SIZE / 2)
+	var pawn := spawner.create_pawn(cell, pdata.name,
+			{Job.Type.CHOP: 1, Job.Type.HAUL: 1, Job.Type.BUILD: 1, Job.Type.PLANT: 1})
+	pawn.traits = pdata.traits
+	for skill_id: String in pdata.skills:
+		pawn.skills.xp[skill_id] = float(pdata.skills[skill_id])
+	if String(pdata.weapon) != "":
+		pawn.combat.equip(pdata.weapon)
+	pawn.combat.ammo = int(pdata.ammo)
+	pawn.combat.relic_id = String(pdata.relic)
+	pawn.combat.hp = maxf(float(pdata.hp) * 0.8, 30.0)  # battle-worn
+	if selected == null:
+		_select(pawn)
+
+func mourn_expedition_loss() -> void:
+	spawner.spawn_entity(spawner.GRAVE_SCENE, _free_cell_near(WorldGrid.MAP_SIZE / 2))
+	for pawn in pawns:
+		pawn.needs.mourn()
+
+func _free_cell_near(center: Vector2i) -> Vector2i:
+	for radius in 6:
+		var cell := center + Vector2i(randi_range(-radius, radius), randi_range(-radius, radius))
+		if WorldGrid.in_bounds(cell) and not WorldGrid.is_wall(cell):
+			return cell
+	return center
+
+func _on_realm_ruled() -> void:
+	story_panel.show_story("RULER OF THE REALM",
+			"Every banner in the realm bows or burns.\n\n"
+			+ "From three survivors and a wagon to this: the roads are yours,\n"
+			+ "the tributes flow, and the ones who lit the fire are answered.\n\n"
+			+ "The hearth you built still burns. Warmer now, for all of it.")
 
 ## Smashed by enemies: gone, no refund.
 func _on_building_destroyed(cell: Vector2i) -> void:

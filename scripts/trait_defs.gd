@@ -5,12 +5,17 @@ extends RefCounted
 ## pool (Orphaned, Last Smith, Witness...) lands in Phase 9; these three
 ## prove the model, and magic_affinity gates relic use in Phase 5.
 
-const ORDER := ["brawler", "diligent", "magic_affinity"]
+const ORDER := ["brawler", "diligent", "magic_affinity"]  # random pool
+const BACKSTORIES := ["orphaned", "last_smith", "witness"]  # the three survivors
 
 const DEFS := {
 	"brawler": {"name": "Brawler", "melee_damage_mult": 1.25},
 	"diligent": {"name": "Diligent", "work_speed_mult": 1.15},
 	"magic_affinity": {"name": "Magic Affinity", "magic": true},
+	# Backstory traits from the fall of the city (full pool in Phase 9).
+	"orphaned": {"name": "Orphaned", "melee_damage_mult": 1.15},
+	"last_smith": {"name": "Last Smith", "work_speed_mult": 1.12},
+	"witness": {"name": "Witness", "ranged_damage_mult": 1.15},
 }
 
 static func get_def(id: String) -> Dictionary:

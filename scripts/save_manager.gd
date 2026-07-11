@@ -4,7 +4,7 @@ extends Node
 ## Loading reloads the main scene; `pending_load` survives the reload
 ## because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 17
+const SAVE_VERSION := 18
 const MANUAL_SAVE_PATH := "user://save.json"
 const AUTOSAVE_PATH := "user://autosave.json"
 
@@ -49,6 +49,7 @@ func apply_pending_load() -> void:
 	GameClock.ticks = int(data.clock_ticks)
 	main.raid_director.ticks_until_raid = int(data.raid_ticks)
 	main.raid_director.raid_count = int(data.raid_count)
+	FactionManager.deserialize(data.realm)
 	var spawner: WorldSpawner = main.spawner
 	spawner.ground_seed = int(data.ground_seed)
 	spawner.generate_ground()
@@ -74,6 +75,7 @@ func apply_pending_load() -> void:
 		spawner.spawn_entity(spawner.GRAVE_SCENE, _vec(g))
 	for r: Dictionary in data.raiders:
 		var raider: Raider = spawner.spawn_raider(_vec(r.cell), bool(r.boss))
+		raider.faction_id = String(r.faction)
 		raider.hp = float(r.hp)
 		raider.attack_cooldown = int(r.atk_cd)
 		raider.move_cooldown = int(r.move_cd)

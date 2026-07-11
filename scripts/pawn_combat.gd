@@ -98,7 +98,8 @@ func ranged_tick() -> bool:
 		ammo -= 1
 		var lvl := pawn.skills.level("archery")
 		if randf() < 0.6 + 0.04 * lvl:
-			target.take_damage(float(wdef.damage) * (1.0 + 0.05 * lvl))
+			target.take_damage(float(wdef.damage) * (1.0 + 0.05 * lvl)
+					* TraitDefs.multiplier(pawn.traits, "ranged_damage_mult"))
 			pawn.skills.gain("archery", 8.0)
 	return true
 
