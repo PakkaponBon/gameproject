@@ -12,16 +12,20 @@ var _input: PlayerInput = null
 
 func _ready() -> void:
 	visible = false
+	# Hotbar look: icon row inside a themed panel, centered above the roster.
+	var panel := PanelContainer.new()
+	panel.anchor_left = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_top = 1.0
+	panel.anchor_bottom = 1.0
+	panel.offset_top = -86.0
+	panel.offset_bottom = -44.0
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	add_child(panel)
 	_row = HBoxContainer.new()
-	_row.anchor_left = 0.5
-	_row.anchor_right = 0.5
-	_row.anchor_top = 1.0
-	_row.anchor_bottom = 1.0
-	_row.offset_top = -76.0
-	_row.offset_bottom = -48.0
-	_row.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_row.add_theme_constant_override("separation", 6)
-	add_child(_row)
+	panel.add_child(_row)
 
 func show_for(mode: int, input_ctrl: PlayerInput) -> void:
 	_input = input_ctrl

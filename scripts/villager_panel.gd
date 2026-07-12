@@ -66,15 +66,17 @@ func _build_ui() -> void:
 	panel.anchor_bottom = 1.0
 	panel.offset_left = -258.0
 	panel.offset_right = -8.0
-	panel.offset_top = -324.0
+	panel.offset_top = -8.0
 	panel.offset_bottom = -8.0
-	panel.self_modulate = Color(1, 1, 1, 0.92)
+	# Sized by content, expanding upward — can never overflow the screen.
+	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	add_child(panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	panel.add_child(box)
 	_name_label = _label(box)
 	_name_label.modulate = Color(0.95, 0.9, 0.7)
+	_name_label.add_theme_font_size_override("font_size", 15)
 	_traits_label = _label(box)
 	_traits_label.modulate = Color(0.75, 0.75, 0.8)
 	_activity_label = _label(box)

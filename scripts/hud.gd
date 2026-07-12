@@ -4,7 +4,7 @@ extends CanvasLayer
 ## counts, and a fading notification feed. Per-villager info lives in
 ## VillagerPanel now.
 
-const FEED_MAX := 5
+const FEED_MAX := 3  # keeps the feed clear of the villager card below it
 const FEED_SECONDS := 12.0
 
 const SPRITES := preload("res://assets/sprites.png")
@@ -33,7 +33,7 @@ func _ready() -> void:
 	# Translucent strip across the top so mode line / icons / calendar
 	# stop fighting the grass for contrast. Drawn first = behind everything.
 	var backdrop := ColorRect.new()
-	backdrop.color = Color(0.08, 0.07, 0.1, 0.55)
+	backdrop.color = Color(0.07, 0.065, 0.09, 0.72)
 	backdrop.anchor_right = 1.0
 	backdrop.offset_bottom = 52.0
 	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -63,9 +63,10 @@ func _ready() -> void:
 	_feed = VBoxContainer.new()
 	_feed.anchor_left = 1.0
 	_feed.anchor_right = 1.0
-	_feed.offset_left = -420.0
+	_feed.offset_left = -328.0
 	_feed.offset_right = -8.0
-	_feed.offset_top = 165.0  # below the FIRST STEPS panel (top 62 + ~90 tall)
+	_feed.offset_top = 184.0  # below the FIRST STEPS panel
+	_feed.add_theme_constant_override("separation", 4)
 	add_child(_feed)
 	var speed_row := HBoxContainer.new()
 	speed_row.anchor_left = 1.0
@@ -89,31 +90,33 @@ func _ready() -> void:
 	GameClock.speed_changed.connect(_update_calendar)
 	_update_calendar()
 
-## Push a message into the feed. Pass a world position to make the entry
-## clickable (jumps the camera there).
+## Push a message into the feed as a translucent chip. Pass a world
+## position to make it clickable (jumps the camera there).
 func set_event(text: String, tint := Color.WHITE, jump := Vector2.INF) -> void:
 	if text == "":
 		return
-	var entry: Control
+	var chip := PanelContainer.new()
+	var label := Label.new()
+	label.text = text
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.modulate = tint
+	chip.add_child(label)
 	if jump.is_finite():
-		var button := Button.new()
-		button.text = "> " + text
-		button.flat = true
-		button.tooltip_text = "Click to look"
-		button.pressed.connect(func() -> void:
-			(get_parent().get_node("Camera") as Camera2D).position = jump)
-		entry = button
+		label.text = "» " + text
+		chip.tooltip_text = "Click to look"
+		chip.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		chip.gui_input.connect(func(event: InputEvent) -> void:
+			if event is InputEventMouseButton and event.pressed \
+					and event.button_index == MOUSE_BUTTON_LEFT:
+				(get_parent().get_node("Camera") as Camera2D).position = jump)
 	else:
-		var label := Label.new()
-		label.text = "> " + text
-		entry = label
-	entry.modulate = tint
-	_feed.add_child(entry)
+		chip.mouse_filter = Control.MOUSE_FILTER_IGNORE  # don't eat map clicks
+	_feed.add_child(chip)
 	if _feed.get_child_count() > FEED_MAX:
 		_feed.get_child(0).queue_free()
 	get_tree().create_timer(FEED_SECONDS).timeout.connect(func() -> void:
-		if is_instance_valid(entry):
-			entry.queue_free())
+		if is_instance_valid(chip):
+			chip.queue_free())
 
 func _speed_button(row: HBoxContainer, text: String, tip: String, action: Callable) -> void:
 	var button := Button.new()

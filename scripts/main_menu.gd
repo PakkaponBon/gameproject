@@ -2,6 +2,7 @@ extends Control
 ## Title screen: new game / load / quit. The .md files call it Ashfall.
 
 func _ready() -> void:
+	theme = UiTheme.get_theme()
 	%NewGameButton.pressed.connect(func() -> void:
 		SaveManager.pending_load = {}
 		get_tree().change_scene_to_file("res://scenes/main.tscn"))

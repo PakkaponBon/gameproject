@@ -19,13 +19,13 @@ func _ready() -> void:
 	panel.offset_left = -250.0
 	panel.offset_right = -8.0
 	panel.offset_top = 62.0
-	panel.self_modulate = Color(1, 1, 1, 0.85)
 	add_child(panel)
 	_box = VBoxContainer.new()
 	panel.add_child(_box)
 	var title := Label.new()
 	title.text = "FIRST STEPS"
 	title.modulate = Color(0.95, 0.85, 0.55)
+	title.add_theme_font_size_override("font_size", 14)
 	_box.add_child(title)
 	for id in ["beds", "food", "raid"]:
 		var label := Label.new()

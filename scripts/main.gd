@@ -33,6 +33,7 @@ var _lights := {}  # cell -> PointLight2D (workstation glow)
 @onready var build_palette: BuildPalette = $BuildPalette
 
 func _ready() -> void:
+	UiTheme.apply_to_layers(self)  # children built their UI in their _ready
 	raid_director.spawn_parent = entities
 	field_keeper.spawn_parent = entities
 	forge_keeper.spawn_parent = entities
