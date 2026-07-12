@@ -32,6 +32,10 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 	var graves: Array = []
 	for node in tree.get_nodes_in_group("graves"):
 		graves.append(_v((node as Grave).cell))
+	var bushes: Array = []
+	for node in tree.get_nodes_in_group("bushes"):
+		var bush := node as BerryBush
+		bushes.append({"cell": _v(bush.cell), "regrow": bush.regrow_ticks})
 	var raiders: Array = []
 	for node in tree.get_nodes_in_group("raiders"):
 		var raider := node as Raider
@@ -90,6 +94,7 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 		"ore_nodes": ore_nodes,
 		"food": food,
 		"graves": graves,
+		"bushes": bushes,
 		"raiders": raiders,
 		"blueprints": blueprints,
 		"decon_orders": decon,

@@ -7,7 +7,7 @@ enum Mode { COMMAND, BUILD, STOCKPILE, FIELD, SAFETY }
 
 var mode := Mode.COMMAND
 var current_building := "wall"
-var current_crop := "potato"
+var current_crop := "turnip"
 
 @onready var main: Node2D = get_parent()
 

@@ -4,9 +4,11 @@ extends RefCounted
 ## grow_days vs yield is the field-planning tradeoff: fast-and-thin
 ## (potato) vs slow-and-rich (wheat), with berries in between.
 
-const ORDER := ["potato", "wheat", "berries", "herbs"]
+const ORDER := ["turnip", "potato", "wheat", "berries", "herbs"]
 
 const DEFS := {
+	"turnip": {"name": "Turnip", "grow_days": Balance.TURNIP_GROW_DAYS,
+			"yield": Balance.TURNIP_YIELD, "color": Color(0.88, 0.82, 0.95)},
 	"potato": {"name": "Potato", "grow_days": 1.5, "yield": 1, "color": Color(0.85, 0.75, 0.45)},
 	"wheat": {"name": "Wheat", "grow_days": 3.0, "yield": 3, "color": Color(0.9, 0.8, 0.35)},
 	"berries": {"name": "Berries", "grow_days": 2.0, "yield": 2, "color": Color(0.7, 0.3, 0.45)},

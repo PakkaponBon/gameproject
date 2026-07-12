@@ -4,7 +4,7 @@ extends Node
 ## Loading reloads the main scene; `pending_load` survives the reload
 ## because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 20
+const SAVE_VERSION := 21
 ## Keys a save must carry; anything less is corrupt, and corrupt saves
 ## get an error message — never a crash to desktop.
 const REQUIRED_KEYS := ["clock_ticks", "ground_seed", "buildings", "pawns", "realm", "items", "fields"]
@@ -84,6 +84,9 @@ func apply_pending_load() -> void:
 		main.entities.add_child(food)
 	for g: Array in data.graves:
 		spawner.spawn_entity(spawner.GRAVE_SCENE, _vec(g))
+	for b: Dictionary in data.get("bushes", []):
+		var bush: BerryBush = spawner.spawn_bush(_vec(b.cell), false)
+		bush.regrow_ticks = int(b.regrow)
 	for r: Dictionary in data.raiders:
 		var raider: Raider = spawner.spawn_raider(_vec(r.cell), bool(r.boss))
 		raider.faction_id = String(r.faction)

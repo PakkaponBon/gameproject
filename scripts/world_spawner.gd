@@ -12,7 +12,7 @@ const DIRT := Vector2i(1, 0)
 const TREE_SCENE := preload("res://scenes/tree_entity.tscn")
 const TREE_COUNT := 40
 const FOOD_SCENE := preload("res://scenes/food_item.tscn")
-const FOOD_COUNT := 15
+const BUSH_SCENE := preload("res://scenes/berry_bush.tscn")
 const RESOURCE_SCENE := preload("res://scenes/resource_item.tscn")
 const ORE_SCENE := preload("res://scenes/ore_node.tscn")
 const STONE_NODES := 12
@@ -42,7 +42,7 @@ func new_game() -> void:
 	var used := {}
 	_spawn_pawns(used)
 	_scatter(TREE_SCENE, TREE_COUNT, used)
-	_scatter(FOOD_SCENE, FOOD_COUNT, used)
+	_scatter_bushes(Balance.START_FOOD, used)
 	_scatter_ore("stone", STONE_NODES, used)
 	_scatter_ore("iron_ore", IRON_NODES, used)
 	_guarantee_start_resources(used)
@@ -145,6 +145,26 @@ func spawn_raider(cell: Vector2i, boss: bool) -> Raider:
 	raider.position = WorldGrid.cell_to_world(cell)
 	entities.add_child(raider)
 	return raider
+
+func spawn_bush(cell: Vector2i, with_berries: bool) -> BerryBush:
+	var bush: BerryBush = BUSH_SCENE.instantiate()
+	bush.start_with_berries = with_berries
+	bush.position = WorldGrid.cell_to_world(cell)
+	entities.add_child(bush)
+	return bush
+
+## Wild forage: each bush starts bearing food, then regrows after picking.
+func _scatter_bushes(count: int, used: Dictionary) -> void:
+	var placed := 0
+	var attempts := 0
+	while placed < count and attempts < 1000:
+		attempts += 1
+		var cell := Vector2i(randi() % WorldGrid.MAP_SIZE.x, randi() % WorldGrid.MAP_SIZE.y)
+		if used.has(cell):
+			continue
+		used[cell] = true
+		spawn_bush(cell, true)
+		placed += 1
 
 func spawn_ore(cell: Vector2i, id: String) -> OreNode:
 	var node: OreNode = ORE_SCENE.instantiate()
