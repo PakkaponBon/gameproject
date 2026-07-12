@@ -92,6 +92,10 @@ func _apply_tool(button_index: int, dragging := false) -> void:
 			elif button_index == MOUSE_BUTTON_RIGHT:
 				WorldGrid.set_safety(cell, false)
 
+## Toolbar entry point — clicking the active tool returns to COMMAND.
+func set_tool(new_mode: Mode) -> void:
+	_set_mode(Mode.COMMAND if new_mode == mode else new_mode)
+
 func _set_mode(new_mode: Mode) -> void:
 	mode = new_mode
 	_update_mode_label()

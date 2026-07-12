@@ -16,8 +16,24 @@ static func get_theme() -> Theme:
 	if _cached != null:
 		return _cached
 	var theme := Theme.new()
-	theme.default_font_size = 13
+	theme.default_font_size = 14
 	theme.set_stylebox("panel", "PanelContainer", _box(PANEL_BG, EDGE, 6, 8))
+	# Typography hierarchy — assign via label.theme_type_variation.
+	theme.set_type_variation("Title", "Label")
+	theme.set_font_size("font_size", "Title", 17)
+	theme.set_color("font_color", "Title", Color(0.97, 0.93, 0.82))
+	theme.set_constant("outline_size", "Title", 2)  # same-color outline = bold
+	theme.set_color("font_outline_color", "Title", Color(0.97, 0.93, 0.82, 0.35))
+	theme.set_type_variation("Header", "Label")  # small-caps section labels
+	theme.set_font_size("font_size", "Header", 11)
+	theme.set_color("font_color", "Header", INK_DIM)
+	theme.set_type_variation("Muted", "Label")
+	theme.set_font_size("font_size", "Muted", 12)
+	theme.set_color("font_color", "Muted", INK_DIM)
+	# Thin bronze rule between card sections.
+	var line := StyleBoxLine.new()
+	line.color = Color(EDGE.r, EDGE.g, EDGE.b, 0.45)
+	theme.set_stylebox("separator", "HSeparator", line)
 	# Buttons: flat dark, gold on hover, sunken when pressed.
 	theme.set_stylebox("normal", "Button",
 			_box(Color(0.16, 0.15, 0.2, 0.95), Color(0.34, 0.3, 0.24), 4, 5))
@@ -32,11 +48,12 @@ static func get_theme() -> Theme:
 	theme.set_color("font_hover_color", "Button", GOLD)
 	theme.set_color("font_pressed_color", "Button", GOLD)
 	theme.set_color("font_disabled_color", "Button", INK_DIM)
-	# Progress bars: dark trough, light fill (callers tint via modulate).
+	# Progress bars: thin fully-rounded pill, light fill (callers tint
+	# via modulate). Pair with an 8px bar height.
 	theme.set_stylebox("background", "ProgressBar",
-			_box(Color(0.05, 0.05, 0.07, 0.9), Color(0, 0, 0, 0.5), 3, 1))
+			_box(Color(0.05, 0.05, 0.07, 0.9), Color(0, 0, 0, 0.5), 4, 1))
 	theme.set_stylebox("fill", "ProgressBar",
-			_box(Color(0.88, 0.88, 0.9), Color(1, 1, 1, 0.25), 3, 1))
+			_box(Color(0.88, 0.88, 0.9), Color(1, 1, 1, 0.25), 4, 1))
 	# Labels: soft shadow so text reads over terrain without a backdrop.
 	theme.set_color("font_color", "Label", INK)
 	theme.set_color("font_shadow_color", "Label", Color(0, 0, 0, 0.7))

@@ -66,6 +66,7 @@ func _add_button(sheet: Texture2D, region: Rect2, tint: Color, tip: String, acti
 	atlas.atlas = sheet
 	atlas.region = region
 	icon.texture = atlas
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	icon.modulate = tint
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
 	icon.set_anchors_preset(Control.PRESET_FULL_RECT)

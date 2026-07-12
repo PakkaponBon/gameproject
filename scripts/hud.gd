@@ -22,6 +22,7 @@ var _feed: VBoxContainer
 var _raid_arrow: Label
 var _res_counts := {}
 var _resource_cooldown := 0
+var _tool_buttons := {}  # PlayerInput.Mode -> toolbar Button
 
 @onready var mode_label: Label = $ModeLabel
 @onready var resource_label: Label = $ResourceLabel
@@ -50,6 +51,7 @@ func _ready() -> void:
 		atlas.atlas = SPRITES
 		atlas.region = Rect2(int(RES_ICONS[id][0]) * 16, 0, 16, 16)
 		icon.texture = atlas
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		icon.modulate = RES_ICONS[id][1]
 		icon.tooltip_text = RES_ICONS[id][2]
 		icon.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -68,12 +70,14 @@ func _ready() -> void:
 	_feed.offset_top = 184.0  # below the FIRST STEPS panel
 	_feed.add_theme_constant_override("separation", 4)
 	add_child(_feed)
+	# Speed controls live inside the top strip, under the calendar.
 	var speed_row := HBoxContainer.new()
 	speed_row.anchor_left = 1.0
 	speed_row.anchor_right = 1.0
-	speed_row.offset_left = -180.0
+	speed_row.offset_left = -140.0
 	speed_row.offset_right = -8.0
-	speed_row.offset_top = 30.0
+	speed_row.offset_top = 25.0
+	speed_row.add_theme_constant_override("separation", 4)
 	add_child(speed_row)
 	_speed_button(speed_row, "||", "Pause the simulation [Space]",
 			func() -> void: GameClock.set_sim_paused(not GameClock.sim_paused))
@@ -81,6 +85,7 @@ func _ready() -> void:
 			func() -> void: GameClock.set_speed(1.0))
 	_speed_button(speed_row, "3x", "Fast speed [E]",
 			func() -> void: GameClock.set_speed(3.0))
+	_build_toolbar()
 	_raid_arrow = Label.new()
 	_raid_arrow.text = "!! RAID !!"
 	_raid_arrow.modulate = Color(1.0, 0.3, 0.25)
@@ -122,36 +127,95 @@ func _speed_button(row: HBoxContainer, text: String, tip: String, action: Callab
 	var button := Button.new()
 	button.text = text
 	button.tooltip_text = tip
-	button.custom_minimum_size = Vector2(40, 26)
+	button.custom_minimum_size = Vector2(38, 24)
 	button.pressed.connect(action)
 	row.add_child(button)
+
+## Bottom-center tool bar: the mouse-first way to switch modes (hotkeys
+## still work; they live in the tooltips now instead of the mode line).
+func _build_toolbar() -> void:
+	var input: PlayerInput = get_parent().get_node("PlayerInput")
+	var panel := PanelContainer.new()
+	panel.anchor_left = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_top = 1.0
+	panel.anchor_bottom = 1.0
+	panel.offset_top = -44.0
+	panel.offset_bottom = -8.0
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	add_child(panel)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	panel.add_child(row)
+	var tools := [
+		[PlayerInput.Mode.COMMAND, "Select", "Command villagers — click to select, click ground to move"],
+		[PlayerInput.Mode.BUILD, "Build", "Place buildings  [B]"],
+		[PlayerInput.Mode.STOCKPILE, "Zones", "Paint stockpile zones  [Z]"],
+		[PlayerInput.Mode.FIELD, "Fields", "Zone crop fields  [F]"],
+		[PlayerInput.Mode.SAFETY, "Safety", "Paint flee zones for raids  [X]"],
+	]
+	for entry: Array in tools:
+		var mode_id: int = entry[0]
+		var btn := Button.new()
+		btn.text = entry[1]
+		btn.tooltip_text = entry[2]
+		btn.toggle_mode = true
+		btn.custom_minimum_size = Vector2(62, 28)
+		btn.pressed.connect(func() -> void: input.set_tool(mode_id))
+		row.add_child(btn)
+		_tool_buttons[mode_id] = btn
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(10, 0)
+	row.add_child(gap)
+	var map_btn := Button.new()
+	map_btn.text = "Map"
+	map_btn.tooltip_text = "World map — factions and expeditions  [M]"
+	map_btn.custom_minimum_size = Vector2(52, 28)
+	map_btn.pressed.connect(func() -> void: get_parent().world_map.toggle())
+	row.add_child(map_btn)
+	var help_btn := Button.new()
+	help_btn.text = "?"
+	help_btn.tooltip_text = "Help  [H]"
+	help_btn.custom_minimum_size = Vector2(30, 28)
+	help_btn.pressed.connect(func() -> void: get_parent().help_panel.toggle())
+	row.add_child(help_btn)
+
+func set_active_tool(mode: int) -> void:
+	for id: int in _tool_buttons:
+		(_tool_buttons[id] as Button).set_pressed_no_signal(id == mode)
 
 func set_inspect(text: String) -> void:
 	inspect_label.text = text
 
 func show_command_mode() -> void:
 	mode_label.modulate = Color.WHITE
-	mode_label.text = "COMMAND — LMB select/move/attack  [R draft] [B/Z/F/X tools] [M map] [P priorities] [H help]"
+	mode_label.text = "Click a villager to select · click ground to move, enemy to attack"
+	set_active_tool(PlayerInput.Mode.COMMAND)
 
 func show_build_mode(def: Dictionary) -> void:
 	var costs: Array[String] = []
 	for id: String in def.cost:
 		costs.append("%d %s" % [int(def.cost[id]), id])
 	mode_label.modulate = Color(1.0, 0.75, 0.45)
-	mode_label.text = "BUILD: %s (%s) — LMB place, RMB remove/cancel  [Q: next] [B: back]" \
+	mode_label.text = "Build · %s (%s) — LMB place · RMB remove · Q next" \
 			% [def.name, " + ".join(costs)]
+	set_active_tool(PlayerInput.Mode.BUILD)
 
 func show_stockpile_mode() -> void:
 	mode_label.modulate = Color(1.0, 0.9, 0.5)
-	mode_label.text = "STOCKPILE — LMB paint zone, RMB erase  [Z: back]"
+	mode_label.text = "Stockpile · LMB paint · RMB erase"
+	set_active_tool(PlayerInput.Mode.STOCKPILE)
 
 func show_field_mode(def: Dictionary) -> void:
 	mode_label.modulate = Color(0.65, 0.9, 0.55)
-	mode_label.text = "FIELD: %s — LMB zone field, RMB clear  [Q: next crop] [F: back]" % def.name
+	mode_label.text = "Field · %s — LMB zone · RMB clear · Q next crop" % def.name
+	set_active_tool(PlayerInput.Mode.FIELD)
 
 func show_safety_mode() -> void:
 	mode_label.modulate = Color(0.75, 0.65, 0.95)
-	mode_label.text = "SAFETY — LMB paint flee zone, RMB erase  [X: back]"
+	mode_label.text = "Safety · LMB paint flee zone · RMB erase"
+	set_active_tool(PlayerInput.Mode.SAFETY)
 
 func _on_tick() -> void:
 	_update_calendar()

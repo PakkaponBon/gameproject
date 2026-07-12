@@ -3,6 +3,8 @@ extends CanvasLayer
 ## Right-side panel for the selected villager: needs bars, mood, skills,
 ## gear, traits, current activity, priority row, draft + gear buttons.
 
+const SPRITES := preload("res://assets/sprites.png")
+
 var pawn: Pawn = null
 var _bars := {}
 var _name_label: Label
@@ -72,15 +74,35 @@ func _build_ui() -> void:
 	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	add_child(panel)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 4)
+	box.add_theme_constant_override("separation", 5)
 	panel.add_child(box)
-	_name_label = _label(box)
-	_name_label.modulate = Color(0.95, 0.9, 0.7)
-	_name_label.add_theme_font_size_override("font_size", 15)
-	_traits_label = _label(box)
-	_traits_label.modulate = Color(0.75, 0.75, 0.8)
+	# Header: pixel portrait beside name + backstory.
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 8)
+	box.add_child(head)
+	var portrait := TextureRect.new()
+	var atlas := AtlasTexture.new()
+	atlas.atlas = SPRITES
+	atlas.region = Rect2(0, 0, 16, 16)
+	portrait.texture = atlas
+	portrait.custom_minimum_size = Vector2(44, 44)
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	head.add_child(portrait)
+	var id_box := VBoxContainer.new()
+	id_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(id_box)
+	_name_label = Label.new()
+	_name_label.theme_type_variation = "Title"
+	id_box.add_child(_name_label)
+	_traits_label = Label.new()
+	_traits_label.theme_type_variation = "Muted"
+	id_box.add_child(_traits_label)
+	box.add_child(HSeparator.new())
 	_activity_label = _label(box)
-	# Compact label+bar rows instead of stacked pairs.
+	_activity_label.modulate = Color(0.8, 0.88, 0.78)
+	# Small-caps tag + thin pill bar per need.
 	var bar_tints := {
 		"hunger": Color(0.9, 0.65, 0.3), "rest": Color(0.5, 0.65, 0.9),
 		"mood": Color(0.9, 0.85, 0.4), "hp": Color(0.9, 0.4, 0.4),
@@ -89,21 +111,25 @@ func _build_ui() -> void:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
 		var tag := Label.new()
-		tag.text = key.capitalize()
-		tag.custom_minimum_size = Vector2(52, 0)
+		tag.theme_type_variation = "Header"
+		tag.text = key.to_upper()
+		tag.custom_minimum_size = Vector2(56, 0)
 		row.add_child(tag)
 		var bar := ProgressBar.new()
 		bar.max_value = 100.0
 		bar.show_percentage = false
-		bar.custom_minimum_size = Vector2(0, 12)
+		bar.custom_minimum_size = Vector2(0, 8)
 		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		bar.modulate = bar_tints[key]
 		row.add_child(bar)
 		box.add_child(row)
 		_bars[key] = bar
+	box.add_child(HSeparator.new())
 	_gear_label = _label(box)
+	_gear_label.theme_type_variation = "Muted"
 	_skills_label = _label(box)
+	_skills_label.theme_type_variation = "Muted"
 	# Priorities as a tight 2x2 grid.
 	var grid := GridContainer.new()
 	grid.columns = 2
