@@ -18,7 +18,7 @@ func _on_tick() -> void:
 	if move_cooldown > 0:
 		return
 	move_cooldown = MOVE_EVERY_TICKS + randi_range(0, 12)
-	var next := cell + Pawn.DIRS.pick_random()
+	var next: Vector2i = cell + Pawn.DIRS.pick_random()
 	if WorldGrid.in_bounds(next) and not WorldGrid.is_wall(next):
 		cell = next
 
