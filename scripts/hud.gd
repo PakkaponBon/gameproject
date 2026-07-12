@@ -30,6 +30,15 @@ var _resource_cooldown := 0
 
 func _ready() -> void:
 	resource_label.visible = false  # replaced by the icon row
+	# Translucent strip across the top so mode line / icons / calendar
+	# stop fighting the grass for contrast. Drawn first = behind everything.
+	var backdrop := ColorRect.new()
+	backdrop.color = Color(0.08, 0.07, 0.1, 0.55)
+	backdrop.anchor_right = 1.0
+	backdrop.offset_bottom = 52.0
+	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(backdrop)
+	move_child(backdrop, 0)
 	var row := HBoxContainer.new()
 	row.offset_left = 8.0
 	row.offset_top = 28.0
@@ -56,7 +65,7 @@ func _ready() -> void:
 	_feed.anchor_right = 1.0
 	_feed.offset_left = -420.0
 	_feed.offset_right = -8.0
-	_feed.offset_top = 64.0
+	_feed.offset_top = 165.0  # below the FIRST STEPS panel (top 62 + ~90 tall)
 	add_child(_feed)
 	var speed_row := HBoxContainer.new()
 	speed_row.anchor_left = 1.0

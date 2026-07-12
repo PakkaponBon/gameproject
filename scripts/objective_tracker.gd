@@ -12,15 +12,20 @@ var _cooldown := 0
 @onready var main: Node2D = get_parent()
 
 func _ready() -> void:
+	# Top-right, under the speed buttons; backdrop for legibility.
+	var panel := PanelContainer.new()
+	panel.anchor_left = 1.0
+	panel.anchor_right = 1.0
+	panel.offset_left = -250.0
+	panel.offset_right = -8.0
+	panel.offset_top = 62.0
+	panel.self_modulate = Color(1, 1, 1, 0.85)
+	add_child(panel)
 	_box = VBoxContainer.new()
-	_box.anchor_left = 1.0
-	_box.anchor_right = 1.0
-	_box.offset_left = -240.0
-	_box.offset_right = -8.0
-	_box.offset_top = 180.0
-	add_child(_box)
+	panel.add_child(_box)
 	var title := Label.new()
 	title.text = "FIRST STEPS"
+	title.modulate = Color(0.95, 0.85, 0.55)
 	_box.add_child(title)
 	for id in ["beds", "food", "raid"]:
 		var label := Label.new()
