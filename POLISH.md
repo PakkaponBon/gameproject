@@ -13,19 +13,20 @@ Achieved twice with different testers → ready for itch.io.
 ## Phase 12 — Juice & Game Feel
 Make every action FELT. No art changes yet — feedback layer only.
 
-- [ ] Hit feedback: white flash on damaged entity + floating damage number
-- [ ] Death feedback: pawn death pause-frame + sound + blood decal (small, tasteful)
-- [ ] Work particles: wood chips (chop), stone dust (mine), soil puff (farm)
-- [ ] Item pickup/drop: small bounce/arc animation, not teleport
-- [ ] Pawn movement: 2-frame walk cycle minimum, face movement direction
-- [ ] Sound pass v0: chop, mine, build hammer, eat, footsteps (soft), sword hit,
+- [x] Hit feedback: white flash on damaged entity + floating damage number
+- [x] Death feedback: pawn death pause-frame + sound + ~~blood~~ ash-mark decal
+      *(tone rule: no gore — GAME_DESIGN.md)*
+- [x] Work particles: wood chips (chop), stone dust (mine), soil puff (farm)
+- [x] Item pickup/drop: small bounce/arc animation, not teleport
+- [x] Pawn movement: 2-frame walk cycle minimum, face movement direction
+- [x] Sound pass v0: chop, mine, build hammer, eat, footsteps (soft), sword hit,
       bow release, pawn hurt, pawn death, raid horn, UI clicks
-      (freesound.org / Kenney audio; SoundManager autoload, pitch randomize ±10%)
-- [ ] Ambient loop: birds at day, crickets at night, wind
-- [ ] Day/night visual tint via CanvasModulate (dawn gold → day → dusk orange → night blue)
-- [ ] Raid feel: warning horn + 1s screen shake on raid spawn, red edge-of-screen
+      *(synthesized placeholder WAVs, not downloads; SoundManager autoload, pitch ±10%)*
+- [x] Ambient loop: birds at day, crickets at night *(no separate wind layer)*
+- [x] Day/night visual tint via CanvasModulate (dawn gold → day → dusk orange → night blue)
+- [x] Raid feel: warning horn + 1s screen shake on raid spawn, red edge-of-screen
       indicator pointing at spawn direction
-- [ ] Selection feedback: pawn selected = outline/ring + soft click sound
+- [x] Selection feedback: pawn selected = outline/ring + soft click sound
 
 **DoD:** capture a 60s gameplay clip. Chopping, a raid arriving, and a fight
 must be readable and satisfying with sound ON, watching with no explanation.
