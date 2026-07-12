@@ -40,11 +40,11 @@ func _on_tick() -> void:
 	var food := get_tree().get_nodes_in_group("food").size()
 	var raid_beaten: bool = main.raid_director.raid_count >= 1 \
 			and get_tree().get_nodes_in_group("raiders").is_empty()
-	_set(_labels.beds, beds >= 3, "Build 3 beds (%d/3)" % mini(beds, 3))
-	_set(_labels.food, food >= 10, "Stock 10 food (%d/10)" % mini(food, 10))
-	_set(_labels.raid, raid_beaten, "Survive the first raid")
+	_set_goal(_labels.beds, beds >= 3, "Build 3 beds (%d/3)" % mini(beds, 3))
+	_set_goal(_labels.food, food >= 10, "Stock 10 food (%d/10)" % mini(food, 10))
+	_set_goal(_labels.raid, raid_beaten, "Survive the first raid")
 	visible = not (beds >= 3 and food >= 10 and raid_beaten)
 
-func _set(label: Label, done: bool, text: String) -> void:
+func _set_goal(label: Label, done: bool, text: String) -> void:
 	label.text = ("[/] " if done else "[ ] ") + text
 	label.modulate = Color(0.6, 0.9, 0.6) if done else Color.WHITE
