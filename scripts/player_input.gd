@@ -99,20 +99,11 @@ func set_tool(new_mode: Mode) -> void:
 func _set_mode(new_mode: Mode) -> void:
 	mode = new_mode
 	_update_mode_label()
-	main.build_palette.show_for(mode, self)
 
+## Mode/tool feedback is the toolbar now (persistent labels went away in
+## the Cities-style rework) — one sync refreshes highlights + sub-tools.
 func _update_mode_label() -> void:
-	match mode:
-		Mode.COMMAND:
-			main.hud.show_command_mode()
-		Mode.BUILD:
-			main.hud.show_build_mode(BuildingDefs.get_def(current_building))
-		Mode.STOCKPILE:
-			main.hud.show_stockpile_mode()
-		Mode.FIELD:
-			main.hud.show_field_mode(CropDefs.get_def(current_crop))
-		Mode.SAFETY:
-			main.hud.show_safety_mode()
+	main.build_palette.sync(self)
 
 ## Why placement would fail here (Phase 14: red ghost + reason).
 func placement_reason(cell: Vector2i) -> String:

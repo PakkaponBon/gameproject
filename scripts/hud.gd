@@ -1,8 +1,8 @@
 class_name HudController
 extends CanvasLayer
-## Ambient HUD: mode line, calendar (with speed/threat tags), resource
-## counts, and a fading notification feed. Per-villager info lives in
-## VillagerPanel now.
+## Ambient HUD, Cities-style: slim corner clusters only. Resources top-left,
+## clock + speed top-right, notification chips under that. Tool selection
+## lives in BuildPalette (bottom toolbar); per-villager info in VillagerPanel.
 
 const FEED_MAX := 3  # keeps the feed clear of the villager card below it
 const FEED_SECONDS := 12.0
@@ -22,7 +22,7 @@ var _feed: VBoxContainer
 var _raid_arrow: Label
 var _res_counts := {}
 var _resource_cooldown := 0
-var _tool_buttons := {}  # PlayerInput.Mode -> toolbar Button
+var _calendar: Label
 
 @onready var mode_label: Label = $ModeLabel
 @onready var resource_label: Label = $ResourceLabel
@@ -30,21 +30,40 @@ var _tool_buttons := {}  # PlayerInput.Mode -> toolbar Button
 @onready var calendar_label: Label = $CalendarLabel
 
 func _ready() -> void:
-	resource_label.visible = false  # replaced by the icon row
-	# Translucent strip across the top so mode line / icons / calendar
-	# stop fighting the grass for contrast. Drawn first = behind everything.
-	var backdrop := ColorRect.new()
-	backdrop.color = Color(0.07, 0.065, 0.09, 0.72)
-	backdrop.anchor_right = 1.0
-	backdrop.offset_bottom = 52.0
-	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(backdrop)
-	move_child(backdrop, 0)
+	# Corner clusters replaced the old full-width strip and text labels;
+	# the scene's legacy labels stay as hidden nodes.
+	mode_label.visible = false
+	resource_label.visible = false
+	calendar_label.visible = false
+	_build_resource_strip()
+	_build_clock_cluster()
+	_feed = VBoxContainer.new()
+	_feed.anchor_left = 1.0
+	_feed.anchor_right = 1.0
+	_feed.offset_left = -328.0
+	_feed.offset_right = -8.0
+	_feed.offset_top = 205.0  # below the clock cluster + objectives badge
+	_feed.add_theme_constant_override("separation", 4)
+	add_child(_feed)
+	_raid_arrow = Label.new()
+	_raid_arrow.text = "!! RAID !!"
+	_raid_arrow.modulate = Color(1.0, 0.3, 0.25)
+	_raid_arrow.visible = false
+	add_child(_raid_arrow)
+	GameClock.ticked.connect(_on_tick)
+	GameClock.speed_changed.connect(_update_calendar)
+	_update_calendar()
+
+## Slim icon+count strip, top-left. Meaning lives in the tooltips.
+func _build_resource_strip() -> void:
+	var panel := PanelContainer.new()
+	panel.theme_type_variation = "SlimPanel"
+	panel.offset_left = 8.0
+	panel.offset_top = 8.0
+	add_child(panel)
 	var row := HBoxContainer.new()
-	row.offset_left = 8.0
-	row.offset_top = 28.0
-	row.add_theme_constant_override("separation", 10)
-	add_child(row)
+	row.add_theme_constant_override("separation", 8)
+	panel.add_child(row)
 	for id: String in RES_ICONS:
 		var icon := TextureRect.new()
 		var atlas := AtlasTexture.new()
@@ -62,38 +81,28 @@ func _ready() -> void:
 		count.mouse_filter = Control.MOUSE_FILTER_STOP
 		row.add_child(count)
 		_res_counts[id] = count
-	_feed = VBoxContainer.new()
-	_feed.anchor_left = 1.0
-	_feed.anchor_right = 1.0
-	_feed.offset_left = -328.0
-	_feed.offset_right = -8.0
-	_feed.offset_top = 184.0  # below the FIRST STEPS panel
-	_feed.add_theme_constant_override("separation", 4)
-	add_child(_feed)
-	# Speed controls live inside the top strip, under the calendar.
-	var speed_row := HBoxContainer.new()
-	speed_row.anchor_left = 1.0
-	speed_row.anchor_right = 1.0
-	speed_row.offset_left = -140.0
-	speed_row.offset_right = -8.0
-	speed_row.offset_top = 25.0
-	speed_row.add_theme_constant_override("separation", 4)
-	add_child(speed_row)
-	_speed_button(speed_row, "||", "Pause the simulation [Space]",
+
+## One top-right cluster: calendar text + pause/1x/3x.
+func _build_clock_cluster() -> void:
+	var panel := PanelContainer.new()
+	panel.theme_type_variation = "SlimPanel"
+	panel.anchor_left = 1.0
+	panel.anchor_right = 1.0
+	panel.offset_right = -8.0
+	panel.offset_top = 8.0
+	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	add_child(panel)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	panel.add_child(row)
+	_calendar = Label.new()
+	row.add_child(_calendar)
+	_speed_button(row, "||", "Pause the simulation [Space]",
 			func() -> void: GameClock.set_sim_paused(not GameClock.sim_paused))
-	_speed_button(speed_row, "1x", "Normal speed [E]",
+	_speed_button(row, "1x", "Normal speed [E]",
 			func() -> void: GameClock.set_speed(1.0))
-	_speed_button(speed_row, "3x", "Fast speed [E]",
+	_speed_button(row, "3x", "Fast speed [E]",
 			func() -> void: GameClock.set_speed(3.0))
-	_build_toolbar()
-	_raid_arrow = Label.new()
-	_raid_arrow.text = "!! RAID !!"
-	_raid_arrow.modulate = Color(1.0, 0.3, 0.25)
-	_raid_arrow.visible = false
-	add_child(_raid_arrow)
-	GameClock.ticked.connect(_on_tick)
-	GameClock.speed_changed.connect(_update_calendar)
-	_update_calendar()
 
 ## Push a message into the feed as a translucent chip. Pass a world
 ## position to make it clickable (jumps the camera there).
@@ -127,95 +136,12 @@ func _speed_button(row: HBoxContainer, text: String, tip: String, action: Callab
 	var button := Button.new()
 	button.text = text
 	button.tooltip_text = tip
-	button.custom_minimum_size = Vector2(38, 24)
+	button.custom_minimum_size = Vector2(34, 24)
 	button.pressed.connect(action)
 	row.add_child(button)
 
-## Bottom-center tool bar: the mouse-first way to switch modes (hotkeys
-## still work; they live in the tooltips now instead of the mode line).
-func _build_toolbar() -> void:
-	var input: PlayerInput = get_parent().get_node("PlayerInput")
-	var panel := PanelContainer.new()
-	panel.anchor_left = 0.5
-	panel.anchor_right = 0.5
-	panel.anchor_top = 1.0
-	panel.anchor_bottom = 1.0
-	panel.offset_top = -44.0
-	panel.offset_bottom = -8.0
-	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	add_child(panel)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 4)
-	panel.add_child(row)
-	var tools := [
-		[PlayerInput.Mode.COMMAND, "Select", "Command villagers — click to select, click ground to move"],
-		[PlayerInput.Mode.BUILD, "Build", "Place buildings  [B]"],
-		[PlayerInput.Mode.STOCKPILE, "Zones", "Paint stockpile zones  [Z]"],
-		[PlayerInput.Mode.FIELD, "Fields", "Zone crop fields  [F]"],
-		[PlayerInput.Mode.SAFETY, "Safety", "Paint flee zones for raids  [X]"],
-	]
-	for entry: Array in tools:
-		var mode_id: int = entry[0]
-		var btn := Button.new()
-		btn.text = entry[1]
-		btn.tooltip_text = entry[2]
-		btn.toggle_mode = true
-		btn.custom_minimum_size = Vector2(62, 28)
-		btn.pressed.connect(func() -> void: input.set_tool(mode_id))
-		row.add_child(btn)
-		_tool_buttons[mode_id] = btn
-	var gap := Control.new()
-	gap.custom_minimum_size = Vector2(10, 0)
-	row.add_child(gap)
-	var map_btn := Button.new()
-	map_btn.text = "Map"
-	map_btn.tooltip_text = "World map — factions and expeditions  [M]"
-	map_btn.custom_minimum_size = Vector2(52, 28)
-	map_btn.pressed.connect(func() -> void: get_parent().world_map.toggle())
-	row.add_child(map_btn)
-	var help_btn := Button.new()
-	help_btn.text = "?"
-	help_btn.tooltip_text = "Help  [H]"
-	help_btn.custom_minimum_size = Vector2(30, 28)
-	help_btn.pressed.connect(func() -> void: get_parent().help_panel.toggle())
-	row.add_child(help_btn)
-
-func set_active_tool(mode: int) -> void:
-	for id: int in _tool_buttons:
-		(_tool_buttons[id] as Button).set_pressed_no_signal(id == mode)
-
 func set_inspect(text: String) -> void:
 	inspect_label.text = text
-
-func show_command_mode() -> void:
-	mode_label.modulate = Color.WHITE
-	mode_label.text = "Click a villager to select · click ground to move, enemy to attack"
-	set_active_tool(PlayerInput.Mode.COMMAND)
-
-func show_build_mode(def: Dictionary) -> void:
-	var costs: Array[String] = []
-	for id: String in def.cost:
-		costs.append("%d %s" % [int(def.cost[id]), id])
-	mode_label.modulate = Color(1.0, 0.75, 0.45)
-	mode_label.text = "Build · %s (%s) — LMB place · RMB remove · Q next" \
-			% [def.name, " + ".join(costs)]
-	set_active_tool(PlayerInput.Mode.BUILD)
-
-func show_stockpile_mode() -> void:
-	mode_label.modulate = Color(1.0, 0.9, 0.5)
-	mode_label.text = "Stockpile · LMB paint · RMB erase"
-	set_active_tool(PlayerInput.Mode.STOCKPILE)
-
-func show_field_mode(def: Dictionary) -> void:
-	mode_label.modulate = Color(0.65, 0.9, 0.55)
-	mode_label.text = "Field · %s — LMB zone · RMB clear · Q next crop" % def.name
-	set_active_tool(PlayerInput.Mode.FIELD)
-
-func show_safety_mode() -> void:
-	mode_label.modulate = Color(0.75, 0.65, 0.95)
-	mode_label.text = "Safety · LMB paint flee zone · RMB erase"
-	set_active_tool(PlayerInput.Mode.SAFETY)
 
 func _on_tick() -> void:
 	_update_calendar()
@@ -264,4 +190,4 @@ func _update_calendar() -> void:
 		tag = "  >> x%d" % int(GameClock.speed)
 	if not get_tree().get_nodes_in_group("raiders").is_empty():
 		tag += "  !! RAID"
-	calendar_label.text = GameClock.calendar_text() + tag
+	_calendar.text = GameClock.calendar_text() + tag

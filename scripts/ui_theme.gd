@@ -34,6 +34,12 @@ static func get_theme() -> Theme:
 	var line := StyleBoxLine.new()
 	line.color = Color(EDGE.r, EDGE.g, EDGE.b, 0.45)
 	theme.set_stylebox("separator", "HSeparator", line)
+	# Slim corner strips (resources, clock, toolbar): same look, tighter.
+	var slim := _box(PANEL_BG, EDGE, 6, 6)
+	slim.content_margin_top = 4.0
+	slim.content_margin_bottom = 4.0
+	theme.set_type_variation("SlimPanel", "PanelContainer")
+	theme.set_stylebox("panel", "SlimPanel", slim)
 	# Buttons: flat dark, gold on hover, sunken when pressed.
 	theme.set_stylebox("normal", "Button",
 			_box(Color(0.16, 0.15, 0.2, 0.95), Color(0.34, 0.3, 0.24), 4, 5))
@@ -74,6 +80,31 @@ static func apply_to_layers(root: Node) -> void:
 			for control in layer.get_children():
 				if control is Control:
 					(control as Control).theme = get_theme()
+
+## Icon-only button: pixel-art atlas icon + tooltip; the icon brightens
+## on hover and dims on press (on top of the stylebox states).
+static func icon_button(sheet: Texture2D, region: Rect2, tint: Color, tip: String,
+		size := Vector2(38, 32)) -> Button:
+	var btn := Button.new()
+	btn.tooltip_text = tip
+	btn.custom_minimum_size = size
+	var icon := TextureRect.new()
+	var atlas := AtlasTexture.new()
+	atlas.atlas = sheet
+	atlas.region = region
+	icon.texture = atlas
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.modulate = tint
+	btn.add_child(icon)
+	btn.mouse_entered.connect(func() -> void: icon.modulate = tint.lightened(0.3))
+	btn.mouse_exited.connect(func() -> void: icon.modulate = tint)
+	btn.button_down.connect(func() -> void: icon.modulate = tint.darkened(0.15))
+	btn.button_up.connect(func() -> void:
+		icon.modulate = tint.lightened(0.3) if btn.is_hovered() else tint)
+	return btn
 
 static func _box(bg: Color, edge: Color, radius: int, margin: int) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
