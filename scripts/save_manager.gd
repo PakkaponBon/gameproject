@@ -93,6 +93,9 @@ func apply_pending_load() -> void:
 		raider.hp = float(r.hp)
 		raider.attack_cooldown = int(r.atk_cd)
 		raider.move_cooldown = int(r.move_cd)
+		if bool(r.get("looter", false)):
+			raider.make_looter()
+		raider.carrying_loot = bool(r.get("loot", false))
 	for b: Dictionary in data.blueprints:
 		main.place_blueprint(_vec(b.cell), b.id)
 		var bp: Blueprint = main.blueprints[_vec(b.cell)]

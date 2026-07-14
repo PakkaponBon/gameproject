@@ -44,6 +44,21 @@ static func burst(parent: Node, world_pos: Vector2, color: Color) -> void:
 	parent.add_child(particles)
 	particles.finished.connect(particles.queue_free)
 
+## Tiny floating glyph over an entity's head: readable inner life at a
+## glance ("!" hungry, "z" sleeping, "<3" friendship).
+static func emote(anchor: Node2D, text: String, color := Color.WHITE) -> void:
+	var label := Label.new()
+	label.text = text
+	label.modulate = color
+	label.z_index = 60
+	label.position = Vector2(-4, -24)
+	label.scale = Vector2(0.75, 0.75)
+	anchor.add_child(label)
+	var tween := label.create_tween()
+	tween.tween_property(label, "position:y", label.position.y - 6.0, 1.2)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 1.2)
+	tween.tween_callback(label.queue_free)
+
 ## Dropped items bounce into place instead of teleporting.
 static func hop(item: Node2D) -> void:
 	var rest_y := item.position.y

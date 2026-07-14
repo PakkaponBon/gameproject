@@ -41,7 +41,12 @@ func tick() -> void:
 				or TraitDefs.has_flag(other.traits, "solitary"):
 			drift = DRIFT_SOLITARY
 		var key := String(other.name)
-		bonds[key] = clampf(float(bonds.get(key, 0.0)) + drift, -CAP, CAP)
+		var prev := float(bonds.get(key, 0.0))
+		bonds[key] = clampf(prev + drift, -CAP, CAP)
+		if prev < FRIEND_AT and float(bonds[key]) >= FRIEND_AT:
+			Fx.emote(pawn, "<3", Color(0.95, 0.6, 0.7))
+			if String(pawn.name) < key:  # one chronicle line per pair, not two
+				EventBus.chronicle_entry.emit("%s and %s became fast friends." % [pawn.name, key])
 		if is_friend(key):
 			friends_near += 1
 		elif is_rival(key):

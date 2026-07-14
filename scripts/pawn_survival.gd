@@ -34,6 +34,7 @@ func seek_food() -> void:
 	food_target = food
 	eat_ticks_left = EAT_TICKS
 	pawn.target_cell = food.cell
+	Fx.emote(pawn, "!", Color(0.95, 0.7, 0.3))
 
 func seek_bed() -> void:
 	if bed_cell != WorldGrid.INVALID_CELL or food_target:
@@ -82,8 +83,11 @@ func wander() -> void:
 		pawn.target_cell = next
 
 func fall_asleep() -> void:
+	if sleeping:
+		return
 	sleeping = true
 	pawn.set_sleep_visual(true)
+	Fx.emote(pawn, "z", Color(0.6, 0.7, 0.95))
 
 func wake() -> void:
 	sleeping = false

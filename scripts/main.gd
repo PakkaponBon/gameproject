@@ -35,6 +35,7 @@ var _lights := {}  # cell -> PointLight2D (workstation glow)
 @onready var festival_director: FestivalDirector = $FestivalDirector
 @onready var chronicle_director: ChronicleDirector = $ChronicleDirector
 @onready var chronicle_panel: ChroniclePanel = $ChroniclePanel
+@onready var choice_panel: ChoicePanel = $ChoicePanel
 
 func _ready() -> void:
 	UiTheme.apply_to_layers(self)  # children built their UI in their _ready
@@ -65,6 +66,9 @@ func _ready() -> void:
 	EventBus.building_destroyed.connect(_on_building_destroyed)
 	EventBus.merchant_arrived.connect(func() -> void:
 		hud.set_event("A traveling merchant has arrived", Color(0.95, 0.85, 0.45)))
+	EventBus.raider_stole.connect(func(world_pos: Vector2) -> void:
+		hud.set_event("A looter grabbed your goods — stop him before he escapes!",
+				Color(1.0, 0.6, 0.3), world_pos))
 	SaveManager.main = self
 	FactionManager.main = self
 	FactionManager.announced.connect(hud.set_event)

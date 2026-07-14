@@ -17,6 +17,8 @@ var hp := HP_MAX
 var attack_damage := 8.0
 var armor := 0.0
 var is_boss := false  # set before add_child: tougher, drops a relic
+var is_looter := false  # grabs your goods and runs for the edge
+var carrying_loot := false
 var faction_id := ""  # who sent this bandit (attrition on death)
 var attack_cooldown := 0
 var move_cooldown := 0
@@ -33,7 +35,14 @@ func _ready() -> void:
 		body.scale = Vector2(1.3, 1.3)
 	hp *= Balance.enemy_hp_mult()
 	attack_damage *= Balance.enemy_damage_mult()
+	if is_looter:
+		make_looter()
 	GameClock.ticked.connect(_on_tick)
+
+## Looters read differently at a glance: mossy hood, lighter build.
+func make_looter() -> void:
+	is_looter = true
+	($Body as Sprite2D).modulate = Color(0.55, 0.62, 0.38)
 
 func take_damage(amount: float) -> void:
 	Fx.flash($Body)
@@ -44,6 +53,8 @@ func take_damage(amount: float) -> void:
 			FactionManager.on_bandit_killed(faction_id)
 		if is_boss:
 			_drop_item(RelicDefs.ORDER.pick_random())  # the relic faucet
+		if carrying_loot:
+			_drop_item("wood")  # cut down mid-theft: the goods stay home
 		if randf() < SWORD_DROP_CHANCE:
 			_drop_item("sword")
 		gone.emit()
@@ -58,6 +69,8 @@ func _drop_item(id: String) -> void:
 func _on_tick() -> void:
 	if attack_cooldown > 0:
 		attack_cooldown -= 1
+	if is_looter and _looter_tick():
+		return
 	# Fight whatever defender is closest — villager or allied warrior.
 	# Variant on purpose: Pawn and Ally share cell/take_damage by shape.
 	var target: Variant = _nearest_living_pawn()
@@ -95,6 +108,65 @@ func _on_tick() -> void:
 		var gpath: Array[Vector2i] = WorldGrid.astar_enemy.get_id_path(cell, gate, true)
 		if gpath.size() >= 2:
 			cell = gpath[1]
+
+## Looter behavior: grab the nearest loose item and sprint for the map
+## edge. Returns false to fall back to fighting when there's nothing to
+## steal (or no way to reach it).
+func _looter_tick() -> bool:
+	if carrying_loot:
+		var exit := _nearest_edge()
+		if cell == exit:
+			gone.emit()  # away with the goods
+			queue_free()
+			return true
+		_step_toward(exit)
+		return true
+	var prize := _nearest_loose_item()
+	if prize == null:
+		return false
+	if prize.cell == cell:
+		prize.queue_free()
+		carrying_loot = true
+		Fx.emote(self, "!", Color(1.0, 0.85, 0.3))
+		EventBus.raider_stole.emit(position)
+		return true
+	var path: Array[Vector2i] = WorldGrid.astar_enemy.get_id_path(cell, prize.cell, true)
+	if path.size() < 2:
+		return false  # sealed away from the goods: act like a fighter
+	_step_toward(prize.cell)
+	return true
+
+func _step_toward(target_cell: Vector2i) -> void:
+	move_cooldown -= 1
+	if move_cooldown > 0:
+		return
+	move_cooldown = MOVE_EVERY_TICKS
+	var path: Array[Vector2i] = WorldGrid.astar_enemy.get_id_path(cell, target_cell, true)
+	if path.size() >= 2:
+		cell = path[1]
+
+func _nearest_loose_item() -> ResourceItem:
+	var best: ResourceItem = null
+	var best_dist := INF
+	for node in get_tree().get_nodes_in_group("resources"):
+		var item := node as ResourceItem
+		if item.get_parent() is Pawn:
+			continue
+		var dist := float((item.cell - cell).length_squared())
+		if dist < best_dist:
+			best = item
+			best_dist = dist
+	return best
+
+func _nearest_edge() -> Vector2i:
+	var s := WorldGrid.MAP_SIZE
+	var options: Array[Vector2i] = [Vector2i(cell.x, 0), Vector2i(cell.x, s.y - 1),
+			Vector2i(0, cell.y), Vector2i(s.x - 1, cell.y)]
+	var best := options[0]
+	for option in options:
+		if (option - cell).length_squared() < (best - cell).length_squared():
+			best = option
+	return best
 
 func _attack_defender(target: Variant) -> void:
 	if attack_cooldown > 0:

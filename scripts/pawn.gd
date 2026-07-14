@@ -235,6 +235,7 @@ func _on_damaged() -> void:
 
 func _on_break_started() -> void:
 	# Mental break: drop colony work, but keep heading to food if hungry.
+	Fx.emote(self, "!", Color(0.9, 0.35, 0.3))
 	work.abort()
 	if survival.food_target == null:
 		target_cell = cell

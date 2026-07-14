@@ -61,7 +61,9 @@ func _spawn_raid() -> void:
 			break
 		var cell := origin + offset
 		if WorldGrid.in_bounds(cell) and not WorldGrid.is_wall(cell):
-			_spawn_bandit(cell, faction_id, placed == 0 and count >= 4)  # big raids bring a boss
+			var raider := _spawn_bandit(cell, faction_id, placed == 0 and count >= 4)
+			if count >= 3 and placed % 3 == 2:
+				raider.make_looter()  # every third bandit is after your goods
 			placed += 1
 	if count >= ALLY_HELP_AT and FactionManager.has_ally():
 		_spawn_allies()
@@ -73,13 +75,14 @@ func _spawn_raid() -> void:
 func _wealth_pressure() -> int:
 	return clampi(WorldGrid.buildings.size() / 12 + FactionManager.renown / 3, 0, 3)
 
-func _spawn_bandit(cell: Vector2i, faction_id: String, boss := false) -> void:
+func _spawn_bandit(cell: Vector2i, faction_id: String, boss := false) -> Raider:
 	var raider: Raider = RAIDER_SCENE.instantiate()
 	raider.is_boss = boss
 	raider.faction_id = faction_id
 	raider.position = WorldGrid.cell_to_world(cell)
 	raider.gone.connect(_on_raider_gone)
 	spawn_parent.add_child(raider)
+	return raider
 
 func _spawn_allies() -> void:
 	var center := WorldGrid.MAP_SIZE / 2

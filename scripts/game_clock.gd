@@ -9,8 +9,10 @@ signal season_changed(season: int)
 signal speed_changed  # sim pause or speed multiplier flipped
 
 const TICKS_PER_SECOND := 10.0
-const TICKS_PER_DAY := 3000  # 5 real minutes per in-game day
-const DAYS_PER_SEASON := 5
+## Pacing: ~3.3 real minutes per day, 4-day seasons — a year in under an
+## hour, so the faction arc fits one sitting instead of an afternoon.
+const TICKS_PER_DAY := 2000
+const DAYS_PER_SEASON := 4
 const SEASON_NAMES := ["Spring", "Summer", "Autumn", "Winter"]
 const NIGHT_START := 0.75  # last quarter of each day is night
 
