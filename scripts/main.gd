@@ -49,6 +49,9 @@ func _ready() -> void:
 		$Camera.shake(1.0, 5.0))
 	raid_director.raid_started.connect(func(fname: String) -> void:
 		_last_raid_faction = fname)
+	raid_director.raid_warning.connect(func() -> void:
+		hud.set_event("Scouts sighted beyond the treeline — a raid is coming. Draft [R] and man the walls.",
+				Color(1.0, 0.75, 0.4)))
 	raid_director.raid_ended.connect(func() -> void:
 		FactionManager.add_renown(1)
 		hud.set_event("The raid is beaten. Word of your village spreads.", Color(0.7, 0.95, 0.7))

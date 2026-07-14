@@ -12,6 +12,8 @@ const ENVOY_COOLDOWN_TICKS := 3000  # one envoy per faction per day
 const DEMAND_CHANCE_PER_DAY := 0.2
 const DEMAND_GRACE_TICKS := 3000  # a day to pay
 const ALLIANCE_AT := 100.0
+const REQUEST_CHANCE_PER_DAY := 0.25
+const REQUEST_GRACE_TICKS := GameClock.TICKS_PER_DAY * 2
 const EXPEDITION_TICKS := 3000  # the party is away one day
 const EXPEDITION_STRENGTH_HIT := 25.0
 const RUINS_STRENGTH := 50.0
@@ -19,6 +21,7 @@ const KILL_ATTRITION := 2.0  # faction strength lost per bandit slain
 
 var factions := {}  # id -> {strength, attitude, resolved, envoy_ready, demand_deadline}
 var expedition := {}  # {} when none; else target/return_tick/party/power
+var request := {}  # {} or {id, resource, amount, deadline}: a faction's standing ask
 var victory_shown := false
 var renown := 0  # village fame: unlocks buildings, attracts refugees
 var main: Node2D = null  # current Main scene; re-registers itself each load
@@ -40,6 +43,7 @@ func reset() -> void:
 			"demand_deadline": 0,
 		}
 	expedition = {}
+	request = {}
 	victory_shown = false
 	renown = 0
 	factions_changed.emit()
@@ -49,12 +53,13 @@ func add_renown(amount: int) -> void:
 	factions_changed.emit()
 
 func serialize() -> Dictionary:
-	return {"factions": factions, "expedition": expedition,
+	return {"factions": factions, "expedition": expedition, "request": request,
 			"victory_shown": victory_shown, "renown": renown, "difficulty": Balance.mode}
 
 func deserialize(data: Dictionary) -> void:
 	factions = data.factions
 	expedition = data.expedition
+	request = data.get("request", {})
 	victory_shown = bool(data.victory_shown)
 	renown = int(data.renown)
 	Balance.mode = String(data.difficulty)
@@ -64,6 +69,19 @@ func deserialize(data: Dictionary) -> void:
 
 func send_gift(id: String) -> void:
 	if _resolved(id):
+		return
+	# A standing request makes the gift land differently: their need, met.
+	if not request.is_empty() and String(request.id) == id:
+		if not _consume(String(request.resource), int(request.amount)):
+			announced.emit("You lack the %d %s that %s asked for." \
+					% [int(request.amount), String(request.resource), _fname(id)])
+			return
+		announced.emit("%s receives exactly what they needed. Word of it travels." % _fname(id))
+		EventBus.chronicle_entry.emit("The village answered %s's call for %s." \
+				% [_fname(id), String(request.resource)])
+		request = {}
+		add_renown(1)
+		_shift_attitude(id, 30.0)
 		return
 	if not _consume("wood", GIFT_WOOD):
 		announced.emit("Not enough spare wood for a gift (%d needed)." % GIFT_WOOD)
@@ -259,6 +277,10 @@ func _on_tick() -> void:
 			f.demand_deadline = 0
 			announced.emit("%s's demand goes unanswered. They will remember." % _fname(id))
 			_shift_attitude(id, -20.0)
+	if not request.is_empty() and GameClock.ticks > int(request.deadline):
+		announced.emit("%s's request lapses unanswered." % _fname(String(request.id)))
+		_shift_attitude(String(request.id), -8.0)
+		request = {}
 
 func _on_day_started(_day: int) -> void:
 	for id: String in factions:
@@ -272,6 +294,23 @@ func _on_day_started(_day: int) -> void:
 			f.demand_deadline = GameClock.ticks + DEMAND_GRACE_TICKS
 			announced.emit("%s demands tribute! Answer on the world map [M] within a day." % _fname(id))
 			factions_changed.emit()
+	if request.is_empty() and randf() < REQUEST_CHANCE_PER_DAY:
+		_post_request()
+
+## A faction asks for materials: meet it with a gift [M] before the
+## deadline for outsized favor (+renown); let it lapse and they sour.
+func _post_request() -> void:
+	var open: Array[String] = []
+	for id: String in factions:
+		if factions[id].resolved == "":
+			open.append(id)
+	if open.is_empty():
+		return
+	var id: String = open.pick_random()
+	request = {"id": id, "resource": ["wood", "stone"].pick_random(),
+			"amount": randi_range(8, 14), "deadline": GameClock.ticks + REQUEST_GRACE_TICKS}
+	announced.emit("%s asks for %d %s — send a gift [M] within two days and earn real favor." \
+			% [_fname(id), int(request.amount), String(request.resource)])
 
 func _shift_attitude(id: String, amount: float) -> void:
 	var f: Dictionary = factions[id]

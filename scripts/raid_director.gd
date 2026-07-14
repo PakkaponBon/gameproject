@@ -4,11 +4,14 @@ extends Node
 ## a raid is in progress. Scene-local to Main, not an autoload.
 
 signal raid_started(faction_name: String)
+signal raid_warning  # scouts spotted: ~1 real minute to prepare
 signal raid_ended
 
 const RAIDER_SCENE := preload("res://scenes/raider.tscn")
 const ALLY_SCENE := preload("res://scenes/ally.tscn")
-const RAID_INTERVAL_TICKS := 2000  # ~3.3 minutes at 10 ticks/sec
+const RAID_INTERVAL_MIN := 1700  # cadence varies so raids never feel clockwork
+const RAID_INTERVAL_MAX := 2600
+const RAID_WARNING_TICKS := 600  # scouts spotted ~1 real minute ahead
 ## First raid lands at the end of day 2 (POLISH.md): guaranteed small,
 ## an early taste of danger that's survivable unarmed.
 const FIRST_RAID_AT := int(GameClock.TICKS_PER_DAY * 2.7)
@@ -20,6 +23,8 @@ var ticks_until_raid := FIRST_RAID_AT
 var raid_count := 0
 var spawn_parent: Node2D = null  # assigned by Main
 
+var _warned := false
+
 func _ready() -> void:
 	GameClock.ticked.connect(_on_tick)
 
@@ -27,8 +32,15 @@ func _on_tick() -> void:
 	if Balance.peaceful():
 		return  # the realm sleeps
 	ticks_until_raid -= 1
+	# Tension beat: the player gets a warning window to draft and repair.
+	if not _warned and ticks_until_raid <= RAID_WARNING_TICKS and ticks_until_raid > 0 \
+			and FactionManager.pick_raid_faction(false) != "":
+		_warned = true
+		raid_warning.emit()
 	if ticks_until_raid <= 0:
-		ticks_until_raid = RAID_INTERVAL_TICKS
+		ticks_until_raid = int(randi_range(RAID_INTERVAL_MIN, RAID_INTERVAL_MAX) \
+				* Balance.raid_interval_mult())
+		_warned = false
 		_spawn_raid()
 
 func _spawn_raid() -> void:
@@ -37,8 +49,8 @@ func _spawn_raid() -> void:
 	if faction_id == "":
 		return
 	raid_count += 1
-	# Escalate with survival; the very first raid is always a small probe.
-	var count := mini(FactionManager.raid_size(faction_id), 2 + raid_count)
+	# Escalate with survival AND prosperity: what you have is worth taking.
+	var count := mini(FactionManager.raid_size(faction_id), 2 + raid_count + _wealth_pressure())
 	if raid_count == 1:
 		count = 2
 	var origin := _random_edge_cell()
@@ -55,6 +67,11 @@ func _spawn_raid() -> void:
 		_spawn_allies()
 	EventBus.play_sfx.emit("horn")
 	raid_started.emit(FactionDefs.get_def(faction_id).name)
+
+## Prosperity attracts trouble: raids scale with what you've built, not
+## just how long you've survived.
+func _wealth_pressure() -> int:
+	return clampi(WorldGrid.buildings.size() / 12 + FactionManager.renown / 3, 0, 3)
 
 func _spawn_bandit(cell: Vector2i, faction_id: String, boss := false) -> void:
 	var raider: Raider = RAIDER_SCENE.instantiate()

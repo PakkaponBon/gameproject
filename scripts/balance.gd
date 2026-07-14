@@ -21,3 +21,6 @@ static func enemy_hp_mult() -> float:
 
 static func enemy_damage_mult() -> float:
 	return 1.25 if mode == "Hard" else 1.0
+
+static func raid_interval_mult() -> float:
+	return 0.75 if mode == "Hard" else 1.0

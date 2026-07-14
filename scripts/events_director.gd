@@ -15,12 +15,37 @@ var spawn_parent: Node2D = null  # assigned by Main
 func _ready() -> void:
 	GameClock.day_started.connect(_on_day_started)
 
+const BARD_CHANCE := 0.07
+const STAR_CHANCE := 0.04
+
 func _on_day_started(_day: int) -> void:
 	if GameClock.season_index() != 3 and randf() < FROST_CHANCE:
 		_frost_snap()
 	var refugee_chance := REFUGEE_BASE_CHANCE + REFUGEE_RENOWN_BONUS * FactionManager.renown
 	if main.pawns.size() < VILLAGER_CAP and randf() < minf(refugee_chance, 0.3):
 		_refugee_arrives()
+	if randf() < BARD_CHANCE:
+		_bard_visits()
+	if randf() < STAR_CHANCE:
+		_star_falls()
+
+func _bard_visits() -> void:
+	for pawn: Pawn in main.pawns:
+		pawn.needs.celebrate()
+	main.hud.set_event("A wandering bard plays through the evening. Spirits lift.",
+			Color(0.8, 0.7, 0.95))
+	EventBus.chronicle_entry.emit("A bard sang of far places, and for one night the meadow felt bigger.")
+
+## A relic falls from the sky somewhere wild — go claim it before winter
+## buries it (or don't; it isn't going anywhere, but it feels urgent).
+func _star_falls() -> void:
+	var cell := Vector2i(randi() % WorldGrid.MAP_SIZE.x, randi() % WorldGrid.MAP_SIZE.y)
+	if WorldGrid.is_wall(cell) or WorldGrid.items.has(cell):
+		return  # the sky misses this year
+	main.spawner.spawn_resource(cell, RelicDefs.ORDER.pick_random())
+	main.hud.set_event("A star fell in the night — something glitters where it landed.",
+			Color(0.7, 0.9, 1.0), WorldGrid.cell_to_world(cell))
+	EventBus.chronicle_entry.emit("A star fell beyond the fields. The bold went looking.")
 
 func _frost_snap() -> void:
 	var killed := 0

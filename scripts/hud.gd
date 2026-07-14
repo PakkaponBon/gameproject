@@ -103,6 +103,8 @@ func _build_clock_cluster() -> void:
 			func() -> void: GameClock.set_speed(1.0))
 	_speed_button(row, "3x", "Fast speed [E]",
 			func() -> void: GameClock.set_speed(3.0))
+	_speed_button(row, "5x", "Skip the quiet stretches",
+			func() -> void: GameClock.set_speed(5.0))
 
 ## Push a message into the feed as a translucent chip. Pass a world
 ## position to make it clickable (jumps the camera there).
