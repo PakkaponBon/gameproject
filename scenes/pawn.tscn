@@ -43,7 +43,6 @@ color = Color(1, 1, 1, 0.35)
 texture = ExtResource("7_sprites")
 region_enabled = true
 region_rect = Rect2(0, 0, 16, 16)
-modulate = Color(0.4, 0.62, 0.95, 1)
 
 [node name="Held" type="Sprite2D" parent="."]
 visible = false

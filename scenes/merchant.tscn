@@ -9,5 +9,4 @@ script = ExtResource("1_merchant")
 [node name="Body" type="Sprite2D" parent="."]
 texture = ExtResource("2_sprites")
 region_enabled = true
-region_rect = Rect2(0, 0, 16, 16)
-modulate = Color(0.95, 0.8, 0.35, 1)
+region_rect = Rect2(416, 0, 16, 16)

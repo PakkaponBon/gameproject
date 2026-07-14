@@ -11,9 +11,9 @@ signal died
 ## How fast the sprite eases toward its logical cell (rendering only).
 const LERP_WEIGHT := 12.0
 const DIRS: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
-const BODY_COLOR := Color(0.4, 0.62, 0.95)
-const SLEEP_COLOR := Color(0.22, 0.32, 0.5)
-const COLLAPSE_COLOR := Color(0.65, 0.72, 0.9)
+const BODY_COLOR := Color.WHITE  # real character art now; tints only for states
+const SLEEP_COLOR := Color(0.55, 0.6, 0.8)
+const COLLAPSE_COLOR := Color(0.75, 0.78, 0.95)
 const COLLAPSE_HP_DRAIN := 0.2  # per tick: ~50s from full HP to death
 
 var cell: Vector2i

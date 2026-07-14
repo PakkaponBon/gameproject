@@ -16,19 +16,20 @@ static func get_theme() -> Theme:
 	if _cached != null:
 		return _cached
 	var theme := Theme.new()
-	theme.default_font_size = 14
+	theme.default_font = load("res://assets/kenney_pixel.ttf")  # Kenney Pixel, CC0
+	theme.default_font_size = 16  # pixel font: crispest at its native-ish size
 	theme.set_stylebox("panel", "PanelContainer", _box(PANEL_BG, EDGE, 6, 8))
 	# Typography hierarchy — assign via label.theme_type_variation.
 	theme.set_type_variation("Title", "Label")
-	theme.set_font_size("font_size", "Title", 17)
+	theme.set_font_size("font_size", "Title", 22)
 	theme.set_color("font_color", "Title", Color(0.97, 0.93, 0.82))
 	theme.set_constant("outline_size", "Title", 2)  # same-color outline = bold
 	theme.set_color("font_outline_color", "Title", Color(0.97, 0.93, 0.82, 0.35))
 	theme.set_type_variation("Header", "Label")  # small-caps section labels
-	theme.set_font_size("font_size", "Header", 11)
+	theme.set_font_size("font_size", "Header", 13)
 	theme.set_color("font_color", "Header", INK_DIM)
 	theme.set_type_variation("Muted", "Label")
-	theme.set_font_size("font_size", "Muted", 12)
+	theme.set_font_size("font_size", "Muted", 14)
 	theme.set_color("font_color", "Muted", INK_DIM)
 	# Thin bronze rule between card sections.
 	var line := StyleBoxLine.new()

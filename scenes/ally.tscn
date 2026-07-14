@@ -9,5 +9,4 @@ script = ExtResource("1_ally")
 [node name="Body" type="Sprite2D" parent="."]
 texture = ExtResource("2_sprites")
 region_enabled = true
-region_rect = Rect2(0, 0, 16, 16)
-modulate = Color(0.35, 0.8, 0.5, 1)
+region_rect = Rect2(400, 0, 16, 16)
