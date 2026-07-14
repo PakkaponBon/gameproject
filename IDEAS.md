@@ -27,4 +27,12 @@ Claude Code: when Bo asks for something outside the current phase, append it to 
 - Real-time simulated enemy settlements — that's a 5-year different game; expeditions auto-resolve
 
 ## Inbox (unsorted — append here)
-- 
+- "2.5D like Dota 2" (2026-07-14): true 3D rejected (see Rejected below); full isometric
+  conversion = weeks of art rework, only reconsider as a v2.0+ art decision if the game
+  proves itself. The affordable version is the depth-illusion pass: tall 16x32
+  building/tree sprites behind y-sort, drop shadows under entities, cloud-shadow
+  parallax, and (human-art era) top+front two-face buildings.
+
+## Rejected additions
+- True 3D / Dota-style camera — rebuilds the entire rendering + art pipeline; kills the
+  solo-shippable architecture (flat grid, TileMapLayer, pixel sprites). Non-goal in VISION.md.
