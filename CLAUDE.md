@@ -44,6 +44,7 @@
 |---|---|
 | ROADMAP.md | 11 phases to v1.0, checklists, DoD gates — source of truth for *what to build now* |
 | GAME_DESIGN.md | What the game IS — loops, weapon tiers, factions, tone. Consult before designing features |
+| VISION.md | The FULL game (post-1.0): acts, endings, update ladder v1.1→v2.0. Never code from it directly — slice into mini-roadmaps |
 | ART_DIRECTION.md | Palette, sprite specs, animation caps |
 | IDEAS.md | Scope parking lot — cool-but-not-now goes here, never into code |
 | PROMPTS.md / WORKFLOW.md | Bo's manuals — how he drives you |
