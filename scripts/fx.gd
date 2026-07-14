@@ -59,6 +59,18 @@ static func emote(anchor: Node2D, text: String, color := Color.WHITE) -> void:
 	tween.parallel().tween_property(label, "modulate:a", 0.0, 1.2)
 	tween.tween_callback(label.queue_free)
 
+## Melee swing: the body sprite snaps toward the target and settles back.
+## Sets a "lunging" meta so per-frame animators leave the offset alone.
+static func lunge(body: Node2D, dir: Vector2) -> void:
+	if body.has_meta("lunging"):
+		return
+	body.set_meta("lunging", true)
+	var push := dir.normalized() * 5.0
+	var tween := body.create_tween()
+	tween.tween_property(body, "position", push, 0.06)
+	tween.tween_property(body, "position", Vector2.ZERO, 0.14)
+	tween.tween_callback(func() -> void: body.remove_meta("lunging"))
+
 ## Dropped items bounce into place instead of teleporting.
 static func hop(item: Node2D) -> void:
 	var rest_y := item.position.y

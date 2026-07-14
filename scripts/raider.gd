@@ -172,6 +172,7 @@ func _attack_defender(target: Variant) -> void:
 	if attack_cooldown > 0:
 		return
 	attack_cooldown = ATTACK_COOLDOWN_TICKS
+	Fx.lunge($Body, (target as Node2D).position - position)
 	target.take_damage(attack_damage)
 	EventBus.play_sfx.emit("hit")
 
@@ -190,6 +191,7 @@ func _attack_gate(gate: Vector2i) -> void:
 	if attack_cooldown > 0:
 		return
 	attack_cooldown = ATTACK_COOLDOWN_TICKS
+	Fx.lunge($Body, WorldGrid.cell_to_world(gate) - position)
 	WorldGrid.damage_building(gate, attack_damage)
 
 func _nearest_breakable() -> Vector2i:
@@ -216,9 +218,19 @@ func _nearest_living_pawn() -> Pawn:
 	return best
 
 func _process(delta: float) -> void:
-	# Rendering only: ease toward the logical cell; walk frames while moving.
+	# Rendering only: ease toward the logical cell; procedural bob + lean
+	# while moving (single-frame art, same trick as the pawns).
 	var dest := WorldGrid.cell_to_world(cell)
 	position = position.lerp(dest, minf(1.0, LERP_WEIGHT * delta))
-	# Hooded silhouette (one frame); still faces its direction of travel.
+	var body: Sprite2D = $Body
 	if absf(dest.x - position.x) > 0.5:
-		($Body as Sprite2D).flip_h = dest.x < position.x
+		body.flip_h = dest.x < position.x
+	if body.has_meta("lunging"):
+		return
+	var t := Time.get_ticks_msec() / 1000.0
+	if position.distance_to(dest) > 1.5:
+		body.position.y = -absf(sin(t * 8.0)) * 2.0
+		body.rotation = sin(t * 8.0) * 0.08
+	else:
+		body.position.y = 0.0
+		body.rotation = 0.0

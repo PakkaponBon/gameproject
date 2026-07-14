@@ -304,13 +304,32 @@ func _die() -> void:
 	queue_free()
 
 func _process(delta: float) -> void:
-	# Rendering only: ease the visual position toward the logical grid cell,
-	# and alternate walk frames while moving.
+	# Rendering only: ease toward the logical cell and animate the body
+	# procedurally — bob and lean while walking, tool-swing while working,
+	# a slow breath at rest. Single-frame art; the motion is ours to fake.
 	var dest := WorldGrid.cell_to_world(cell)
 	position = position.lerp(dest, minf(1.0, LERP_WEIGHT * delta))
-	if not dead and not collapsed:
-		var walking := position.distance_to(dest) > 1.5 or cell != target_cell
-		var frame := 14 if walking and int(Time.get_ticks_msec() / 180) % 2 == 0 else 0
-		body.region_rect.position.x = frame * 16
-		if absf(dest.x - position.x) > 0.5:
-			body.flip_h = dest.x < position.x  # face where we're headed
+	if dead or collapsed:
+		return
+	if absf(dest.x - position.x) > 0.5:
+		body.flip_h = dest.x < position.x  # face where we're headed
+	if body.has_meta("lunging"):
+		return  # mid-swing: Fx.lunge owns the body offset
+	var t := Time.get_ticks_msec() / 1000.0
+	var walking := position.distance_to(dest) > 1.5 or cell != target_cell
+	var working: bool = work.job != null and not walking and not survival.sleeping
+	body.scale = Vector2.ONE
+	if walking:
+		body.position.y = -absf(sin(t * 9.0)) * 2.0
+		body.rotation = sin(t * 9.0) * 0.09
+		body.region_rect.position.x = 224.0 if int(t * 6.0) % 2 == 0 else 0.0
+	elif working:
+		body.position.y = 0.0
+		body.rotation = (0.22 if body.flip_h else -0.22) * (0.5 + 0.5 * sin(t * 14.0))
+		body.region_rect.position.x = 0.0
+	else:
+		body.position.y = 0.0
+		body.rotation = 0.0
+		body.region_rect.position.x = 0.0
+		if not survival.sleeping:
+			body.scale.y = 1.0 + sin(t * 2.0 + position.x * 0.1) * 0.02  # breathing

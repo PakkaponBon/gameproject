@@ -49,6 +49,7 @@ func engage_adjacent() -> bool:
 		return false
 	if attack_cooldown <= 0:
 		attack_cooldown = ATTACK_COOLDOWN_TICKS
+		Fx.lunge(pawn.body, raider.position - pawn.position)
 		var lvl := pawn.skills.level("melee")
 		if randf() < BASE_HIT_CHANCE + HIT_PER_MELEE_LEVEL * lvl:
 			var damage := attack_damage * (1.0 + DAMAGE_PER_MELEE_LEVEL * lvl) \
