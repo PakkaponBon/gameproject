@@ -9,6 +9,7 @@ const DECON_SCENE := preload("res://scenes/deconstruct_order.tscn")
 
 var pawns: Array[Pawn] = []
 var selected: Pawn = null
+var _last_raid_faction := "bandit"
 var blueprints := {}  # cell -> Blueprint
 var decon_orders := {}  # cell -> DeconstructOrder
 var _lights := {}  # cell -> PointLight2D (workstation glow)
@@ -31,6 +32,9 @@ var _lights := {}  # cell -> PointLight2D (workstation glow)
 @onready var priority_grid: PriorityGrid = $PriorityGrid
 @onready var help_panel: HelpPanel = $HelpPanel
 @onready var build_palette: BuildPalette = $BuildPalette
+@onready var festival_director: FestivalDirector = $FestivalDirector
+@onready var chronicle_director: ChronicleDirector = $ChronicleDirector
+@onready var chronicle_panel: ChroniclePanel = $ChroniclePanel
 
 func _ready() -> void:
 	UiTheme.apply_to_layers(self)  # children built their UI in their _ready
@@ -43,9 +47,12 @@ func _ready() -> void:
 	raid_director.raid_started.connect(func(fname: String) -> void:
 		hud.set_event("RAID — %s attacks!" % fname, Color(1.0, 0.4, 0.35))
 		$Camera.shake(1.0, 5.0))
+	raid_director.raid_started.connect(func(fname: String) -> void:
+		_last_raid_faction = fname)
 	raid_director.raid_ended.connect(func() -> void:
 		FactionManager.add_renown(1)
-		hud.set_event("The raid is beaten. Word of your village spreads.", Color(0.7, 0.95, 0.7)))
+		hud.set_event("The raid is beaten. Word of your village spreads.", Color(0.7, 0.95, 0.7))
+		EventBus.chronicle_entry.emit("The %s raid was broken at the gates." % _last_raid_faction))
 	pause_menu.save_requested.connect(func() -> void: SaveManager.save_game(SaveManager.MANUAL_SAVE_PATH))
 	pause_menu.load_requested.connect(func(path: String) -> void: SaveManager.load_game(path))
 	spawner.pawn_created.connect(_on_pawn_created)
@@ -94,7 +101,7 @@ func _new_game() -> void:
 			+ "A place to build. A place to endure.\n"
 			+ "A place to remember."},
 		{"title": "ONE DAY", "body":
-			"Grow food. Raise walls. Arm your people.\n"
+			"Grow food. Raise walls. Keep the hearth warm.\n"
 			+ "Five powers surround you — win them or break them.\n\n"
 			+ "And when you are strong enough... answer Vhal.\n\n"
 			+ "(Press H anytime for the controls.)"},
@@ -155,8 +162,8 @@ func place_building(cell: Vector2i, id: String) -> void:
 	WorldGrid.register_building(cell, id)
 	var def: Dictionary = BuildingDefs.get_def(id)
 	walls.set_cell(cell, SOURCE_ID, def.tile)
-	# Fire-warmed workstations glow at night.
-	if def.get("workstation", false) or def.get("kitchen", false):
+	# Fire-warmed workstations, hearths, and braziers glow at night.
+	if def.get("workstation", false) or def.get("kitchen", false) or def.get("light", false):
 		var light := PointLight2D.new()
 		light.texture = preload("res://assets/light.png")
 		light.position = WorldGrid.cell_to_world(cell)
@@ -284,8 +291,14 @@ func _on_pawn_died(pawn: Pawn) -> void:
 		spawner.drop_resource(pawn.cell, pawn.combat.weapon_id, 1)  # gear outlives its owner
 	pawns.erase(pawn)
 	for other in pawns:
-		other.needs.mourn()  # loss is real: colony-wide mood hit
+		# Loss is real: colony-wide mood hit, and friends grieve deeper.
+		if other.social.is_friend(String(pawn.name)):
+			other.needs.grieve()
+			EventBus.chronicle_entry.emit("%s grieves for %s." % [other.name, pawn.name])
+		else:
+			other.needs.mourn()
 	hud.set_event("%s has died." % pawn.name, Color(1.0, 0.4, 0.35), pawn.position)
+	EventBus.chronicle_entry.emit("%s was laid to rest beneath the meadow." % pawn.name)
 	if pawns.is_empty():
 		selected = null
 		villager_panel.show_pawn(null)
@@ -333,6 +346,7 @@ func _on_building_deconstructed(cell: Vector2i) -> void:
 		spawner.drop_resource(cell, id, int(refund[id]))
 
 func _on_realm_ruled() -> void:
+	EventBus.chronicle_entry.emit("The last banner bowed. The realm is ours.")
 	story_panel.show_story("RULER OF THE REALM",
 			"Every banner in the realm bows or burns.\n\n"
 			+ "From three survivors and a wagon to this: the roads are yours,\n"

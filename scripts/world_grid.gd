@@ -18,6 +18,9 @@ var fields := {}  # Vector2i -> crop id (String)
 var safety_cells := {}  # Set of Vector2i: where undrafted villagers flee in raids
 var items := {}  # Vector2i -> Node2D occupying that cell
 var reserved_storage := {}  # Set of Vector2i claimed as a haul destination
+var indoor_cells := {}  # Set of Vector2i sealed off from the map edge (rooms)
+var warmth_sources := {}  # Vector2i -> radius (hearth, brazier)
+var comfort_sources := {}  # Vector2i -> comfort value (furniture)
 
 func _ready() -> void:
 	for grid: AStarGrid2D in [astar, astar_enemy]:
@@ -35,6 +38,9 @@ func reset() -> void:
 	safety_cells.clear()
 	items.clear()
 	reserved_storage.clear()
+	indoor_cells.clear()
+	warmth_sources.clear()
+	comfort_sources.clear()
 	astar.fill_solid_region(astar.region, false)
 	astar_enemy.fill_solid_region(astar_enemy.region, false)
 	zones_changed.emit()
@@ -55,6 +61,12 @@ func register_building(cell: Vector2i, id: String) -> void:
 		building_hp[cell] = float(def.hp)
 	astar.set_point_solid(cell, def.block_villagers)
 	astar_enemy.set_point_solid(cell, def.block_enemies)
+	if def.has("warmth_radius"):
+		warmth_sources[cell] = int(def.warmth_radius)
+	if def.has("comfort"):
+		comfort_sources[cell] = int(def.comfort)
+	if def.block_villagers or def.block_enemies:
+		_recompute_rooms()
 	if def.storage:
 		stockpile_cells[cell] = true
 		zones_changed.emit()
@@ -67,6 +79,10 @@ func remove_building(cell: Vector2i) -> void:
 	building_hp.erase(cell)
 	astar.set_point_solid(cell, false)
 	astar_enemy.set_point_solid(cell, false)
+	warmth_sources.erase(cell)
+	comfort_sources.erase(cell)
+	if def.block_villagers or def.block_enemies:
+		_recompute_rooms()
 	if def.storage:
 		stockpile_cells.erase(cell)
 		zones_changed.emit()
@@ -84,6 +100,78 @@ func set_obstacle(cell: Vector2i, solid: bool) -> void:
 	if in_bounds(cell):
 		astar.set_point_solid(cell, solid)
 		astar_enemy.set_point_solid(cell, solid)
+		_recompute_rooms()  # ore can seal a room; mining it out unseals
+
+## Rooms: flood the outside in from the map edge; any cell the flood can't
+## reach (and doesn't itself seal) is indoors. Sealing = solid to enemies,
+## so walls, closed doors, and gates all hold the warmth in.
+func _recompute_rooms() -> void:
+	indoor_cells.clear()
+	var outside := {}
+	var stack: Array[Vector2i] = []
+	for x in MAP_SIZE.x:
+		for cell: Vector2i in [Vector2i(x, 0), Vector2i(x, MAP_SIZE.y - 1)]:
+			if not _seals_room(cell) and not outside.has(cell):
+				outside[cell] = true
+				stack.append(cell)
+	for y in MAP_SIZE.y:
+		for cell: Vector2i in [Vector2i(0, y), Vector2i(MAP_SIZE.x - 1, y)]:
+			if not _seals_room(cell) and not outside.has(cell):
+				outside[cell] = true
+				stack.append(cell)
+	while not stack.is_empty():
+		var cell: Vector2i = stack.pop_back()
+		for dir: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+			var next := cell + dir
+			if in_bounds(next) and not outside.has(next) and not _seals_room(next):
+				outside[next] = true
+				stack.append(next)
+	for x in MAP_SIZE.x:
+		for y in MAP_SIZE.y:
+			var cell := Vector2i(x, y)
+			if not outside.has(cell) and not _seals_room(cell):
+				indoor_cells[cell] = true
+
+func _seals_room(cell: Vector2i) -> bool:
+	return astar_enemy.is_point_solid(cell)
+
+func is_indoors(cell: Vector2i) -> bool:
+	return indoor_cells.has(cell)
+
+## Within any hearth/brazier's square radius?
+func is_warm_spot(cell: Vector2i) -> bool:
+	for src: Vector2i in warmth_sources:
+		var radius: int = warmth_sources[src]
+		if absi(cell.x - src.x) <= radius and absi(cell.y - src.y) <= radius:
+			return true
+	return false
+
+## Furniture comfort within reach of a cell (capped — a palace of chairs
+## is still just cozy).
+func comfort_at(cell: Vector2i) -> float:
+	var total := 0.0
+	for src: Vector2i in comfort_sources:
+		if absi(cell.x - src.x) <= 4 and absi(cell.y - src.y) <= 4:
+			total += float(comfort_sources[src])
+	return minf(total, 6.0)
+
+## A reachable spot at/next to the best furniture — breaks and festival
+## evenings gather villagers here.
+func best_comfort_spot(from_cell: Vector2i) -> Vector2i:
+	var best := INVALID_CELL
+	var best_score := -INF
+	for src: Vector2i in comfort_sources:
+		var score := comfort_at(src) * 100.0 - float((src - from_cell).length_squared())
+		if score <= best_score:
+			continue
+		for dir: Vector2i in [Vector2i.ZERO, Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+			var spot := src + dir
+			if in_bounds(spot) and not is_wall(spot) \
+					and not astar.get_id_path(from_cell, spot).is_empty():
+				best = spot
+				best_score = score
+				break
+	return best
 
 func set_stockpile(cell: Vector2i, on: bool) -> void:
 	if not in_bounds(cell) or (on and (is_wall(cell) or fields.has(cell))):

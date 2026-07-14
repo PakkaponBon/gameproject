@@ -8,7 +8,8 @@ extends RefCounted
 ## as a stockpile once built. workstation=true lets ForgeKeeper run
 ## recipes there. cost/refund are per-resource dictionaries.
 
-const ORDER := ["wall", "door", "gate", "bed", "barn", "forge", "stove", "watchtower"]
+const ORDER := ["wall", "door", "gate", "bed", "barn", "forge", "stove", "watchtower",
+		"hearth", "brazier", "table", "chair", "shrine", "trophy_wall"]
 
 const DEFS := {
 	"wall": {
@@ -92,6 +93,82 @@ const DEFS := {
 		"block_enemies": false,
 		"storage": false,
 		"kitchen": true,
+	},
+	"hearth": {
+		"name": "Hearth",
+		"cost": {"stone": 2, "wood": 1},
+		"refund": {"stone": 1},
+		"build_ticks": 40,
+		"tile": Vector2i(10, 0),
+		"ghost": Color(0.85, 0.55, 0.3),
+		"block_villagers": false,
+		"block_enemies": false,
+		"storage": false,
+		"warmth_radius": 4,
+		"comfort": 2,
+		"light": true,  # glows like a workstation
+	},
+	"brazier": {
+		"name": "Brazier",
+		"cost": {"wood": 1, "stone": 1},
+		"refund": {},
+		"build_ticks": 15,
+		"tile": Vector2i(15, 0),
+		"ghost": Color(0.8, 0.5, 0.3),
+		"block_villagers": false,
+		"block_enemies": false,
+		"storage": false,
+		"warmth_radius": 2,
+		"light": true,
+	},
+	"table": {
+		"name": "Table",
+		"cost": {"wood": 2},
+		"refund": {"wood": 1},
+		"build_ticks": 25,
+		"tile": Vector2i(11, 0),
+		"ghost": Color(0.7, 0.55, 0.35),
+		"block_villagers": false,
+		"block_enemies": false,
+		"storage": false,
+		"comfort": 1,
+	},
+	"chair": {
+		"name": "Chair",
+		"cost": {"wood": 1},
+		"refund": {},
+		"build_ticks": 15,
+		"tile": Vector2i(12, 0),
+		"ghost": Color(0.7, 0.55, 0.35),
+		"block_villagers": false,
+		"block_enemies": false,
+		"storage": false,
+		"comfort": 1,
+	},
+	"shrine": {
+		"name": "Shrine",
+		"cost": {"stone": 3},
+		"refund": {"stone": 1},
+		"build_ticks": 50,
+		"tile": Vector2i(13, 0),
+		"ghost": Color(0.75, 0.75, 0.85),
+		"block_villagers": false,
+		"block_enemies": false,
+		"storage": false,
+		"comfort": 3,
+	},
+	"trophy_wall": {
+		"name": "Trophy Wall",
+		"cost": {"wood": 2, "iron_ingot": 1},
+		"refund": {"wood": 1},
+		"build_ticks": 40,
+		"tile": Vector2i(14, 0),
+		"ghost": Color(0.6, 0.5, 0.4),
+		"block_villagers": false,
+		"block_enemies": false,
+		"storage": false,
+		"comfort": 2,
+		"renown_req": 1,  # trophies need a story behind them
 	},
 	"watchtower": {
 		"name": "Watchtower",

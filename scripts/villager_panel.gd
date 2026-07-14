@@ -9,6 +9,7 @@ var pawn: Pawn = null
 var _bars := {}
 var _name_label: Label
 var _traits_label: Label
+var _bond_label: Label
 var _activity_label: Label
 var _gear_label: Label
 var _skills_label: Label
@@ -39,10 +40,15 @@ func refresh() -> void:
 	_traits_label.text = ", ".join(trait_names)
 	_traits_label.tooltip_text = "\n".join(lore)
 	_traits_label.mouse_filter = Control.MOUSE_FILTER_STOP
+	var bond := pawn.social.strongest_bond_text()
+	_bond_label.text = bond
+	_bond_label.visible = bond != ""
 	_activity_label.text = pawn.activity_text()
 	_bars.hunger.value = pawn.needs.hunger
 	_bars.rest.value = pawn.needs.rest
 	_bars.mood.value = pawn.needs.mood
+	_bars.warmth.value = pawn.needs.warmth
+	_bars.joy.value = pawn.needs.joy
 	_bars.hp.value = pawn.combat.hp
 	var gear := pawn.combat.weapon_id if pawn.combat.weapon_id != "" else "unarmed"
 	if pawn.combat.is_ranged():
@@ -99,13 +105,17 @@ func _build_ui() -> void:
 	_traits_label = Label.new()
 	_traits_label.theme_type_variation = "Muted"
 	id_box.add_child(_traits_label)
+	_bond_label = Label.new()
+	_bond_label.theme_type_variation = "Muted"
+	id_box.add_child(_bond_label)
 	box.add_child(HSeparator.new())
 	_activity_label = _label(box)
 	_activity_label.modulate = Color(0.8, 0.88, 0.78)
 	# Small-caps tag + thin pill bar per need.
 	var bar_tints := {
 		"hunger": Color(0.9, 0.65, 0.3), "rest": Color(0.5, 0.65, 0.9),
-		"mood": Color(0.9, 0.85, 0.4), "hp": Color(0.9, 0.4, 0.4),
+		"mood": Color(0.9, 0.85, 0.4), "warmth": Color(0.95, 0.6, 0.5),
+		"joy": Color(0.7, 0.55, 0.9), "hp": Color(0.9, 0.4, 0.4),
 	}
 	for key: String in bar_tints:
 		var row := HBoxContainer.new()

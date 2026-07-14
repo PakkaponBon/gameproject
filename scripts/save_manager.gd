@@ -4,7 +4,7 @@ extends Node
 ## Loading reloads the main scene; `pending_load` survives the reload
 ## because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 21
+const SAVE_VERSION := 22
 ## Keys a save must carry; anything less is corrupt, and corrupt saves
 ## get an error message — never a crash to desktop.
 const REQUIRED_KEYS := ["clock_ticks", "ground_seed", "buildings", "pawns", "realm", "items", "fields"]
@@ -109,6 +109,7 @@ func apply_pending_load() -> void:
 		var crop: Crop = main.field_keeper.spawn_crop(_vec(c.cell), c.id)
 		crop.restore(int(c.growth))
 	main.field_keeper.sync_all()  # plant jobs for empty, non-winter field cells
+	main.chronicle_director.entries = data.get("chronicle", [])
 	for p: Dictionary in data.pawns:
 		_restore_pawn(p)
 	main.select_pawn(int(data.selected))
@@ -124,6 +125,10 @@ func _restore_pawn(p: Dictionary) -> void:
 	pawn.needs.hunger = float(p.hunger)
 	pawn.needs.rest = float(p.rest)
 	pawn.needs.mood = float(p.mood)
+	pawn.needs.warmth = float(p.get("warmth", 100.0))
+	pawn.needs.joy = float(p.get("joy", 70.0))
+	for other_name: String in p.get("bonds", {}):
+		pawn.social.bonds[other_name] = float(p.bonds[other_name])
 	pawn.needs.on_break = bool(p.on_break)
 	pawn.survival.bed_cell = _vec(p.bed)
 	if bool(p.sleeping):

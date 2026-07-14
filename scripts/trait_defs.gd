@@ -5,7 +5,7 @@ extends RefCounted
 ## pool (Orphaned, Last Smith, Witness...) lands in Phase 9; these three
 ## prove the model, and magic_affinity gates relic use in Phase 5.
 
-const ORDER := ["brawler", "diligent", "magic_affinity"]  # random quirk pool
+const ORDER := ["brawler", "diligent", "magic_affinity", "loner"]  # random quirk pool
 ## The full backstory pool (Phase 9): every villager carries one scar
 ## from the fall of the city.
 const BACKSTORIES := ["orphaned", "last_smith", "witness", "veteran", "forager", "stargazer"]
@@ -17,6 +17,8 @@ const DEFS := {
 			"lore": "First up, last to rest. +15% work speed."},
 	"magic_affinity": {"name": "Magic Affinity", "magic": true,
 			"lore": "The old blood runs thin, but it runs. Can wield relics."},
+	"loner": {"name": "Loner", "solitary": true,
+			"lore": "Better company in silence. Bonds sour instead of forming."},
 	"orphaned": {"name": "Orphaned", "melee_damage_mult": 1.15,
 			"lore": "Vhal took everything. The anger stayed. +15% melee damage."},
 	"last_smith": {"name": "Last Smith", "work_speed_mult": 1.12,

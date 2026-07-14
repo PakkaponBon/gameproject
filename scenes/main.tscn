@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://dqj6m2x9s4hb"]
+[gd_scene load_steps=32 format=3 uid="uid://dqj6m2x9s4hb"]
 
 [ext_resource type="Script" uid="uid://b7h4z9d6r1sc" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="TileSet" uid="uid://c5w1r8p3v0gd" path="res://assets/tileset.tres" id="2_tileset"]
@@ -28,6 +28,9 @@
 [ext_resource type="Script" uid="uid://dm3f8c1w6t2k" path="res://scripts/build_palette.gd" id="28_palette"]
 [ext_resource type="Script" uid="uid://ct5k9w2f7n3m" path="res://scripts/hint_director.gd" id="29_hints"]
 [ext_resource type="Script" uid="uid://bf7c2t8k4w1n" path="res://scripts/objective_tracker.gd" id="30_goals"]
+[ext_resource type="Script" path="res://scripts/festival_director.gd" id="31_festival"]
+[ext_resource type="Script" path="res://scripts/chronicle_director.gd" id="32_chronicle"]
+[ext_resource type="Script" path="res://scripts/chronicle_panel.gd" id="33_chronpanel"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -139,6 +142,16 @@ script = ExtResource("29_hints")
 
 [node name="ObjectiveTracker" type="CanvasLayer" parent="."]
 script = ExtResource("30_goals")
+
+[node name="FestivalDirector" type="Node" parent="."]
+script = ExtResource("31_festival")
+
+[node name="ChronicleDirector" type="Node" parent="."]
+script = ExtResource("32_chronicle")
+
+[node name="ChroniclePanel" type="CanvasLayer" parent="."]
+layer = 6
+script = ExtResource("33_chronpanel")
 
 [node name="TradePanel" type="CanvasLayer" parent="."]
 layer = 5

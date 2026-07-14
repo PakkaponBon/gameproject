@@ -10,3 +10,4 @@ signal merchant_arrived
 signal merchant_left
 signal play_sfx(id: String)
 signal play_fx(job_type: int, cell: Vector2i)  # work-completion particles
+signal chronicle_entry(text: String)  # one line for the village's story

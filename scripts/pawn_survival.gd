@@ -59,6 +59,17 @@ func eat_tick() -> void:
 		EventBus.play_sfx.emit("eat")
 		pawn.needs.eat(was_meal)
 
+## Breaks and festival evenings: head somewhere nice if the village has
+## anywhere nice; otherwise pace it off.
+func seek_comfort_or_wander() -> void:
+	if WorldGrid.comfort_at(pawn.cell) > 0.0:
+		return  # already somewhere pleasant — soak it in
+	var spot := WorldGrid.best_comfort_spot(pawn.cell)
+	if spot != WorldGrid.INVALID_CELL:
+		pawn.target_cell = spot
+	else:
+		wander()
+
 ## Mental-break behavior: aimless steps.
 func wander() -> void:
 	wander_cooldown -= 1

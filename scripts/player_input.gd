@@ -54,6 +54,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		main.priority_grid.toggle()
 	elif event.is_action_pressed("toggle_help"):
 		main.help_panel.toggle()
+	elif event.is_action_pressed("toggle_chronicle"):
+		main.chronicle_panel.toggle()
 	elif event is InputEventMouseButton and event.pressed:
 		_apply_tool(event.button_index)
 	elif event is InputEventMouseMotion and mode != Mode.COMMAND:

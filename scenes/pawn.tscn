@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://bh9s4x7p1n5d" path="res://scripts/pawn_work.gd" id="4_work"]
 [ext_resource type="Script" uid="uid://bj5w8n2f6t3q" path="res://scripts/pawn_survival.gd" id="5_survival"]
 [ext_resource type="Script" uid="uid://bf8c3n6t1w9q" path="res://scripts/pawn_skills.gd" id="6_skills"]
+[ext_resource type="Script" path="res://scripts/pawn_social.gd" id="8_social"]
 [ext_resource type="Texture2D" uid="uid://bs7k4w2naf1c" path="res://assets/sprites.png" id="7_sprites"]
 
 [node name="Pawn" type="Node2D"]
@@ -25,6 +26,9 @@ script = ExtResource("5_survival")
 
 [node name="Skills" type="Node" parent="."]
 script = ExtResource("6_skills")
+
+[node name="Social" type="Node" parent="."]
+script = ExtResource("8_social")
 
 [node name="SelectionRing" type="ColorRect" parent="."]
 visible = false

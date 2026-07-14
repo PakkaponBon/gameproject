@@ -44,3 +44,4 @@ func _refugee_arrives() -> void:
 	pawn.skills.xp["archery"] = float(randi_range(0, 300))
 	main.hud.set_event("%s heard of your village and asks to stay." % pawn.name,
 			Color(0.7, 0.95, 0.7))
+	EventBus.chronicle_entry.emit("%s arrived at the gate with nothing, and stayed." % pawn.name)

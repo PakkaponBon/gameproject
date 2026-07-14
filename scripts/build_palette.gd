@@ -71,6 +71,10 @@ func _build_categories() -> void:
 			"World map — factions and expeditions  [M]")
 	map_btn.pressed.connect(func() -> void: get_parent().world_map.toggle())
 	row.add_child(map_btn)
+	var chron_btn := UiTheme.icon_button(SPRITES, Rect2(208, 0, 16, 16), Color(0.85, 0.85, 0.95),
+			"The Chronicle — the village's story so far  [C]")
+	chron_btn.pressed.connect(func() -> void: get_parent().chronicle_panel.toggle())
+	row.add_child(chron_btn)
 	var help_btn := Button.new()
 	help_btn.text = "?"
 	help_btn.tooltip_text = "Help  [H]"

@@ -37,6 +37,7 @@ var traits: Array = []  # trait ids from TraitDefs
 @onready var work: PawnWork = $Work
 @onready var survival: PawnSurvival = $Survival
 @onready var skills: PawnSkills = $Skills
+@onready var social: PawnSocial = $Social
 
 func _ready() -> void:
 	add_to_group("pawns")
@@ -157,9 +158,11 @@ func abort_all(clear_food := true) -> void:
 func _on_tick() -> void:
 	if dead:
 		return
-	needs.tick(survival.sleeping, survival.is_in_bed())
+	needs.tick(survival.sleeping, survival.is_in_bed(), WorldGrid.is_indoors(cell),
+			WorldGrid.is_warm_spot(cell), WorldGrid.comfort_at(cell))
 	if dead:
 		return
+	social.tick()
 	if collapsed:
 		combat.drain(COLLAPSE_HP_DRAIN)  # defeated -> _die
 		return
@@ -193,13 +196,21 @@ func _on_tick() -> void:
 	elif needs.wants_sleep() and needs.is_exhausted():
 		survival.fall_asleep()  # no bed available: collapse where we stand
 	elif needs.on_break:
-		survival.wander()
+		survival.seek_comfort_or_wander()
 	elif combat.sheltering():
 		pass  # wait out the raid inside the safety zone
+	elif _festival_evening():
+		survival.seek_comfort_or_wander()  # gather at the warm heart of home
 	elif work.busy():
 		work.on_arrived()
 	else:
 		work.request_next()
+
+## Festival evenings pull idle villagers toward the nicest spot in the
+## village instead of new work.
+func _festival_evening() -> bool:
+	return FestivalDirector.active_name != "" \
+			and GameClock.day_fraction() > 0.6 and GameClock.day_fraction() < 0.85
 
 func _step() -> void:
 	# Repath every tick so walls placed mid-walk are respected immediately.
