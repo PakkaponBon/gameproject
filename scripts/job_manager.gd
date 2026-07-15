@@ -18,7 +18,9 @@ func remove_job(job: Job) -> void:
 
 ## Best = lowest priority number first (0 disables the job type entirely),
 ## then nearest by distance. Only reachable, currently-valid jobs count.
-func request_job(seeker: Pawn) -> Job:
+## reserve=false peeks for the best job without claiming it — used to tell
+## an idle villager whether real work exists (activity_text).
+func request_job(seeker: Pawn, reserve := true) -> Job:
 	var from_cell := seeker.cell
 	var priorities := seeker.work_priorities
 	# Haul jobs are only valid while somewhere exists to put the item.
@@ -87,7 +89,7 @@ func request_job(seeker: Pawn) -> Job:
 			best = job
 			best_prio = prio
 			best_dist = float((job.cell - from_cell).length_squared())
-	if best:
+	if best and reserve:
 		best.reserved = true
 	return best
 

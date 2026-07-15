@@ -132,7 +132,21 @@ func activity_text() -> String:
 		return "Hauling %s" % ResourceDefs.get_def(work.carrying.resource_id).name
 	if work.job:
 		return (Job.Type.keys()[work.job.type] as String).capitalize()
-	return "Idle"
+	return _idle_reason()
+
+## Why an idle villager is idle — turns "they're not doing anything" from a
+## mystery into an answer on the card.
+func _idle_reason() -> String:
+	var all_off := true
+	for type: int in work_priorities:
+		if int(work_priorities[type]) > 0:
+			all_off = false
+			break
+	if all_off:
+		return "Idle — all work priorities are off"
+	if JobManager.request_job(self, false) == null:
+		return "Idle — no reachable work (designate trees, zone a stockpile, or place blueprints)"
+	return "Idle — about to pick up work"
 
 ## Leaving on expedition: release every claim cleanly before removal.
 func prepare_depart() -> void:
