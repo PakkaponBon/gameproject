@@ -132,6 +132,9 @@ func _build_ui() -> void:
 	_body.add_child(HSeparator.new())
 	_activity_label = _label(_body)
 	_activity_label.modulate = Color(0.8, 0.88, 0.78)
+	# Idle reasons get wordy — wrap instead of running off the card edge.
+	_activity_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_activity_label.custom_minimum_size = Vector2(240, 0)
 	# Small-caps tag + thin pill bar per need.
 	var bar_tints := {
 		"hunger": Color(0.9, 0.65, 0.3), "rest": Color(0.5, 0.65, 0.9),
