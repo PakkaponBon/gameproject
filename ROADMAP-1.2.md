@@ -44,10 +44,15 @@
 - [x] Save: brewery is a building, ale/barley are resources — all already
       covered by existing collectors. No version bump.
 
-## Phase F5 — Livestock  *(new entity, save/load)*
-- [ ] Chickens + sheep as critter-class entities; Coop + Pasture buildings.
-- [ ] Produce eggs / wool on timers (no breeding sim — buy from caravans).
-- [ ] Full save/load for animals and their timers (SAVE_VERSION bump here).
+## Phase F5 — Livestock  *(new entity, save/load)* ✓ (chickens)
+- [x] Chickens as a critter-class Livestock entity; Chicken Coop building
+      (new atlas tile 17). A fresh coop comes stocked with 2 hens (load
+      restores saved animals instead, so no duplication).
+- [x] Hens lay an egg (raw food) about once a day (Balance.EGG_LAY_DAYS).
+- [x] Full save/load: livestock cells, kind, and lay timers. SAVE_VERSION 24.
+- [~] Sheep + Pasture + wool DEFERRED to v1.3: wool is a dead-end resource
+      until the cloth chain exists (same rule as barley/flax/hide). The
+      Livestock entity is already kind-generic, so sheep drop in cheaply then.
 
 ## Phase F6 — Weather  *(light layer)*
 - [ ] Rain (crops grow faster, small mood dip), storm (outdoor work slows),

@@ -332,6 +332,14 @@ func _on_play_fx(job_type: int, cell: Vector2i) -> void:
 func _on_building_built(cell: Vector2i, building_id: String) -> void:
 	blueprints.erase(cell)
 	place_building(cell, building_id)
+	# Fresh build only (load restores saved animals): a new coop comes
+	# stocked with hens. Load uses place_building directly, so no dupes.
+	var def: Dictionary = BuildingDefs.get_def(building_id)
+	if def.has("livestock"):
+		for i in int(def.get("livestock_count", 2)):
+			spawner.spawn_livestock(_free_cell_near(cell), def.livestock)
+		hud.set_event("The coop is stocked with hens — eggs will come.", Color(0.9, 0.85, 0.6))
+		EventBus.chronicle_entry.emit("A coop was raised, and the first hens came to roost.")
 
 ## Smashed by enemies: gone, no refund.
 func _on_building_destroyed(cell: Vector2i) -> void:

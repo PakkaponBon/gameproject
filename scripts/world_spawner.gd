@@ -13,6 +13,7 @@ const TREE_SCENE := preload("res://scenes/tree_entity.tscn")
 const TREE_COUNT := 40
 const FOOD_SCENE := preload("res://scenes/food_item.tscn")
 const BUSH_SCENE := preload("res://scenes/berry_bush.tscn")
+const LIVESTOCK_SCENE := preload("res://scenes/livestock.tscn")
 const RESOURCE_SCENE := preload("res://scenes/resource_item.tscn")
 const ORE_SCENE := preload("res://scenes/ore_node.tscn")
 const STONE_NODES := 12
@@ -169,6 +170,14 @@ func _scatter_bushes(count: int, used: Dictionary) -> void:
 		used[cell] = true
 		spawn_bush(cell, true)
 		placed += 1
+
+func spawn_livestock(cell: Vector2i, kind: String, lay_timer := 0) -> Livestock:
+	var animal: Livestock = LIVESTOCK_SCENE.instantiate()
+	animal.kind = kind
+	animal.lay_timer = lay_timer
+	animal.position = WorldGrid.cell_to_world(cell)
+	entities.add_child(animal)
+	return animal
 
 func spawn_ore(cell: Vector2i, id: String) -> OreNode:
 	var node: OreNode = ORE_SCENE.instantiate()

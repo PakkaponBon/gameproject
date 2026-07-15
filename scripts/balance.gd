@@ -15,6 +15,9 @@ const TURNIP_YIELD := 2
 const MEAT_PER_KILL := 2        # raw food dropped when a rabbit is caught
 const CRITTER_TARGET := 5       # huntable game kept topped up (ambiance + renewable meat)
 
+# --- livestock ---
+const EGG_LAY_DAYS := 1.0       # a hen lays an egg (raw food) about once a day
+
 static var mode := "Normal"
 
 static func peaceful() -> bool:

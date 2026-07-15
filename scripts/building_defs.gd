@@ -9,7 +9,7 @@ extends RefCounted
 ## recipes there. cost/refund are per-resource dictionaries.
 
 const ORDER := ["wall", "door", "gate", "bed", "barn", "forge", "stove", "watchtower",
-		"hearth", "brazier", "table", "chair", "shrine", "trophy_wall", "brewery"]
+		"hearth", "brazier", "table", "chair", "shrine", "trophy_wall", "brewery", "coop"]
 
 const DEFS := {
 	"wall": {
@@ -181,6 +181,19 @@ const DEFS := {
 		"block_enemies": false,
 		"storage": false,
 		"workstation": true,  # brews barley into ale (RecipeDefs station "brewery")
+	},
+	"coop": {
+		"name": "Chicken Coop",
+		"cost": {"wood": 3},
+		"refund": {"wood": 1},
+		"build_ticks": 40,
+		"tile": Vector2i(17, 0),
+		"ghost": Color(0.6, 0.42, 0.3),
+		"block_villagers": false,
+		"block_enemies": false,
+		"storage": false,
+		"livestock": "chicken",  # stocked with hens when built; they lay eggs
+		"livestock_count": 2,
 	},
 	"watchtower": {
 		"name": "Watchtower",
