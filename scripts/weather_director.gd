@@ -55,7 +55,7 @@ func set_weather(weather: String) -> void:
 	_apply_visual()
 
 func _announce() -> void:
-	var line := {
+	var line: String = {
 		"rain": "Rain sweeps in over the meadow.",
 		"storm": "A storm rolls in — work drags in the wet and wind.",
 		"snow": "Snow settles quietly over the village.",
