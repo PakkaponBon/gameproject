@@ -97,6 +97,7 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 	return {
 		"version": version,
 		"clock_ticks": GameClock.ticks,
+		"weather": WeatherDirector.current,
 		"raid_ticks": main.raid_director.ticks_until_raid,
 		"raid_count": main.raid_director.raid_count,
 		"realm": FactionManager.serialize(),

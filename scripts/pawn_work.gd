@@ -352,6 +352,8 @@ func _apply_work() -> void:
 		speed *= 0.5
 	if pawn.combat.is_wounded():
 		speed *= 0.7
+	if not WorldGrid.is_indoors(pawn.cell):
+		speed *= WeatherDirector.outdoor_work_mult()  # storms slow outdoor work
 	work_progress += speed
 	while work_progress >= 1.0:
 		work_progress -= 1.0

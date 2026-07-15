@@ -1,4 +1,4 @@
-[gd_scene load_steps=33 format=3 uid="uid://dqj6m2x9s4hb"]
+[gd_scene load_steps=34 format=3 uid="uid://dqj6m2x9s4hb"]
 
 [ext_resource type="Script" uid="uid://b7h4z9d6r1sc" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="TileSet" uid="uid://c5w1r8p3v0gd" path="res://assets/tileset.tres" id="2_tileset"]
@@ -32,6 +32,7 @@
 [ext_resource type="Script" path="res://scripts/chronicle_director.gd" id="32_chronicle"]
 [ext_resource type="Script" path="res://scripts/chronicle_panel.gd" id="33_chronpanel"]
 [ext_resource type="Script" path="res://scripts/choice_panel.gd" id="34_choice"]
+[ext_resource type="Script" path="res://scripts/weather_director.gd" id="35_weather"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -157,6 +158,9 @@ script = ExtResource("33_chronpanel")
 [node name="ChoicePanel" type="CanvasLayer" parent="."]
 layer = 8
 script = ExtResource("34_choice")
+
+[node name="WeatherDirector" type="Node" parent="."]
+script = ExtResource("35_weather")
 
 [node name="TradePanel" type="CanvasLayer" parent="."]
 layer = 5

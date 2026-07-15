@@ -36,6 +36,7 @@ var _lights := {}  # cell -> PointLight2D (workstation glow)
 @onready var chronicle_director: ChronicleDirector = $ChronicleDirector
 @onready var chronicle_panel: ChroniclePanel = $ChroniclePanel
 @onready var choice_panel: ChoicePanel = $ChoicePanel
+@onready var weather_director: WeatherDirector = $WeatherDirector
 
 func _ready() -> void:
 	UiTheme.apply_to_layers(self)  # children built their UI in their _ready

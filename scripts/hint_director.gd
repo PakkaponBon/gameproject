@@ -33,6 +33,8 @@ func _on_tick() -> void:
 		_hint("forge", "You have iron ore. Build a forge [B] to smelt it into swords and bows.")
 	if GameClock.season_index() == 2 and not _has_building("warmth_radius"):
 		_hint("hearth", "Winter is coming. Wall in a room and build a hearth [B] — cold villagers slow down and sour.")
+	if GameClock.total_days() >= 3 and not _has_building("livestock"):
+		_hint("coop", "Food comes and goes. A Chicken Coop [B] lays eggs every day — steady food, no field needed.")
 
 func _hint(id: String, text: String) -> void:
 	if _shown.has(id):

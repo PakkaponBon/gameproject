@@ -49,6 +49,8 @@ func _on_tick() -> void:
 	if is_mature():
 		return
 	growth_ticks += 1
+	if randf() < WeatherDirector.growth_extra_chance():
+		growth_ticks += 1  # wet weather speeds the fields along
 	if growth_ticks % 10 == 0 or is_mature():  # throttle visual updates
 		_update_visual()
 	if is_mature():

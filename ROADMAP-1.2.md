@@ -54,16 +54,20 @@
       until the cloth chain exists (same rule as barley/flax/hide). The
       Livestock entity is already kind-generic, so sheep drop in cheaply then.
 
-## Phase F6 — Weather  *(light layer)*
-- [ ] Rain (crops grow faster, small mood dip), storm (outdoor work slows),
-      snow visual in winter. No fire/fluid sim — ever.
-- [ ] Drives off GameClock; a per-day weather roll, saved with the day.
+## Phase F6 — Weather  *(light layer)* ✓
+- [x] WeatherDirector rolls each morning: rain (crops grow faster, small
+      outdoor mood dip), storm (outdoor work ×0.75 + bigger mood dip),
+      snow (winter visual). Static reads for crops/work; screen-space
+      particle overlay; a feed line on change. No fire/fluid sim.
+- [x] Saved with the day ("weather" field on the v24 save).
 
 ## Phase F7 — Ship it
-- [ ] SAVE_VERSION bump (once, covering F2–F6 additions), load-guard tested.
-- [ ] Hints for the new loops (preserve before winter, hunt for meat).
-- [ ] DoD (human): play one year — survive winter on preserves, hunt when
-      short, brew for a festival, keep a flock. Then tag v1.2.
+- [x] SAVE_VERSION at 24 (covers F2 stew-kind + F5 livestock; F6 weather
+      rides the same version). Load-guards read new fields with defaults.
+- [x] Hint for the egg loop (build a coop). Hunting/brewing are discoverable
+      through the build menu + auto-behavior.
+- [ ] DoD (human): play one year — hunt when short, brew for the mood,
+      keep a flock, weather a storm. Then tag v1.2.
 
 ## Note on sequencing (read before piling on)
 F1 is safe to land now. F2–F6 each add runtime surface (recipes, entities,

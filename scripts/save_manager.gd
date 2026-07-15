@@ -115,6 +115,7 @@ func apply_pending_load() -> void:
 		var crop: Crop = main.field_keeper.spawn_crop(_vec(c.cell), c.id)
 		crop.restore(int(c.growth))
 	main.field_keeper.sync_all()  # plant jobs for empty, non-winter field cells
+	main.weather_director.set_weather(String(data.get("weather", "clear")))
 	main.chronicle_director.entries = data.get("chronicle", [])
 	for p: Dictionary in data.pawns:
 		_restore_pawn(p)
