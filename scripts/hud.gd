@@ -160,7 +160,7 @@ func _update_resources() -> void:
 		if counts.has(item.resource_id) and not (item.get_parent() is Pawn):
 			counts[item.resource_id] += 1
 	for node in get_tree().get_nodes_in_group("food"):
-		counts["meal" if (node as FoodItem).meal else "food"] += 1
+		counts["meal" if (node as FoodItem).is_cooked() else "food"] += 1
 	counts["renown"] = FactionManager.renown
 	for id: String in _res_counts:
 		_res_counts[id].text = str(counts[id])

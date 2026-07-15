@@ -123,14 +123,20 @@ func mood_work_factor() -> float:
 		factor = lerpf(MOOD_MIN_WORK_FACTOR, 1.0, mood / MOOD_SLOW_BELOW)
 	return factor * (COLD_WORK_FACTOR if is_cold() else 1.0)
 
-## Meals fill completely and lift spirits; raw food just staves it off.
-func eat(meal := false) -> void:
-	if meal:
-		hunger = HUNGER_MAX
-		mood = minf(mood + 12.0, MOOD_MAX)
-	else:
-		hunger = minf(hunger + 65.0, HUNGER_MAX)
-		mood = minf(mood + 3.0, MOOD_MAX)
+## Raw food staves off hunger; a meal fills fully and lifts spirits; a
+## stew does that and warms the heart (a little joy — comfort in the cold).
+func eat(kind := "raw") -> void:
+	match kind:
+		"stew":
+			hunger = HUNGER_MAX
+			mood = minf(mood + 16.0, MOOD_MAX)
+			joy = minf(joy + 10.0, JOY_MAX)
+		"meal":
+			hunger = HUNGER_MAX
+			mood = minf(mood + 12.0, MOOD_MAX)
+		_:
+			hunger = minf(hunger + 65.0, HUNGER_MAX)
+			mood = minf(mood + 3.0, MOOD_MAX)
 	changed.emit()
 
 func attacked() -> void:

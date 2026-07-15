@@ -13,11 +13,16 @@
 - [x] Each a distinct tint so a mixed field reads at a glance.
 - No save bump: crops already persist by id + growth.
 
-## Phase F2 — Preserves & Cooking Variety  *(recipes = data)*
-- [ ] Preserves: at the stove, raw food → "preserve" (keeps through winter,
-      the anti-famine buffer). Recipe data + a kitchen policy toggle.
-- [ ] A second cooked good (stew) for meal variety → small extra mood.
-- [ ] Save: preserves are just FoodItem variants (meal flag already saved).
+## Phase F2 — Cooking Variety  *(FoodItem kinds)* ✓
+- [x] Stew: a heartier dish (3 raw food) the cook makes when the pantry is
+      flush (≥6 raw) — fills fully, +mood, and +joy (comfort in the cold,
+      ties into v1.1's joy need).
+- [x] FoodItem generalized meal:bool → kind:"raw"/"meal"/"stew"; distinct
+      tint per kind. Save v23 (back-compat reads old "meal" bool).
+- [~] Preserves DROPPED on purpose: with no food-spoilage system a
+      "keeps-through-winter" ration is meaningless, and adding spoilage
+      risks reviving the food death spiral we deliberately fixed. Revisit
+      only if a spoilage layer ever lands (it is a non-goal for now).
 
 ## Phase F3 — Hunting  *(reuses critters + jobs)*
 - [ ] Critters become huntable: a drafted or auto HUNT job; arrow puff,

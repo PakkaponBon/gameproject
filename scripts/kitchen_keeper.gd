@@ -1,12 +1,15 @@
 class_name KitchenKeeper
 extends Node
-## Keeps stoves cooking: while 2+ raw foods exist (and meals aren't
-## overstocked), each stove offers a COOK job. Cooking consumes two raw
-## foods from the colony's stores and produces one meal at the stove.
+## Keeps stoves cooking: while raw food exists (and cooked food isn't
+## overstocked), each stove offers a COOK job. A meal takes 2 raw food;
+## when the pantry is flush, the cook makes a heartier stew (3 raw) that
+## also lifts joy. Produces the dish at the stove.
 
 const FOOD_SCENE := preload("res://scenes/food_item.tscn")
 const COOK_TICKS := 30
 const RAW_PER_MEAL := 2
+const RAW_PER_STEW := 3
+const STEW_WHEN_RAW_ATLEAST := 6  # only splurge on stew with food to spare
 const CHECK_EVERY_TICKS := 20
 
 var cook_jobs := {}  # stove cell -> Job
@@ -43,10 +46,12 @@ func _offer_job(cell: Vector2i) -> void:
 
 func _on_cooked(cell: Vector2i) -> void:
 	cook_jobs.erase(cell)
-	if not _consume_raw(RAW_PER_MEAL):
+	var dish := "stew" if _count_raw() >= STEW_WHEN_RAW_ATLEAST else "meal"
+	var need := RAW_PER_STEW if dish == "stew" else RAW_PER_MEAL
+	if not _consume_raw(need):
 		return  # pantry emptied while cooking
 	var food: FoodItem = FOOD_SCENE.instantiate()
-	food.meal = true
+	food.kind = dish
 	food.position = WorldGrid.cell_to_world(cell + Vector2i.DOWN)
 	spawn_parent.add_child(food)
 
@@ -56,24 +61,29 @@ func _is_kitchen(cell: Vector2i) -> bool:
 	return bool(BuildingDefs.get_def(WorldGrid.buildings[cell]).get("kitchen", false))
 
 func _worth_cooking() -> bool:
-	var raw := 0
-	var meals := 0
+	var cooked := 0
 	var pawns := get_tree().get_nodes_in_group("pawns").size()
 	for node in get_tree().get_nodes_in_group("food"):
 		var food := node as FoodItem
 		if food.reserved:
 			continue
-		if food.meal:
-			meals += 1
-		else:
+		if food.is_cooked():
+			cooked += 1
+	return _count_raw() >= RAW_PER_MEAL and cooked < pawns * 2
+
+func _count_raw() -> int:
+	var raw := 0
+	for node in get_tree().get_nodes_in_group("food"):
+		var food := node as FoodItem
+		if food.kind == "raw" and not food.reserved:
 			raw += 1
-	return raw >= RAW_PER_MEAL and meals < pawns * 2
+	return raw
 
 func _consume_raw(count: int) -> bool:
 	var found: Array[FoodItem] = []
 	for node in get_tree().get_nodes_in_group("food"):
 		var food := node as FoodItem
-		if not food.meal and not food.reserved:
+		if food.kind == "raw" and not food.reserved:
 			found.append(food)
 			if found.size() >= count:
 				break

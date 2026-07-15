@@ -54,11 +54,11 @@ func eat_tick() -> void:
 		return
 	eat_ticks_left -= 1
 	if eat_ticks_left <= 0:
-		var was_meal := food_target.meal
+		var kind := food_target.kind
 		food_target.queue_free()
 		food_target = null
 		EventBus.play_sfx.emit("eat")
-		pawn.needs.eat(was_meal)
+		pawn.needs.eat(kind)
 
 ## Breaks and festival evenings: head somewhere nice if the village has
 ## anywhere nice; otherwise pace it off.

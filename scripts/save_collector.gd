@@ -28,7 +28,7 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 	var food: Array = []
 	for node in tree.get_nodes_in_group("food"):
 		var item := node as FoodItem
-		food.append({"cell": _v(item.cell), "meal": item.meal})
+		food.append({"cell": _v(item.cell), "kind": item.kind})
 	var graves: Array = []
 	for node in tree.get_nodes_in_group("graves"):
 		graves.append(_v((node as Grave).cell))

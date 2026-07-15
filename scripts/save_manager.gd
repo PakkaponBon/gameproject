@@ -4,7 +4,7 @@ extends Node
 ## Loading reloads the main scene; `pending_load` survives the reload
 ## because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 22
+const SAVE_VERSION := 23
 ## Keys a save must carry; anything less is corrupt, and corrupt saves
 ## get an error message — never a crash to desktop.
 const REQUIRED_KEYS := ["clock_ticks", "ground_seed", "buildings", "pawns", "realm", "items", "fields"]
@@ -79,7 +79,8 @@ func apply_pending_load() -> void:
 		ore.restore(int(o.work))
 	for f: Dictionary in data.food:
 		var food: FoodItem = spawner.FOOD_SCENE.instantiate()
-		food.meal = bool(f.meal)
+		# Back-compat: pre-v23 saves stored a "meal" bool instead of "kind".
+		food.kind = String(f.get("kind", "meal" if bool(f.get("meal", false)) else "raw"))
 		food.position = WorldGrid.cell_to_world(_vec(f.cell))
 		main.entities.add_child(food)
 	for g: Array in data.graves:
