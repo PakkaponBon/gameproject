@@ -210,5 +210,28 @@ const DEFS := {
 	},
 }
 
+## Plain-language "what is this for" per building, shown in the Help guide.
+const DESC := {
+	"wall": "Blocks villagers and enemies. Wall your colony to control where raiders can go.",
+	"door": "Villagers pass; enemies don't. A cheap way to divide inner rooms (flimsier than a gate).",
+	"gate": "Villagers pass freely; raiders must batter it down. Put one in your wall as the entrance.",
+	"bed": "Villagers sleep and heal here — faster than on the ground. Build about one per villager.",
+	"barn": "Storage. Loose resources get hauled here. Build one early so wood and food don't sit in the mud.",
+	"forge": "Workshop. Smelts iron ore into ingots, then crafts swords, bows, and arrows.",
+	"stove": "Kitchen. Cooks raw food into meals — and stew when food is plentiful. Cooked food fills more and lifts mood.",
+	"watchtower": "An archer standing on it shoots much farther. Enemies can't climb it. Needs renown to build.",
+	"hearth": "Warms an enclosed room. In winter, cold villagers work slower and get miserable — keep a hearth indoors.",
+	"brazier": "A cheap, small warmth source for corners a hearth can't reach.",
+	"table": "Furniture. Adds comfort to a room; villagers relax nearby on breaks and slowly regain joy.",
+	"chair": "Furniture. A little comfort — pair it with a table by the hearth.",
+	"shrine": "A place of quiet. Strong comfort; villagers gather here to lift their spirits.",
+	"trophy_wall": "Prestige furniture — big comfort, needs renown. The centerpiece of a proud hall.",
+	"brewery": "Brews barley into ale. Villagers drink a mug on breaks for a real joy boost.",
+	"coop": "Comes stocked with hens. They lay an egg (food) about once a day — steady food with no field needed.",
+}
+
 static func get_def(id: String) -> Dictionary:
 	return DEFS[id]
+
+static func desc(id: String) -> String:
+	return DESC.get(id, "")
