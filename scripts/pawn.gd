@@ -158,6 +158,11 @@ func abort_all(clear_food := true) -> void:
 func _on_tick() -> void:
 	if dead:
 		return
+	# Safety net: a wall finished on top of us (someone walked onto a
+	# blueprint before it completed). A pawn on a solid cell can't path
+	# anywhere, so shove out to the nearest open ground.
+	if WorldGrid.is_wall(cell):
+		_unstick_from_wall()
 	needs.tick(survival.sleeping, survival.is_in_bed(), WorldGrid.is_indoors(cell),
 			WorldGrid.is_warm_spot(cell), WorldGrid.comfort_at(cell))
 	if dead:
@@ -211,6 +216,23 @@ func _on_tick() -> void:
 func _festival_evening() -> bool:
 	return FestivalDirector.active_name != "" \
 			and GameClock.day_fraction() > 0.6 and GameClock.day_fraction() < 0.85
+
+## Teleport a pawn embedded in a wall to the nearest open cell, expanding
+## the search ring outward. Drops whatever it was doing — being trapped in
+## stone trumps the job.
+func _unstick_from_wall() -> void:
+	for r in range(1, 8):
+		for dx in range(-r, r + 1):
+			for dy in range(-r, r + 1):
+				if absi(dx) != r and absi(dy) != r:
+					continue  # perimeter of this ring only
+				var c := cell + Vector2i(dx, dy)
+				if WorldGrid.in_bounds(c) and not WorldGrid.is_wall(c):
+					abort_all()
+					combat.attack_target = null
+					cell = c
+					target_cell = c
+					return
 
 func _step() -> void:
 	# Repath every tick so walls placed mid-walk are respected immediately.
