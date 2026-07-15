@@ -16,6 +16,8 @@ const DEFS := {
 	"bow": {"name": "Bow", "color": Color(0.75, 0.6, 0.4), "sprite": 8},
 	"arrow": {"name": "Arrows", "color": Color(0.9, 0.9, 0.78), "sprite": 9, "shots": 5},
 	"herb": {"name": "Herb", "color": Color(0.35, 0.8, 0.6), "sprite": 10, "medicine": 25.0},
+	"barley": {"name": "Barley", "color": Color(0.9, 0.78, 0.34), "sprite": 3},
+	"ale": {"name": "Ale", "color": Color(0.85, 0.6, 0.22), "sprite": 10},
 	"relic_fireball": {"name": "Fireball Relic", "color": Color(0.95, 0.5, 0.25), "sprite": 12, "relic": true},
 	"relic_heal": {"name": "Healing Relic", "color": Color(0.45, 0.9, 0.55), "sprite": 12, "relic": true},
 	"relic_barrier": {"name": "Barrier Relic", "color": Color(0.55, 0.6, 1.0), "sprite": 12, "relic": true},

@@ -11,6 +11,7 @@ var eat_ticks_left := 0
 var sleeping := false
 var bed_cell := WorldGrid.INVALID_CELL  # claimed bed (or target while walking)
 var wander_cooldown := 0
+var drink_cooldown := 0  # don't drain the cellar in one sitting
 
 @onready var pawn: Pawn = get_parent()
 
@@ -61,8 +62,10 @@ func eat_tick() -> void:
 		pawn.needs.eat(kind)
 
 ## Breaks and festival evenings: head somewhere nice if the village has
-## anywhere nice; otherwise pace it off.
+## anywhere nice; otherwise pace it off. A mug of ale, if any is brewed,
+## lifts the spirits along the way.
 func seek_comfort_or_wander() -> void:
+	_try_drink_ale()
 	if WorldGrid.comfort_at(pawn.cell) > 0.0:
 		return  # already somewhere pleasant — soak it in
 	var spot := WorldGrid.best_comfort_spot(pawn.cell)
@@ -70,6 +73,24 @@ func seek_comfort_or_wander() -> void:
 		pawn.target_cell = spot
 	else:
 		wander()
+
+## Drink a mug of ale if the colony has any and we're off cooldown: a
+## real joy lift, plus a little mood. Ale is the payoff for brewing.
+func _try_drink_ale() -> void:
+	if drink_cooldown > 0:
+		drink_cooldown -= 1
+		return
+	for node in get_tree().get_nodes_in_group("resources"):
+		var item := node as ResourceItem
+		if item.resource_id == "ale" and not item.reserved and not (item.get_parent() is Pawn):
+			item.pick_up(pawn)  # unregisters the item + clears its haul job
+			item.queue_free()
+			pawn.needs.joy = minf(pawn.needs.joy + 22.0, PawnNeeds.JOY_MAX)
+			pawn.needs.mood = minf(pawn.needs.mood + 6.0, PawnNeeds.MOOD_MAX)
+			pawn.needs.changed.emit()
+			Fx.emote(pawn, "~", Color(0.9, 0.75, 0.4))
+			drink_cooldown = 600
+			return
 
 ## Mental-break behavior: aimless steps.
 func wander() -> void:

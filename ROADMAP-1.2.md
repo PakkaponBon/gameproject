@@ -34,10 +34,15 @@
 - [~] Hide DEFERRED to v1.3 (leather chain) — same rule as F1's barley/flax:
       no crop/kill yields a resource with no use yet.
 
-## Phase F4 — Brewing  *(new building + recipe)*
-- [ ] Barley crop (F1 held it back) + Brewery building (workstation).
-- [ ] Barley → ale; ale is a joy good consumed on breaks/festivals.
-- [ ] Save: brewery is a building; ale is a resource — both already covered.
+## Phase F4 — Brewing  *(new building + recipe)* ✓
+- [x] Barley crop + Barley/Ale resources + Brewery workstation (new atlas
+      tile 16, a barrel). RecipeDefs brew_ale: 2 barley → ale, max_stock 4.
+- [x] Recipe station filtering fixed: recipes name their building, so a
+      brewery never forges swords (latent gap — forge was the only station).
+- [x] Ale is a joy good: villagers drink a mug on breaks/festival evenings
+      for +joy +mood (cooldown so they don't drain the cellar at once).
+- [x] Save: brewery is a building, ale/barley are resources — all already
+      covered by existing collectors. No version bump.
 
 ## Phase F5 — Livestock  *(new entity, save/load)*
 - [ ] Chickens + sheep as critter-class entities; Coop + Pasture buildings.

@@ -28,7 +28,7 @@ func _on_tick() -> void:
 			orders.erase(cell)
 	for cell: Vector2i in WorldGrid.buildings:
 		if _is_workstation(cell) and not orders.has(cell):
-			var recipe := _pick_recipe()
+			var recipe := _pick_recipe(WorldGrid.buildings[cell])
 			if recipe != "":
 				start_order(cell, recipe)
 
@@ -45,9 +45,13 @@ func _is_workstation(cell: Vector2i) -> bool:
 		return false
 	return bool(BuildingDefs.get_def(WorldGrid.buildings[cell]).get("workstation", false))
 
-func _pick_recipe() -> String:
+## Pick a recipe this station can actually make — each recipe names the
+## building it belongs to, so a brewery never forges swords and vice versa.
+func _pick_recipe(station_id: String) -> String:
 	for id: String in RecipeDefs.ORDER:
 		var def := RecipeDefs.get_def(id)
+		if String(def.get("station", "")) != station_id:
+			continue
 		# Don't overproduce: skip recipes whose output is already stocked up.
 		if _count_free(def.output) >= int(def.get("max_stock", 999)):
 			continue

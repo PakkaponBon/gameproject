@@ -8,7 +8,7 @@ extends RefCounted
 ## tradeoff ladder. All output food except herbs. Barley + flax are held
 ## for v1.2's brewing/cloth chains so no crop yields a dead-end resource.
 const ORDER := ["turnip", "carrot", "potato", "beans", "cabbage",
-		"berries", "wheat", "corn", "pumpkin", "herbs"]
+		"berries", "wheat", "corn", "pumpkin", "barley", "herbs"]
 
 const DEFS := {
 	"turnip": {"name": "Turnip", "grow_days": Balance.TURNIP_GROW_DAYS,
@@ -21,6 +21,8 @@ const DEFS := {
 	"wheat": {"name": "Wheat", "grow_days": 3.0, "yield": 3, "color": Color(0.9, 0.8, 0.35)},
 	"corn": {"name": "Corn", "grow_days": 3.5, "yield": 4, "color": Color(0.95, 0.85, 0.3)},
 	"pumpkin": {"name": "Pumpkin", "grow_days": 4.0, "yield": 5, "color": Color(0.9, 0.5, 0.2)},
+	"barley": {"name": "Barley", "grow_days": 3.0, "yield": 2,
+			"color": Color(0.9, 0.78, 0.34), "resource_output": "barley"},
 	"herbs": {"name": "Healing Herbs", "grow_days": 2.0, "yield": 2,
 			"color": Color(0.35, 0.8, 0.6), "resource_output": "herb"},
 }
