@@ -16,6 +16,9 @@ var _skills_label: Label
 var _priority_buttons := {}
 var _draft_button: Button
 var _drop_button: Button
+var _body: VBoxContainer
+var _collapse_button: Button
+var _collapsed := false  # sticks across selections once the player sets it
 
 func _ready() -> void:
 	visible = false
@@ -25,6 +28,13 @@ func show_pawn(selected: Pawn) -> void:
 	pawn = selected
 	visible = pawn != null
 	refresh()
+
+## Fold the card down to just the portrait + name, or open it back up.
+func set_collapsed(on: bool) -> void:
+	_collapsed = on
+	_body.visible = not on
+	_collapse_button.text = "+" if on else "–"
+	_collapse_button.tooltip_text = "Show villager details" if on else "Hide villager details"
 
 func refresh() -> void:
 	if pawn == null or not is_instance_valid(pawn):
@@ -42,7 +52,7 @@ func refresh() -> void:
 	_traits_label.mouse_filter = Control.MOUSE_FILTER_STOP
 	var bond := pawn.social.strongest_bond_text()
 	_bond_label.text = bond
-	_bond_label.visible = bond != ""
+	_bond_label.visible = bond != "" and not _collapsed
 	_activity_label.text = pawn.activity_text()
 	_bars.hunger.value = pawn.needs.hunger
 	_bars.rest.value = pawn.needs.rest
@@ -98,6 +108,7 @@ func _build_ui() -> void:
 	head.add_child(portrait)
 	var id_box := VBoxContainer.new()
 	id_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	id_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(id_box)
 	_name_label = Label.new()
 	_name_label.theme_type_variation = "Title"
@@ -108,8 +119,18 @@ func _build_ui() -> void:
 	_bond_label = Label.new()
 	_bond_label.theme_type_variation = "Muted"
 	id_box.add_child(_bond_label)
-	box.add_child(HSeparator.new())
-	_activity_label = _label(box)
+	# Collapse toggle: folds the card to just this header strip.
+	_collapse_button = Button.new()
+	_collapse_button.custom_minimum_size = Vector2(26, 26)
+	_collapse_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_collapse_button.pressed.connect(func() -> void: set_collapsed(not _collapsed))
+	head.add_child(_collapse_button)
+	# Everything below the header lives in _body so it can be hidden at once.
+	_body = VBoxContainer.new()
+	_body.add_theme_constant_override("separation", 5)
+	box.add_child(_body)
+	_body.add_child(HSeparator.new())
+	_activity_label = _label(_body)
 	_activity_label.modulate = Color(0.8, 0.88, 0.78)
 	# Small-caps tag + thin pill bar per need.
 	var bar_tints := {
@@ -133,19 +154,19 @@ func _build_ui() -> void:
 		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		bar.modulate = bar_tints[key]
 		row.add_child(bar)
-		box.add_child(row)
+		_body.add_child(row)
 		_bars[key] = bar
-	box.add_child(HSeparator.new())
-	_gear_label = _label(box)
+	_body.add_child(HSeparator.new())
+	_gear_label = _label(_body)
 	_gear_label.theme_type_variation = "Muted"
-	_skills_label = _label(box)
+	_skills_label = _label(_body)
 	_skills_label.theme_type_variation = "Muted"
 	# Priorities as a tight 2x2 grid.
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 4)
 	grid.add_theme_constant_override("v_separation", 4)
-	box.add_child(grid)
+	_body.add_child(grid)
 	var jobs := {Job.Type.CHOP: "Chop", Job.Type.HAUL: "Haul", Job.Type.BUILD: "Build", Job.Type.PLANT: "Farm"}
 	for type: int in jobs:
 		var btn := Button.new()
@@ -159,7 +180,7 @@ func _build_ui() -> void:
 		_priority_buttons[type] = btn
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 4)
-	box.add_child(actions)
+	_body.add_child(actions)
 	_draft_button = Button.new()
 	_draft_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_draft_button.tooltip_text = "Drafted villagers follow your orders and ignore work/needs."
@@ -174,6 +195,7 @@ func _build_ui() -> void:
 		pawn.combat.unequip()
 		refresh())
 	actions.add_child(_drop_button)
+	set_collapsed(false)  # label the toggle, start expanded
 
 func _label(box: VBoxContainer) -> Label:
 	var label := Label.new()
