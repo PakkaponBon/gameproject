@@ -49,9 +49,16 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 			"atk_cd": raider.attack_cooldown,
 			"move_cd": raider.move_cooldown,
 		})
+	# These three iterate dicts that can briefly hold a freed instance
+	# (an order/blueprint queue_free()d before its keeper's next prune
+	# tick). Read UNTYPED and validate first — a typed `var x: T = freed`
+	# throws "invalid previously freed instance" on the assignment itself,
+	# before any is_instance_valid guard can run.
 	var blueprints: Array = []
 	for cell: Vector2i in main.blueprints:
-		var bp: Blueprint = main.blueprints[cell]
+		var bp = main.blueprints[cell]
+		if not is_instance_valid(bp):
+			continue
 		blueprints.append({
 			"cell": _v(cell),
 			"id": bp.building_id,
@@ -60,10 +67,13 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 		})
 	var decon: Array = []
 	for cell: Vector2i in main.decon_orders:
-		decon.append({"cell": _v(cell), "work": main.decon_orders[cell].job.work_ticks})
+		var order = main.decon_orders[cell]
+		if not is_instance_valid(order):
+			continue
+		decon.append({"cell": _v(cell), "work": order.job.work_ticks})
 	var craft_orders: Array = []
 	for cell: Vector2i in main.forge_keeper.orders:
-		var order: CraftOrder = main.forge_keeper.orders[cell]
+		var order = main.forge_keeper.orders[cell]
 		if not is_instance_valid(order):
 			continue  # finished between keeper prune ticks
 		craft_orders.append({
