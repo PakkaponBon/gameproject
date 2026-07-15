@@ -4,7 +4,7 @@ extends RefCounted
 
 signal completed
 
-enum Type { CHOP, HAUL, BUILD, SUPPLY, DECONSTRUCT, PLANT, HARVEST, FEED, MINE, EQUIP, CRAFT, AMMO, RELIC, TREAT, COOK }  # SUPPLY = haul to a site; FEED/TREAT = bring food/herbs to a downed/wounded pawn; EQUIP/AMMO/RELIC = claim gear
+enum Type { CHOP, HAUL, BUILD, SUPPLY, DECONSTRUCT, PLANT, HARVEST, FEED, MINE, EQUIP, CRAFT, AMMO, RELIC, TREAT, COOK, HUNT }  # SUPPLY = haul to a site; FEED/TREAT = bring food/herbs to a downed/wounded pawn; EQUIP/AMMO/RELIC = claim gear; HUNT = catch ambient game for meat
 
 var resource_id := ""  # SUPPLY: which material this delivery is for
 

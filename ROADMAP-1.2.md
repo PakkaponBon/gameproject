@@ -24,11 +24,15 @@
       risks reviving the food death spiral we deliberately fixed. Revisit
       only if a spoilage layer ever lands (it is a non-goal for now).
 
-## Phase F3 — Hunting  *(reuses critters + jobs)*
-- [ ] Critters become huntable: a drafted or auto HUNT job; arrow puff,
-      no gore (rabbit fades like everything else per tone rule).
-- [ ] Drops meat (food) + occasionally hide (for F-later leather).
-- [ ] Balance knobs in Balance: critter respawn, meat yield.
+## Phase F3 — Hunting  *(reuses critters + jobs)* ✓
+- [x] Rabbits are huntable game (birds stay pure ambiance): each carries a
+      HUNT job; a villager runs it down and a short scuffle catches it.
+      HUNT shares the CHOP (gathering) priority — no new UI.
+- [x] Drops meat (raw food) with a dust puff — no gore, per tone rule.
+- [x] Population topped up daily to Balance.CRITTER_TARGET, so hunting is
+      renewable and never empties the meadow. Meat yield = Balance.MEAT_PER_KILL.
+- [~] Hide DEFERRED to v1.3 (leather chain) — same rule as F1's barley/flax:
+      no crop/kill yields a resource with no use yet.
 
 ## Phase F4 — Brewing  *(new building + recipe)*
 - [ ] Barley crop (F1 held it back) + Brewery building (workstation).

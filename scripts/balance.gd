@@ -11,6 +11,10 @@ const BERRY_REGROW_DAYS := 5.0  # a picked bush bears food again after this
 const TURNIP_GROW_DAYS := 1.0   # starter crop: harvest lands before hunger does
 const TURNIP_YIELD := 2
 
+# --- hunting ---
+const MEAT_PER_KILL := 2        # raw food dropped when a rabbit is caught
+const CRITTER_TARGET := 5       # huntable game kept topped up (ambiance + renewable meat)
+
 static var mode := "Normal"
 
 static func peaceful() -> bool:

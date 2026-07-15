@@ -31,6 +31,15 @@ func _on_day_started(_day: int) -> void:
 		_star_falls()
 	if randf() < DILEMMA_CHANCE and get_tree().get_nodes_in_group("raiders").is_empty():
 		_roll_dilemma()
+	_replenish_game()
+
+## Keep huntable game topped up: ambient life stays alive AND meat stays a
+## renewable trickle, so hunting never exterminates the meadow.
+func _replenish_game() -> void:
+	var count := get_tree().get_nodes_in_group("game").size()
+	while count < Balance.CRITTER_TARGET:
+		main.spawner.spawn_one_critter(false)  # rabbits are the huntable kind
+		count += 1
 
 ## Decisions at the gate: pause, two buttons, consequences. This is the
 ## beat the sim can't generate on its own.

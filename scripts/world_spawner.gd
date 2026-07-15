@@ -118,13 +118,17 @@ func _place_landmarks(rng: RandomNumberGenerator) -> void:
 
 func spawn_critters() -> void:
 	for i in CRITTER_COUNT:
-		var critter: Critter = CRITTER_SCENE.instantiate()
-		var body: Sprite2D = critter.get_node("Body")
-		if i % 2 == 1:  # every other one is a bird
-			body.region_rect = Rect2(384, 0, 16, 16)
-		critter.position = WorldGrid.cell_to_world(
-				Vector2i(randi() % WorldGrid.MAP_SIZE.x, randi() % WorldGrid.MAP_SIZE.y))
-		entities.add_child(critter)
+		spawn_one_critter(i % 2 == 1)  # every other one is a bird
+
+## One critter. Rabbits are huntable game; birds stay pure set dressing.
+func spawn_one_critter(is_bird: bool) -> void:
+	var critter: Critter = CRITTER_SCENE.instantiate()
+	critter.huntable = not is_bird
+	if is_bird:
+		(critter.get_node("Body") as Sprite2D).region_rect = Rect2(384, 0, 16, 16)
+	critter.position = WorldGrid.cell_to_world(
+			Vector2i(randi() % WorldGrid.MAP_SIZE.x, randi() % WorldGrid.MAP_SIZE.y))
+	entities.add_child(critter)
 
 func spawn_entity(scene: PackedScene, cell: Vector2i) -> Node2D:
 	var node: Node2D = scene.instantiate()

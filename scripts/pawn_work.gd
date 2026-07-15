@@ -103,6 +103,8 @@ func _do_job() -> void:
 			_claim_here()
 		Job.Type.DECONSTRUCT, Job.Type.MINE:
 			_do_adjacent_work()
+		Job.Type.HUNT:
+			_do_hunt()
 		Job.Type.PLANT:
 			# Field unzoned or winter arrived while we walked here.
 			if not WorldGrid.fields.has(job.cell) or (job.target as FieldKeeper).is_winter():
@@ -124,6 +126,25 @@ func _do_job() -> void:
 				job = null
 				if was_build:
 					_step_off_wall(work_cell)
+
+## Hunting a moving critter: give chase until adjacent, then a short
+## scuffle catches it. The critter wanders, so re-target every tick.
+func _do_hunt() -> void:
+	var prey := job.target as Critter
+	if not is_instance_valid(prey):
+		job = null  # already caught by someone, or despawned
+		return
+	var d := (prey.cell - pawn.cell).abs()
+	if d.x + d.y > 1:
+		pawn.target_cell = prey.cell  # still running it down
+		return
+	_apply_work()
+	if job.work_ticks <= 0:
+		var caught := job
+		job = null
+		JobManager.complete_job(caught)  # sfx/fx, then...
+		if is_instance_valid(prey):
+			prey.hunted()  # ...drops the meat
 
 func _approach_work_spot() -> void:
 	var spot := JobManager.nearest_work_spot(pawn.cell, job.cell)
