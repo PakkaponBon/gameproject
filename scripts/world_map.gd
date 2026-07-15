@@ -1,10 +1,50 @@
 class_name WorldMap
 extends CanvasLayer
-## The realm as a screen: five faction cards + the ruins, driven entirely
-## by FactionManager data. Opening it pauses the sim.
+## The realm as an actual map: your village at the heart, the five
+## factions and the ruins placed around it, roads tinted by standing.
+## Click a place, act on it in the side panel. Still pure UI over
+## FactionManager data — nothing here simulates.
 
-var _rows := {}  # faction id -> {strength, attitude, status, gift, envoy, tribute, expedition}
-var _ruins_button: Button
+const SPRITES := preload("res://assets/sprites.png")
+const TILES := preload("res://assets/tiles.png")
+
+## Layout + flavor per place. pos is a fraction of the map area.
+const PLACES := {
+	"village": {"pos": Vector2(0.5, 0.54), "sheet": "tiles", "cell": 10,
+			"tint": Color.WHITE, "label": "Ashfall",
+			"flavor": "Your hearth. Everything on this map wants something from it."},
+	"black_pines": {"pos": Vector2(0.19, 0.26), "sheet": "sprites", "cell": 15,
+			"tint": Color(0.75, 0.8, 0.7),
+			"flavor": "Cutthroats of the near woods. They probe for weakness."},
+	"vale_remnant": {"pos": Vector2(0.8, 0.2), "sheet": "sprites", "cell": 25,
+			"tint": Color.WHITE,
+			"flavor": "What remains of the old kingdom's honor. Envoys mean much here."},
+	"mosswood": {"pos": Vector2(0.13, 0.64), "sheet": "sprites", "cell": 16,
+			"tint": Color.WHITE,
+			"flavor": "Deep-forest traders. Everything has a price."},
+	"deepstone": {"pos": Vector2(0.87, 0.6), "sheet": "tiles", "cell": 6,
+			"tint": Color.WHITE,
+			"flavor": "Mountain holds, rich and wary. Gifts speak loudest."},
+	"ashen_legion": {"pos": Vector2(0.5, 0.1), "sheet": "sprites", "cell": 15,
+			"tint": Color(0.55, 0.2, 0.16),
+			"flavor": "The ones who burned Vhal. They are not done."},
+	"ruins": {"pos": Vector2(0.68, 0.86), "sheet": "sprites", "cell": 13,
+			"tint": Color(0.8, 0.8, 0.9), "label": "Ruins of Vhal",
+			"flavor": "The old city. Relics sleep in the ash."},
+}
+
+var _map: Control
+var _nodes := {}  # place id -> {root, icon, name, strength?, attitude?}
+var _selected := "village"
+
+var _d_title: Label
+var _d_flavor: Label
+var _d_stats: Label
+var _d_gift: Button
+var _d_envoy: Button
+var _d_tribute: Button
+var _d_attack: Button
+var _d_expedition: Button
 var _expedition_label: Label
 
 func _ready() -> void:
@@ -17,6 +57,7 @@ func toggle() -> void:
 	visible = not visible
 	GameClock.set_sim_paused(visible)
 	if visible:
+		_layout_nodes()  # map size is settled by now; place the markers
 		_refresh()
 
 func _build_ui() -> void:
@@ -30,81 +71,117 @@ func _build_ui() -> void:
 	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	add_child(panel)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 10)
+	box.add_theme_constant_override("separation", 8)
 	panel.add_child(box)
 	var title := Label.new()
 	title.text = "THE REALM"
+	title.theme_type_variation = "Title"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
-	for id: String in FactionDefs.ORDER:
-		box.add_child(_build_faction_row(id))
-	box.add_child(_build_ruins_row())
+	var split := HBoxContainer.new()
+	split.add_theme_constant_override("separation", 10)
+	box.add_child(split)
+	var map_frame := PanelContainer.new()
+	map_frame.theme_type_variation = "SlimPanel"
+	split.add_child(map_frame)
+	_map = Control.new()
+	_map.custom_minimum_size = Vector2(560, 400)
+	_map.draw.connect(_draw_roads)
+	_map.resized.connect(_layout_nodes)
+	map_frame.add_child(_map)
+	for id: String in PLACES:
+		_build_node(id)
+	split.add_child(_build_detail())
 	_expedition_label = Label.new()
+	_expedition_label.theme_type_variation = "Muted"
 	box.add_child(_expedition_label)
 	var close := Button.new()
 	close.text = "Close [M]"
 	close.pressed.connect(toggle)
 	box.add_child(close)
 
-func _build_faction_row(id: String) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	var def := FactionDefs.get_def(id)
+func _build_node(id: String) -> void:
+	var place: Dictionary = PLACES[id]
+	var root := VBoxContainer.new()
+	root.custom_minimum_size = Vector2(96, 0)
+	root.add_theme_constant_override("separation", 2)
+	_map.add_child(root)
+	var center := HBoxContainer.new()
+	center.alignment = BoxContainer.ALIGNMENT_CENTER
+	root.add_child(center)
+	var sheet: Texture2D = TILES if place.sheet == "tiles" else SPRITES
+	var icon := UiTheme.icon_button(sheet, Rect2(int(place.cell) * 16, 0, 16, 16),
+			place.tint, String(place.flavor), Vector2(44, 40))
+	icon.pressed.connect(_select.bind(id))
+	center.add_child(icon)
 	var name_label := Label.new()
-	name_label.text = "%s (%s)" % [def.name, def.personality]
-	name_label.custom_minimum_size = Vector2(240, 0)
-	row.add_child(name_label)
-	var widgets := {}
-	widgets["strength"] = _add_bar(row, 0.0, 100.0, Color(0.75, 0.35, 0.3))
-	widgets["attitude"] = _add_bar(row, -100.0, 100.0, Color(0.35, 0.7, 0.4))
-	var status := Label.new()
-	status.custom_minimum_size = Vector2(88, 0)
-	row.add_child(status)
-	widgets["status"] = status
-	widgets["gift"] = _add_button(row, "Gift (%d wood)" % FactionManager.GIFT_WOOD,
-			func() -> void: FactionManager.send_gift(id))
-	widgets["gift"].tooltip_text = "Spend stored wood to warm their attitude. Greedy factions love it."
-	widgets["envoy"] = _add_button(row, "Envoy",
-			func() -> void: FactionManager.send_envoy(id))
-	widgets["envoy"].tooltip_text = "Free goodwill, once per day per faction. Honorable factions respect it."
-	widgets["tribute"] = _add_button(row, "Pay Tribute",
-			func() -> void: FactionManager.pay_tribute(id))
-	widgets["tribute"].tooltip_text = "Pay %d wood to answer their demand before it sours relations." % FactionManager.TRIBUTE_WOOD
-	widgets["expedition"] = _add_confirm_button(row, "Attack!",
-			func() -> void: FactionManager.send_expedition(id))
-	_rows[id] = widgets
-	return row
+	name_label.theme_type_variation = "Header"
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.text = _place_name(id)
+	root.add_child(name_label)
+	var widgets := {"root": root, "icon": icon, "name": name_label}
+	if FactionDefs.DEFS.has(id):
+		widgets["strength"] = _mini_bar(root, 0.0, 100.0, Color(0.75, 0.35, 0.3),
+				"Strength — attack and kill raiders to grind it down")
+		widgets["attitude"] = _mini_bar(root, -100.0, 100.0, Color(0.35, 0.7, 0.4),
+				"Attitude — gifts and envoys raise it; alliance at +100")
+	_nodes[id] = widgets
 
-func _build_ruins_row() -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	var label := Label.new()
-	label.text = "Ruins of the Old City — relics sleep in the ash"
-	label.custom_minimum_size = Vector2(516, 0)
-	row.add_child(label)
-	_ruins_button = _add_confirm_button(row, "Expedition",
+func _build_detail() -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.theme_type_variation = "SlimPanel"
+	var box := VBoxContainer.new()
+	box.custom_minimum_size = Vector2(236, 0)
+	box.add_theme_constant_override("separation", 6)
+	panel.add_child(box)
+	_d_title = Label.new()
+	_d_title.theme_type_variation = "Title"
+	box.add_child(_d_title)
+	_d_flavor = Label.new()
+	_d_flavor.theme_type_variation = "Muted"
+	_d_flavor.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(_d_flavor)
+	_d_stats = Label.new()
+	_d_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(_d_stats)
+	_d_gift = Button.new()
+	_d_gift.text = "Send Gift (%d wood)" % FactionManager.GIFT_WOOD
+	_d_gift.tooltip_text = "Spend stored wood to warm their attitude. Greedy factions love it. If they have an open request, the gift answers it."
+	_d_gift.pressed.connect(func() -> void: FactionManager.send_gift(_selected))
+	box.add_child(_d_gift)
+	_d_envoy = Button.new()
+	_d_envoy.text = "Send Envoy"
+	_d_envoy.tooltip_text = "Free goodwill, once per day per faction. Honorable factions respect it."
+	_d_envoy.pressed.connect(func() -> void: FactionManager.send_envoy(_selected))
+	box.add_child(_d_envoy)
+	_d_tribute = Button.new()
+	_d_tribute.text = "Pay Tribute (%d wood)" % FactionManager.TRIBUTE_WOOD
+	_d_tribute.tooltip_text = "Answer their demand before it sours relations."
+	_d_tribute.pressed.connect(func() -> void: FactionManager.pay_tribute(_selected))
+	box.add_child(_d_tribute)
+	_d_attack = _confirm_button("Attack!",
+			func() -> void: FactionManager.send_expedition(_selected))
+	box.add_child(_d_attack)
+	_d_expedition = _confirm_button("Send Expedition",
 			func() -> void: FactionManager.send_expedition("ruins"))
-	return row
+	box.add_child(_d_expedition)
+	return panel
 
-func _add_bar(row: HBoxContainer, minimum: float, maximum: float, tint: Color) -> ProgressBar:
+func _mini_bar(root: VBoxContainer, minimum: float, maximum: float, tint: Color,
+		tip: String) -> ProgressBar:
 	var bar := ProgressBar.new()
 	bar.min_value = minimum
 	bar.max_value = maximum
 	bar.show_percentage = false
-	bar.custom_minimum_size = Vector2(90, 14)
+	bar.custom_minimum_size = Vector2(0, 6)
 	bar.modulate = tint
-	row.add_child(bar)
+	bar.tooltip_text = tip
+	bar.mouse_filter = Control.MOUSE_FILTER_STOP
+	root.add_child(bar)
 	return bar
 
-func _add_button(row: HBoxContainer, text: String, action: Callable) -> Button:
-	var button := Button.new()
-	button.text = text
-	button.pressed.connect(action)
-	row.add_child(button)
-	return button
-
 ## Two-click safety for expeditions: villagers leave the map for a day.
-func _add_confirm_button(row: HBoxContainer, text: String, action: Callable) -> Button:
+func _confirm_button(text: String, action: Callable) -> Button:
 	var button := Button.new()
 	button.text = text
 	button.set_meta("base_text", text)
@@ -116,37 +193,111 @@ func _add_confirm_button(row: HBoxContainer, text: String, action: Callable) -> 
 		else:
 			button.set_meta("armed", true)
 			button.text = "Confirm?")
-	row.add_child(button)
 	return button
 
 func _reset_confirm(button: Button) -> void:
 	button.set_meta("armed", false)
 	button.text = button.get_meta("base_text")
 
+func _select(id: String) -> void:
+	_selected = id
+	_refresh()
+
+func _place_name(id: String) -> String:
+	var place: Dictionary = PLACES[id]
+	if place.has("label"):
+		return String(place.label)
+	return String(FactionDefs.get_def(id).name)
+
+func _layout_nodes() -> void:
+	for id: String in _nodes:
+		var root: Control = _nodes[id].root
+		root.position = Vector2(PLACES[id].pos) * _map.size - Vector2(48, 22)
+	_map.queue_redraw()
+
+## Roads from the village outward, tinted by standing.
+func _draw_roads() -> void:
+	var home: Vector2 = Vector2(PLACES["village"].pos) * _map.size
+	for id: String in PLACES:
+		if id == "village":
+			continue
+		var color := Color(0.55, 0.48, 0.36, 0.5)  # neutral track
+		if FactionManager.factions.has(id):
+			var f: Dictionary = FactionManager.factions[id]
+			if f.resolved == "allied":
+				color = Color(0.9, 0.78, 0.4, 0.7)
+			elif f.resolved == "destroyed":
+				color = Color(0.3, 0.3, 0.32, 0.5)
+			elif float(f.attitude) < 0.0:
+				color = Color(0.75, 0.3, 0.25, 0.55)
+		_map.draw_line(home, Vector2(PLACES[id].pos) * _map.size, color, 2.0)
+
 func _refresh() -> void:
 	if not visible:
 		return
-	for id: String in _rows:
+	_map.queue_redraw()
+	for id: String in _nodes:
+		if not FactionManager.factions.has(id):
+			continue
 		var f: Dictionary = FactionManager.factions[id]
-		var w: Dictionary = _rows[id]
+		var w: Dictionary = _nodes[id]
 		w.strength.value = float(f.strength)
-		w.strength.tooltip_text = "Strength %d" % int(f.strength)
 		w.attitude.value = float(f.attitude)
-		w.attitude.tooltip_text = "Attitude %d" % int(f.attitude)
-		var status: String = f.resolved
-		w.status.text = "ALLIED" if status == "allied" else ("DESTROYED" if status == "destroyed" else "—")
-		var open := status == ""
-		w.gift.visible = open
-		w.envoy.visible = open
-		w.tribute.visible = open and FactionManager.demand_pending(id)
-		w.expedition.visible = open
-		w.expedition.disabled = FactionManager.expedition_active()
-		_reset_confirm(w.expedition)
-	_ruins_button.disabled = FactionManager.expedition_active()
-	_reset_confirm(_ruins_button)
+		var name_label: Label = w.name
+		var icon: Button = w.icon
+		icon.modulate = Color.WHITE
+		if f.resolved == "allied":
+			name_label.text = _place_name(id) + " (ALLIED)"
+			name_label.modulate = Color(0.9, 0.78, 0.4)
+		elif f.resolved == "destroyed":
+			name_label.text = _place_name(id) + " (BROKEN)"
+			name_label.modulate = Color(0.5, 0.5, 0.52)
+			icon.modulate = Color(0.45, 0.45, 0.45)
+		else:
+			var marks := ""
+			if FactionManager.demand_pending(id):
+				marks += " !"
+			if not FactionManager.request.is_empty() and String(FactionManager.request.id) == id:
+				marks += " ?"
+			name_label.text = _place_name(id) + marks
+			name_label.modulate = Color(0.95, 0.85, 0.55) if marks != "" else Color.WHITE
+	_refresh_detail()
 	if FactionManager.expedition_active():
 		_expedition_label.text = "Expedition in the field — back at dawn."
 	else:
 		var party := FactionManager.party_preview()
 		_expedition_label.text = "Party ready: %s" % party if party != "" \
 				else "No expedition possible (needs 2+ armed villagers)."
+
+func _refresh_detail() -> void:
+	var place: Dictionary = PLACES[_selected]
+	_d_title.text = _place_name(_selected)
+	_d_flavor.text = String(place.flavor)
+	var is_faction := FactionManager.factions.has(_selected)
+	_d_gift.visible = false
+	_d_envoy.visible = false
+	_d_tribute.visible = false
+	_d_attack.visible = false
+	_d_expedition.visible = _selected == "ruins"
+	if _selected == "village":
+		var lines := "Renown: %d" % FactionManager.renown
+		if not FactionManager.request.is_empty():
+			var r: Dictionary = FactionManager.request
+			lines += "\nOpen request: %d %s for %s." \
+					% [int(r.amount), String(r.resource), _place_name(String(r.id))]
+		_d_stats.text = lines
+	elif _selected == "ruins":
+		_d_stats.text = "Risk a party for relic chances."
+		_d_expedition.disabled = FactionManager.expedition_active()
+		_reset_confirm(_d_expedition)
+	elif is_faction:
+		var f: Dictionary = FactionManager.factions[_selected]
+		_d_stats.text = "Attitude %d · Strength %d\nTemperament: %s" \
+				% [int(f.attitude), int(f.strength), FactionDefs.get_def(_selected).personality]
+		var open: bool = f.resolved == ""
+		_d_gift.visible = open
+		_d_envoy.visible = open
+		_d_tribute.visible = open and FactionManager.demand_pending(_selected)
+		_d_attack.visible = open
+		_d_attack.disabled = FactionManager.expedition_active()
+		_reset_confirm(_d_attack)
