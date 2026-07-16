@@ -255,6 +255,8 @@ func _refresh() -> void:
 			icon.modulate = Color(0.45, 0.45, 0.45)
 		else:
 			var marks := ""
+			if FactionManager.has_oath(id):
+				marks += " (KIN)"
 			if FactionManager.demand_pending(id):
 				marks += " !"
 			if not FactionManager.request.is_empty() and String(FactionManager.request.id) == id:
@@ -298,6 +300,8 @@ func _refresh_detail() -> void:
 			_d_flavor.text = "%s — %s\n%s" % [String(def.leader), String(def.quirk), String(place.flavor)]
 		_d_stats.text = "Attitude %d · Strength %d\nTemperament: %s" \
 				% [int(f.attitude), int(f.strength), String(def.personality)]
+		if FactionManager.has_oath(_selected):
+			_d_stats.text += "\nBound to you by kinship."
 		if def.has("likes"):
 			_d_gift.tooltip_text = "%s prizes %s (%d) — that gift earns deep favor. Otherwise: %d wood." \
 					% [String(def.leader), ResourceDefs.get_def(String(def.likes)).name,

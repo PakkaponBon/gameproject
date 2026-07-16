@@ -35,14 +35,19 @@
       ale) — gifting it earns +25 attitude and a chronicle line, giving the
       production chains political weight. Falls back to the wood gift.
 
-## Phase S4 — Oaths & Wars
-- [ ] Faction wars: neighbors skirmish over time; strengths drift against
-      each other; feed lines report the realm moving on its own.
-- [ ] Oath of kinship: marry a villager into a faction (choice event) —
-      you lose the villager, gain a permanent attitude floor + their aid
-      in big raids. A real cost for a real bond. Tone: text, warm, brief.
+## Phase S4 — Oaths & Wars ✓
+- [x] Faction wars: ~daily chance two open factions skirmish; both bleed
+      strength (loser more), floored at 5 — wars soften the realm but the
+      killing blow (or friendship) stays the player's. Feed-only news.
+- [x] Oath of kinship: a faction at attitude ≥ 50 may propose a marriage
+      bond (choice event, names a real villager). Accept: they leave, the
+      faction gets a permanent attitude floor of 40 and answers big raids
+      like an ally; (KIN) marker + detail line on the map; chronicle keeps
+      their name. Decline: -5 attitude. Tone: told, never shown.
+- [x] "oath" rides inside the saved factions dict — no version bump.
 
 ## Phase S5 — Ship it
-- [ ] Save bump verified end-to-end; hints for armor/traps.
+- [x] Save additions verified additive on v25 (trap_uses, oath key, armor).
+- [x] Hints: loom/armor after the first raid, spike pits after the second.
 - [ ] DoD (human): play through a big raid in full armor behind traps,
       watch two factions skirmish, swear one oath. Then tag v1.3.

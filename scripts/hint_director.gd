@@ -35,6 +35,10 @@ func _on_tick() -> void:
 		_hint("hearth", "Winter is coming. Wall in a room and build a hearth [B] — cold villagers slow down and sour.")
 	if GameClock.total_days() >= 3 and not _has_building("livestock"):
 		_hint("coop", "Food comes and goes. A Chicken Coop [B] lays eggs every day — steady food, no field needed.")
+	if main.raid_director.raid_count >= 1 and not _has_building_id("loom"):
+		_hint("armor", "Raids grow with your renown. A Loom [B] weaves wool and hide into armor for your fighters.")
+	if main.raid_director.raid_count >= 2 and WorldGrid.traps.is_empty():
+		_hint("traps", "Lay Spike Pits [B] on the raiders' path — your own villagers walk around them.")
 
 func _hint(id: String, text: String) -> void:
 	if _shown.has(id):
@@ -45,6 +49,12 @@ func _hint(id: String, text: String) -> void:
 func _has_building(flag: String) -> bool:
 	for cell: Vector2i in WorldGrid.buildings:
 		if BuildingDefs.get_def(WorldGrid.buildings[cell]).get(flag, false):
+			return true
+	return false
+
+func _has_building_id(id: String) -> bool:
+	for cell: Vector2i in WorldGrid.buildings:
+		if WorldGrid.buildings[cell] == id:
 			return true
 	return false
 

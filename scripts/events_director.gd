@@ -18,6 +18,7 @@ func _ready() -> void:
 const BARD_CHANCE := 0.07
 const STAR_CHANCE := 0.04
 const DILEMMA_CHANCE := 0.3  # roughly one decision knocking every few days
+const OATH_CHANCE := 0.08  # a friendly faction may propose kinship
 
 func _on_day_started(_day: int) -> void:
 	if GameClock.season_index() != 3 and randf() < FROST_CHANCE:
@@ -31,7 +32,47 @@ func _on_day_started(_day: int) -> void:
 		_star_falls()
 	if randf() < DILEMMA_CHANCE and get_tree().get_nodes_in_group("raiders").is_empty():
 		_roll_dilemma()
+	elif randf() < OATH_CHANCE and get_tree().get_nodes_in_group("raiders").is_empty():
+		_oath_offer()
 	_replenish_game()
+
+## S4 — oath of kinship: a friendly faction asks for a marriage bond.
+## A real villager leaves for a permanent friendship. Tone: text, warm,
+## brief — the wedding is told, never shown.
+func _oath_offer() -> void:
+	if main.pawns.size() < 4:
+		return  # can't spare a soul from a skeleton crew
+	var suitors: Array[String] = []
+	for id: String in FactionManager.factions:
+		var f: Dictionary = FactionManager.factions[id]
+		if f.resolved == "" and float(f.attitude) >= 50.0 and not bool(f.get("oath", false)):
+			suitors.append(id)
+	if suitors.is_empty():
+		return
+	var id: String = suitors.pick_random()
+	var candidates := main.pawns.filter(func(p: Pawn) -> bool:
+		return not p.drafted and not p.collapsed and not p.dead)
+	if candidates.is_empty():
+		return
+	var pawn: Pawn = candidates.pick_random()
+	var def := FactionDefs.get_def(id)
+	var leader := String(def.get("leader", "their chief"))
+	var fname := String(def.name)
+	var accept := func() -> void:
+		main.hud.set_event("%s departs with the %s escort, head high. The bond holds while the village stands." \
+				% [pawn.name, fname], Color(0.9, 0.8, 0.6))
+		EventBus.chronicle_entry.emit("%s wed into %s. The village keeps their name like a candle in a window." \
+				% [pawn.name, fname])
+		FactionManager.swear_oath(id)
+		main.remove_pawn_for_expedition(pawn)  # leaves cleanly, claims released
+	var decline := func() -> void:
+		FactionManager.decline_oath(id)
+	main.choice_panel.open("AN OATH OF KINSHIP",
+			"%s of %s proposes a marriage bond, and names %s. The kinship would hold their friendship for good — but %s would leave the meadow, for a hall far from your hearth." \
+					% [leader, fname, pawn.name, pawn.name],
+			"Let %s go — permanent friendship" % pawn.name,
+			"Politely decline (they will take it hard)",
+			accept, decline)
 
 ## Keep huntable game topped up: ambient life stays alive AND meat stays a
 ## renewable trickle, so hunting never exterminates the meadow.

@@ -15,6 +15,9 @@ const DEMAND_GRACE_TICKS := 3000  # a day to pay
 const ALLIANCE_AT := 100.0
 const REQUEST_CHANCE_PER_DAY := 0.25
 const REQUEST_GRACE_TICKS := GameClock.TICKS_PER_DAY * 2
+const WAR_CHANCE_PER_DAY := 0.15
+const WAR_FLOOR := 5.0  # wars grind factions down but never finish one —
+						# the killing blow (or the friendship) stays yours
 const EXPEDITION_TICKS := 3000  # the party is away one day
 const EXPEDITION_STRENGTH_HIT := 25.0
 const RUINS_STRENGTH := 50.0
@@ -125,6 +128,22 @@ func pay_tribute(id: String) -> void:
 func demand_pending(id: String) -> bool:
 	return int(factions[id].demand_deadline) > 0
 
+## S4 — oath of kinship: a villager weds into the faction. Friendship
+## gets a permanent floor and their warriors answer big raids like an
+## ally's. The "oath" key rides inside the factions dict (saved as-is).
+func swear_oath(id: String) -> void:
+	var f: Dictionary = factions[id]
+	f["oath"] = true
+	announced.emit("The oath is sworn. %s will not forget the village." % _fname(id))
+	_shift_attitude(id, 30.0)
+
+func decline_oath(id: String) -> void:
+	announced.emit("The offer, refused, stings %s's pride." % _fname(id))
+	_shift_attitude(id, -5.0)
+
+func has_oath(id: String) -> bool:
+	return bool(factions[id].get("oath", false))
+
 # --- raids ------------------------------------------------------------------
 
 func pick_raid_faction(prefer_weak := false) -> String:
@@ -145,7 +164,8 @@ func raid_size(id: String) -> int:
 
 func has_ally() -> bool:
 	for id: String in factions:
-		if factions[id].resolved == "allied":
+		var f: Dictionary = factions[id]
+		if f.resolved == "allied" or (bool(f.get("oath", false)) and f.resolved != "destroyed"):
 			return true
 	return false
 
@@ -309,6 +329,30 @@ func _on_day_started(_day: int) -> void:
 			factions_changed.emit()
 	if request.is_empty() and randf() < REQUEST_CHANCE_PER_DAY:
 		_post_request()
+	if randf() < WAR_CHANCE_PER_DAY:
+		_skirmish()
+
+## The realm moves on its own: two open factions trade blows and both
+## bleed strength. Feed-only news — the chronicle is for the village.
+func _skirmish() -> void:
+	var open: Array[String] = []
+	for id: String in factions:
+		if factions[id].resolved == "":
+			open.append(id)
+	if open.size() < 2:
+		return
+	open.shuffle()
+	var a: String = open[0]
+	var b: String = open[1]
+	var a_str := float(factions[a].strength)
+	var b_str := float(factions[b].strength)
+	var winner := a if randf() < a_str / maxf(a_str + b_str, 1.0) else b
+	var loser := b if winner == a else a
+	factions[loser].strength = maxf(float(factions[loser].strength) - 8.0, WAR_FLOOR)
+	factions[winner].strength = maxf(float(factions[winner].strength) - 3.0, WAR_FLOOR)
+	announced.emit("Word from the roads: %s raided %s. Both sides bled." \
+			% [_fname(winner), _fname(loser)])
+	factions_changed.emit()
 
 ## A faction asks for materials: meet it with a gift [M] before the
 ## deadline for outsized favor (+renown); let it lapse and they sour.
@@ -328,6 +372,8 @@ func _post_request() -> void:
 func _shift_attitude(id: String, amount: float) -> void:
 	var f: Dictionary = factions[id]
 	f.attitude = clampf(float(f.attitude) + amount, -100.0, 100.0)
+	if bool(f.get("oath", false)):
+		f.attitude = maxf(float(f.attitude), 40.0)  # kinship holds a floor
 	if float(f.attitude) >= ALLIANCE_AT and f.resolved == "":
 		f.resolved = "allied"
 		renown += 5
