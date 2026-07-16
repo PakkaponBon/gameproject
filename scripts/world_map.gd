@@ -31,6 +31,15 @@ const PLACES := {
 	"ruins": {"pos": Vector2(0.68, 0.86), "sheet": "sprites", "cell": 13,
 			"tint": Color(0.8, 0.8, 0.9), "label": "Ruins of Vhal",
 			"flavor": "The old city. Relics sleep in the ash."},
+	"witchfen": {"pos": Vector2(0.24, 0.88), "sheet": "sprites", "cell": 22,
+			"tint": Color(0.75, 0.85, 0.8), "label": "The Witchfen",
+			"flavor": "Lights over the marsh. Herbs, and worse things, grow rich there."},
+	"dwarf_road": {"pos": Vector2(0.93, 0.42), "sheet": "sprites", "cell": 6,
+			"tint": Color(0.8, 0.78, 0.85), "label": "The Dwarf-road",
+			"flavor": "A dead road of the deep folk. Its waystations still hold iron."},
+	"howling_barrow": {"pos": Vector2(0.07, 0.44), "sheet": "sprites", "cell": 17,
+			"tint": Color(0.7, 0.68, 0.78), "label": "The Howling Barrow",
+			"flavor": "The oldest grave in the realm. Rich in shards; poor in mercy."},
 }
 
 var _map: Control
@@ -163,7 +172,7 @@ func _build_detail() -> PanelContainer:
 			func() -> void: FactionManager.send_expedition(_selected))
 	box.add_child(_d_attack)
 	_d_expedition = _confirm_button("Send Expedition",
-			func() -> void: FactionManager.send_expedition("ruins"))
+			func() -> void: FactionManager.send_expedition(_selected))
 	box.add_child(_d_expedition)
 	return panel
 
@@ -276,11 +285,12 @@ func _refresh_detail() -> void:
 	_d_title.text = _place_name(_selected)
 	_d_flavor.text = String(place.flavor)
 	var is_faction := FactionManager.factions.has(_selected)
+	var is_site := SiteDefs.DEFS.has(_selected)
 	_d_gift.visible = false
 	_d_envoy.visible = false
 	_d_tribute.visible = false
 	_d_attack.visible = false
-	_d_expedition.visible = _selected == "ruins"
+	_d_expedition.visible = is_site
 	if _selected == "village":
 		var lines := "Renown: %d" % FactionManager.renown
 		if not FactionManager.request.is_empty():
@@ -288,9 +298,16 @@ func _refresh_detail() -> void:
 			lines += "\nOpen request: %d %s for %s." \
 					% [int(r.amount), String(r.resource), _place_name(String(r.id))]
 		_d_stats.text = lines
-	elif _selected == "ruins":
-		_d_stats.text = "Risk a party for relic chances."
-		_d_expedition.disabled = FactionManager.expedition_active()
+	elif is_site:
+		var sdef := SiteDefs.get_def(_selected)
+		var ready_in := FactionManager.site_ready_in(_selected)
+		var lines := "Danger: %d · Shards: %d · Relic odds: %d%%" \
+				% [int(sdef.strength), int(sdef.shards), int(float(sdef.relic_chance) * 100.0)]
+		if ready_in > 0:
+			lines += "\nThe trail is cold — ready in %.1f days." \
+					% (float(ready_in) / GameClock.TICKS_PER_DAY)
+		_d_stats.text = lines
+		_d_expedition.disabled = FactionManager.expedition_active() or ready_in > 0
 		_reset_confirm(_d_expedition)
 	elif is_faction:
 		var f: Dictionary = FactionManager.factions[_selected]

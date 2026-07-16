@@ -86,7 +86,9 @@ func _register_craft_job() -> void:
 
 func _on_crafted() -> void:
 	var def := RecipeDefs.get_def(recipe_id)
-	var output: String = def.output
+	# Pool recipes yield a random pick (the shrine decides what wakes).
+	var output: String = (def.output_pool as Array).pick_random() \
+			if def.has("output_pool") else def.output
 	var remaining := int(def.get("output_count", 1))
 	for offset in SPILL:
 		if remaining <= 0:

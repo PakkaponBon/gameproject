@@ -24,6 +24,7 @@ const DEFS := {
 	"padded_coat": {"name": "Padded Coat", "color": Color(0.88, 0.82, 0.68), "sprite": 27, "armor": 2.0},
 	"leather_jerkin": {"name": "Leather Jerkin", "color": Color(0.7, 0.5, 0.32), "sprite": 27, "armor": 3.5},
 	"iron_mail": {"name": "Iron Mail", "color": Color(0.8, 0.82, 0.9), "sprite": 27, "armor": 5.0},
+	"relic_shard": {"name": "Relic Shard", "color": Color(0.6, 0.75, 0.95), "sprite": 12},
 	"relic_fireball": {"name": "Fireball Relic", "color": Color(0.95, 0.5, 0.25), "sprite": 12, "relic": true},
 	"relic_heal": {"name": "Healing Relic", "color": Color(0.45, 0.9, 0.55), "sprite": 12, "relic": true},
 	"relic_barrier": {"name": "Barrier Relic", "color": Color(0.55, 0.6, 1.0), "sprite": 12, "relic": true},

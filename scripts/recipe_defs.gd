@@ -4,7 +4,7 @@ extends RefCounted
 ## picks the first recipe whose inputs exist as free items.
 
 const ORDER := ["forge_sword", "craft_bow", "craft_arrows", "forge_mail", "smelt_iron",
-		"brew_ale", "cut_leather", "weave_padded"]
+		"brew_ale", "cut_leather", "weave_padded", "awaken_relic"]
 
 const DEFS := {
 	"smelt_iron": {
@@ -71,6 +71,16 @@ const DEFS := {
 		"output": "iron_mail",
 		"craft_ticks": 60,
 		"max_stock": 2,
+	},
+	"awaken_relic": {
+		# Magic stays treasure: shards come only from wild sites, so
+		# assembly is expedition-gated, never crafted from raw material.
+		"name": "Awaken Relic",
+		"station": "shrine",
+		"inputs": {"relic_shard": 3},
+		"output_pool": ["relic_fireball", "relic_heal", "relic_barrier"],
+		"craft_ticks": 60,
+		"max_stock": 1,
 	},
 }
 

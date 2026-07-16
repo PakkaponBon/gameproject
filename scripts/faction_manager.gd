@@ -19,13 +19,13 @@ const WAR_CHANCE_PER_DAY := 0.15
 const WAR_FLOOR := 5.0  # wars grind factions down but never finish one —
 						# the killing blow (or the friendship) stays yours
 const EXPEDITION_TICKS := 3000  # the party is away one day
-const EXPEDITION_STRENGTH_HIT := 25.0
-const RUINS_STRENGTH := 50.0
+const EXPEDITION_STRENGTH_HIT := 25.0  # site difficulty now lives in SiteDefs
 const KILL_ATTRITION := 2.0  # faction strength lost per bandit slain
 
 var factions := {}  # id -> {strength, attitude, resolved, envoy_ready, demand_deadline}
 var expedition := {}  # {} when none; else target/return_tick/party/power
 var request := {}  # {} or {id, resource, amount, deadline}: a faction's standing ask
+var sites := {}  # wild site id -> tick when it's worth raiding again
 var victory_shown := false
 var renown := 0  # village fame: unlocks buildings, attracts refugees
 var main: Node2D = null  # current Main scene; re-registers itself each load
@@ -48,6 +48,7 @@ func reset() -> void:
 		}
 	expedition = {}
 	request = {}
+	sites.clear()
 	victory_shown = false
 	renown = 0
 	factions_changed.emit()
@@ -58,12 +59,14 @@ func add_renown(amount: int) -> void:
 
 func serialize() -> Dictionary:
 	return {"factions": factions, "expedition": expedition, "request": request,
-			"victory_shown": victory_shown, "renown": renown, "difficulty": Balance.mode}
+			"sites": sites, "victory_shown": victory_shown, "renown": renown,
+			"difficulty": Balance.mode}
 
 func deserialize(data: Dictionary) -> void:
 	factions = data.factions
 	expedition = data.expedition
 	request = data.get("request", {})
+	sites = data.get("sites", {})
 	victory_shown = bool(data.victory_shown)
 	renown = int(data.renown)
 	Balance.mode = String(data.difficulty)
@@ -195,9 +198,17 @@ func damage_strength(id: String, amount: float) -> void:
 func expedition_active() -> bool:
 	return not expedition.is_empty()
 
+## A wild site's cooldown: 0 when ready, else ticks until worth returning.
+func site_ready_in(id: String) -> int:
+	return maxi(0, int(sites.get(id, 0)) - GameClock.ticks)
+
 func send_expedition(target: String) -> void:
 	if expedition_active():
 		announced.emit("An expedition is already in the field.")
+		return
+	if SiteDefs.DEFS.has(target) and site_ready_in(target) > 0:
+		announced.emit("The trail to %s is cold — give it a day or two." \
+				% SiteDefs.get_def(target).name)
 		return
 	var party := _pick_party()
 	if party.size() < 2:
@@ -253,7 +264,9 @@ func _snapshot(pawn: Pawn) -> Dictionary:
 
 func _resolve_expedition() -> void:
 	var target: String = expedition.target
-	var strength := RUINS_STRENGTH if target == "ruins" else float(factions[target].strength)
+	var is_site := SiteDefs.DEFS.has(target)
+	var strength := float(SiteDefs.get_def(target).strength) if is_site \
+			else float(factions[target].strength)
 	var power := float(expedition.power)
 	var success := randf() < power / (power + strength) + 0.1  # luck favors the bold
 	var report := ""
@@ -265,16 +278,14 @@ func _resolve_expedition() -> void:
 		else:
 			survivors.append(pdata)
 	if success:
-		if target == "ruins":
-			var center: Vector2i = WorldGrid.MAP_SIZE / 2
-			main.spawner.spawn_resource(center + Vector2i(0, 2), RelicDefs.ORDER.pick_random())
-			main.spawner.drop_resource(center, "wood", 5)
-			report = "The ruins gave up a relic!"
+		if is_site:
+			_grant_site_loot(target)
+			report = String(SiteDefs.get_def(target).report)
 		else:
 			report = "Victory! %s reels from the blow." % _fname(target)
 	else:
 		report = "The expedition was driven back from %s." \
-				% ("the ruins" if target == "ruins" else _fname(target))
+				% (String(SiteDefs.get_def(target).name) if is_site else _fname(target))
 	if casualties > 0:
 		report += " %d did not come home." % casualties
 	expedition = {}
@@ -282,10 +293,28 @@ func _resolve_expedition() -> void:
 		main.return_expedition_member(pdata)
 	for i in casualties:
 		main.mourn_expedition_loss()
-	if success and target != "ruins":
+	if is_site:
+		# Win or lose, the site needs time before it's worth returning.
+		sites[target] = GameClock.ticks \
+				+ int(SiteDefs.get_def(target).cooldown_days) * GameClock.TICKS_PER_DAY
+	elif success:
 		damage_strength(target, EXPEDITION_STRENGTH_HIT)
 	announced.emit(report)
 	factions_changed.emit()
+
+## Site plunder: shards are the common treasure, full relics the rare one.
+func _grant_site_loot(id: String) -> void:
+	var def := SiteDefs.get_def(id)
+	var center: Vector2i = WorldGrid.MAP_SIZE / 2
+	if randf() < float(def.relic_chance):
+		main.spawner.spawn_resource(center + Vector2i(0, 2), RelicDefs.ORDER.pick_random())
+	for i in int(def.shards):
+		main.spawner.drop_resource(center + Vector2i(i, 3), "relic_shard", 1)
+	var offset := 0
+	for res: String in def.resources:
+		main.spawner.drop_resource(center + Vector2i(offset - 2, 0), res, int(def.resources[res]))
+		offset += 2
+	EventBus.chronicle_entry.emit(String(def.vignette))
 
 # --- victory ----------------------------------------------------------------
 

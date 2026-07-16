@@ -157,6 +157,8 @@ const DEFS := {
 		"block_enemies": false,
 		"storage": false,
 		"comfort": 3,
+		"workstation": true,  # awakens relic shards (station "shrine")
+		"light": true,  # the old magic glows faintly
 	},
 	"trophy_wall": {
 		"name": "Trophy Wall",
@@ -277,7 +279,7 @@ const DESC := {
 	"brazier": "A cheap, small warmth source for corners a hearth can't reach.",
 	"table": "Furniture. Adds comfort to a room; villagers relax nearby on breaks and slowly regain joy.",
 	"chair": "Furniture. A little comfort — pair it with a table by the hearth.",
-	"shrine": "A place of quiet. Strong comfort; villagers gather here to lift their spirits.",
+	"shrine": "A place of quiet. Strong comfort — and it awakens relic shards (3 from wild sites) into a true relic.",
 	"trophy_wall": "Prestige furniture — big comfort, needs renown. The centerpiece of a proud hall.",
 	"brewery": "Brews barley into ale. Villagers drink a mug on breaks for a real joy boost.",
 	"coop": "Comes stocked with hens. They lay an egg (food) about once a day — steady food with no field needed.",

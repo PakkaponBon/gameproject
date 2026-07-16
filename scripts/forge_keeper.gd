@@ -53,7 +53,14 @@ func _pick_recipe(station_id: String) -> String:
 		if String(def.get("station", "")) != station_id:
 			continue
 		# Don't overproduce: skip recipes whose output is already stocked up.
-		if _count_free(def.output) >= int(def.get("max_stock", 999)):
+		# Pool recipes (random output) count stock across the whole pool.
+		var stocked := 0
+		if def.has("output_pool"):
+			for oid: String in def.output_pool:
+				stocked += _count_free(oid)
+		else:
+			stocked = _count_free(def.output)
+		if stocked >= int(def.get("max_stock", 999)):
 			continue
 		if _inputs_available(def.inputs):
 			return id
