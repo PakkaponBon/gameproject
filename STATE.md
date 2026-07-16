@@ -34,7 +34,8 @@
   UiTheme (Title/Header/Muted/SlimPanel variations, icon_button factory), Cities-style UI
   (icon toolbar + corner clusters + collapsible villager card), world map as node map,
   procedural animation (bob/lean/lunge/breath), pacing pass (scout warnings, wealth-scaled
-  raids, goal ladder, dilemma ChoicePanel events), time compression (2000 ticks/day, 4-day seasons).
+  raids, goal ladder, dilemma ChoicePanel events), time compression (2000 ticks/day, 4-day
+  seasons), interactive tutorial (TutorialDirector, 8 do-it steps, saved, old saves skip).
 
 ## Atlas maps (indices are load-bearing — code refers to cell*16)
 **tiles.png (22 cells, 352px):** 0 grass · 1 dirt · 2 wall(custom brick) · 3 gate ·
