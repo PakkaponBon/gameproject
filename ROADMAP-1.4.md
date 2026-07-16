@@ -29,12 +29,17 @@
 - [x] Legion elites: Ashen Legion raids of 5+ field armored ranks
       (armor 4, +20 hp, deep-red). Saved via an elite flag.
 
-## Phase W4 — Expedition Prep
-- [ ] Provisioning: expeditions auto-pack spare food/herbs; supplies raise
-      power and cut casualty odds; the world map shows what they'd take.
-- [ ] Risk estimate: "odds look strong / even / grim" before committing.
+## Phase W4 — Expedition Prep ✓
+- [x] Provisioning: expeditions auto-pack up to 3 spare raw food (+power,
+      fewer casualties) and a bundle of herbs (fewer casualties); the
+      march-out line reports what they took. Rides the saved expedition dict.
+- [x] Risk estimate on the map: strong / even / grim odds shown for every
+      site and for attacking any unresolved faction. Armor now counts
+      toward expedition power (it keeps them swinging longer).
 
 ## Phase W5 — Ship it
-- [ ] Save additions verified; hints for sites and the shrine.
+- [x] Save additions verified additive (beast/elite flags, sites, packed
+      supplies all ride existing structures). Hints: wild sites once a
+      party stands ready; the shrine once 3 shards are held.
 - [ ] DoD (human): raid all four sites, awaken a relic at the shrine,
       survive a wolf winter, read the odds before an expedition. Tag v1.4.

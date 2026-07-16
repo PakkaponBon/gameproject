@@ -214,23 +214,59 @@ func send_expedition(target: String) -> void:
 	if party.size() < 2:
 		announced.emit("An expedition needs at least 2 armed, standing villagers.")
 		return
+	# Provisioning: pack spare food (power + fewer casualties) and a
+	# bundle of herbs (fewer casualties). Supplies shift the odds.
+	var food_packed := 0
+	while food_packed < 3 and _consume_food(1):
+		food_packed += 1
+	var herb_packed := 1 if _consume("herb", 1) else 0
 	var datas: Array = []
 	var power := 0.0
 	for pawn in party:
-		power += pawn.combat.attack_damage + 2.0 * pawn.skills.level("melee") \
-				+ 2.0 * pawn.skills.level("archery") + pawn.combat.hp / 10.0
-		if pawn.combat.relic_id != "":
-			power += 15.0
+		power += _pawn_power(pawn)
 		datas.append(_snapshot(pawn))
 		main.remove_pawn_for_expedition(pawn)
+	power += 3.0 * food_packed
 	expedition = {
 		"target": target,
 		"return_tick": GameClock.ticks + EXPEDITION_TICKS,
 		"party": datas,
 		"power": power,
+		"food": food_packed,
+		"herb": herb_packed,
 	}
-	announced.emit("The expedition marches out (%d strong). They return in a day." % datas.size())
+	var packed := " Provisioned with %d food%s." % [food_packed, " and herbs" if herb_packed > 0 else ""] \
+			if food_packed > 0 or herb_packed > 0 else ""
+	announced.emit("The expedition marches out (%d strong).%s They return in a day." \
+			% [datas.size(), packed])
 	factions_changed.emit()
+
+func _pawn_power(pawn: Pawn) -> float:
+	var power := pawn.combat.attack_damage + 2.0 * pawn.skills.level("melee") \
+			+ 2.0 * pawn.skills.level("archery") + pawn.combat.hp / 10.0 \
+			+ pawn.combat.armor  # armor keeps them swinging longer
+	if pawn.combat.relic_id != "":
+		power += 15.0
+	return power
+
+## Plain-language risk estimate for the world map, before committing.
+func expedition_odds(target: String) -> String:
+	if not is_instance_valid(main):
+		return ""
+	var party := _pick_party()
+	if party.size() < 2:
+		return ""
+	var power := 0.0
+	for pawn in party:
+		power += _pawn_power(pawn)
+	var strength := float(SiteDefs.get_def(target).strength) if SiteDefs.DEFS.has(target) \
+			else float(factions[target].strength)
+	var p := power / (power + strength) + 0.1
+	if p >= 0.75:
+		return "The odds look strong."
+	if p >= 0.5:
+		return "An even fight."
+	return "The odds look grim."
 
 ## Who would march if an expedition left now (world map preview).
 func party_preview() -> String:
@@ -272,8 +308,12 @@ func _resolve_expedition() -> void:
 	var report := ""
 	var survivors: Array = []
 	var casualties := 0
+	# Provisions bring people home: food and herbs cut the casualty odds.
+	var casualty_chance := (0.1 if success else 0.3) \
+			- 0.03 * int(expedition.get("food", 0)) - 0.05 * int(expedition.get("herb", 0))
+	casualty_chance = maxf(casualty_chance, 0.02)
 	for pdata: Dictionary in expedition.party:
-		if randf() < (0.1 if success else 0.3):
+		if randf() < casualty_chance:
 			casualties += 1
 		else:
 			survivors.append(pdata)
@@ -431,6 +471,21 @@ func _count(id: String) -> int:
 		if item.resource_id == id and not item.reserved and not (item.get_parent() is Pawn):
 			total += 1
 	return total
+
+## Consume n free raw food items (expedition packs); false if short.
+func _consume_food(n: int) -> bool:
+	var found: Array[FoodItem] = []
+	for node in get_tree().get_nodes_in_group("food"):
+		var food := node as FoodItem
+		if food.kind == "raw" and not food.reserved:
+			found.append(food)
+			if found.size() >= n:
+				break
+	if found.size() < n:
+		return false
+	for food in found:
+		food.queue_free()
+	return true
 
 func _consume(id: String, n: int) -> bool:
 	var found: Array[ResourceItem] = []

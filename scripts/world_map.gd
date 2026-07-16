@@ -303,6 +303,9 @@ func _refresh_detail() -> void:
 		var ready_in := FactionManager.site_ready_in(_selected)
 		var lines := "Danger: %d · Shards: %d · Relic odds: %d%%" \
 				% [int(sdef.strength), int(sdef.shards), int(float(sdef.relic_chance) * 100.0)]
+		var odds := FactionManager.expedition_odds(_selected)
+		if odds != "":
+			lines += "\n" + odds
 		if ready_in > 0:
 			lines += "\nThe trail is cold — ready in %.1f days." \
 					% (float(ready_in) / GameClock.TICKS_PER_DAY)
@@ -319,6 +322,10 @@ func _refresh_detail() -> void:
 				% [int(f.attitude), int(f.strength), String(def.personality)]
 		if FactionManager.has_oath(_selected):
 			_d_stats.text += "\nBound to you by kinship."
+		if f.resolved == "":
+			var odds := FactionManager.expedition_odds(_selected)
+			if odds != "":
+				_d_stats.text += "\nIf attacked now: " + odds.to_lower()
 		if def.has("likes"):
 			_d_gift.tooltip_text = "%s prizes %s (%d) — that gift earns deep favor. Otherwise: %d wood." \
 					% [String(def.leader), ResourceDefs.get_def(String(def.likes)).name,

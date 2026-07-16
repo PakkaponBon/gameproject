@@ -39,6 +39,10 @@ func _on_tick() -> void:
 		_hint("armor", "Raids grow with your renown. A Loom [B] weaves wool and hide into armor for your fighters.")
 	if main.raid_director.raid_count >= 2 and WorldGrid.traps.is_empty():
 		_hint("traps", "Lay Spike Pits [B] on the raiders' path — your own villagers walk around them.")
+	if FactionManager.sites.is_empty() and FactionManager.party_preview() != "":
+		_hint("sites", "Your armed villagers could raid the wild sites [M] — shards and relics wait out there.")
+	if _count_free("relic_shard") >= 3 and not _has_building_id("shrine"):
+		_hint("shrine", "You hold relic shards. A Shrine [B] can awaken three of them into a true relic.")
 
 func _hint(id: String, text: String) -> void:
 	if _shown.has(id):
