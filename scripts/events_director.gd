@@ -50,7 +50,7 @@ func _oath_offer() -> void:
 	if suitors.is_empty():
 		return
 	var id: String = suitors.pick_random()
-	var candidates := main.pawns.filter(func(p: Pawn) -> bool:
+	var candidates: Array = main.pawns.filter(func(p: Pawn) -> bool:
 		return not p.drafted and not p.collapsed and not p.dead)
 	if candidates.is_empty():
 		return
