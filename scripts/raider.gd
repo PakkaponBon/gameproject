@@ -18,6 +18,8 @@ var attack_damage := 8.0
 var armor := 0.0
 var is_boss := false  # set before add_child: tougher, drops a relic
 var is_looter := false  # grabs your goods and runs for the edge
+var is_beast := false  # ash-wolf: fast, fragile, can't batter gates
+var is_elite := false  # Legion rank: armored, tougher
 var carrying_loot := false
 var faction_id := ""  # who sent this bandit (attrition on death)
 var attack_cooldown := 0
@@ -44,6 +46,25 @@ func make_looter() -> void:
 	is_looter = true
 	($Body as Sprite2D).modulate = Color(0.55, 0.62, 0.38)
 
+## Ash-wolf: a beast, not a bandit. Fast and fragile, hits softer, can't
+## batter gates — walls fully answer a wolf winter.
+func make_wolf() -> void:
+	is_beast = true
+	hp = 30.0 * Balance.enemy_hp_mult()
+	attack_damage = 6.0 * Balance.enemy_damage_mult()
+	move_cooldown = 0
+	var body: Sprite2D = $Body
+	body.region_rect = Rect2(368, 0, 16, 16)  # four-legged silhouette
+	body.modulate = Color(0.5, 0.52, 0.58)  # ash-gray
+	body.scale = Vector2(1.2, 1.2)
+
+## Legion elite: armored rank in the Cindermarked's big raids.
+func make_elite() -> void:
+	is_elite = true
+	armor = 4.0
+	hp += 20.0
+	($Body as Sprite2D).modulate = Color(0.42, 0.16, 0.2)  # deep legion red
+
 func take_damage(amount: float) -> void:
 	Fx.flash($Body)
 	Fx.damage_number(self, amount)
@@ -51,14 +72,22 @@ func take_damage(amount: float) -> void:
 	if hp <= 0.0:
 		if faction_id != "":
 			FactionManager.on_bandit_killed(faction_id)
-		if is_boss:
-			_drop_item(RelicDefs.ORDER.pick_random())  # the relic faucet
-		if carrying_loot:
-			_drop_item("wood")  # cut down mid-theft: the goods stay home
-		if randf() < SWORD_DROP_CHANCE:
-			_drop_item("sword")
+		if is_beast:
+			_drop_meat()  # a felled wolf feeds the village
+		else:
+			if is_boss:
+				_drop_item(RelicDefs.ORDER.pick_random())  # the relic faucet
+			if carrying_loot:
+				_drop_item("wood")  # cut down mid-theft: the goods stay home
+			if randf() < SWORD_DROP_CHANCE:
+				_drop_item("sword")
 		gone.emit()
 		queue_free()
+
+func _drop_meat() -> void:
+	var meat: FoodItem = preload("res://scenes/food_item.tscn").instantiate()
+	meat.position = WorldGrid.cell_to_world(cell)
+	get_parent().add_child(meat)
 
 func _drop_item(id: String) -> void:
 	var item: ResourceItem = RESOURCE_SCENE.instantiate()
@@ -93,10 +122,12 @@ func _on_tick() -> void:
 	var path: Array[Vector2i] = WorldGrid.astar_enemy.get_id_path(cell, target_cell, true)
 	if path.size() >= 2:
 		if move_cooldown <= 0:
-			move_cooldown = MOVE_EVERY_TICKS
+			move_cooldown = 1 if is_beast else MOVE_EVERY_TICKS  # wolves lope
 			cell = path[1]
 			WorldGrid.trigger_trap(cell, self)  # spike pits bite (may free us)
 		return
+	if is_beast:
+		return  # beasts can't batter gates: walls fully answer a wolf winter
 	var gate := _nearest_breakable()
 	if gate == WorldGrid.INVALID_CELL:
 		return  # sealed solid: walls are absolute; pace outside

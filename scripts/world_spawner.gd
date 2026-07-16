@@ -121,12 +121,19 @@ func spawn_critters() -> void:
 	for i in CRITTER_COUNT:
 		spawn_one_critter(i % 2 == 1)  # every other one is a bird
 
-## One critter. Rabbits are huntable game; birds stay pure set dressing.
-func spawn_one_critter(is_bird: bool) -> void:
+## One critter. Rabbits (and boars) are huntable game; birds stay set
+## dressing. A boar yields more meat but wounds whoever corners it.
+func spawn_one_critter(is_bird: bool, boar := false) -> void:
 	var critter: Critter = CRITTER_SCENE.instantiate()
 	critter.huntable = not is_bird
+	var body: Sprite2D = critter.get_node("Body")
 	if is_bird:
-		(critter.get_node("Body") as Sprite2D).region_rect = Rect2(384, 0, 16, 16)
+		body.region_rect = Rect2(384, 0, 16, 16)
+	elif boar:
+		critter.fierce = true
+		critter.meat_count = Balance.MEAT_PER_KILL + 1
+		body.modulate = Color(0.55, 0.42, 0.32)  # dark bristled hide
+		body.scale = Vector2(1.15, 1.15)
 	critter.position = WorldGrid.cell_to_world(
 			Vector2i(randi() % WorldGrid.MAP_SIZE.x, randi() % WorldGrid.MAP_SIZE.y))
 	entities.add_child(critter)

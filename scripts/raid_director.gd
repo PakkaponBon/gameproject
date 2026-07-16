@@ -71,6 +71,8 @@ func _spawn_raid() -> void:
 			var raider := _spawn_bandit(cell, faction_id, placed == 0 and count >= 4)
 			if count >= 3 and placed % 3 == 2:
 				raider.make_looter()  # every third bandit is after your goods
+			elif faction_id == "ashen_legion" and count >= 5 and placed % 2 == 1:
+				raider.make_elite()  # the Cindermarked send armored ranks
 			placed += 1
 	if count >= ALLY_HELP_AT and FactionManager.has_ally():
 		_spawn_allies()
@@ -103,6 +105,22 @@ func _check_bells() -> void:
 ## just how long you've survived.
 func _wealth_pressure() -> int:
 	return clampi(WorldGrid.buildings.size() / 12 + FactionManager.renown / 3, 0, 3)
+
+## A beast pack (ash-wolves): no faction, no warning scouts — winter's own
+## raid. They share the raiders group, so defenses and raid_ended apply.
+func spawn_beast_pack(count: int) -> void:
+	var origin := _random_edge_cell()
+	var placed := 0
+	for offset: Vector2i in [Vector2i.ZERO, Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT,
+			Vector2i.RIGHT, Vector2i(0, 2), Vector2i(0, -2), Vector2i(2, 0), Vector2i(-2, 0)]:
+		if placed >= count:
+			break
+		var cell := origin + offset
+		if WorldGrid.in_bounds(cell) and not WorldGrid.is_wall(cell):
+			var wolf := _spawn_bandit(cell, "")
+			wolf.make_wolf()
+			placed += 1
+	EventBus.play_sfx.emit("horn")
 
 func _spawn_bandit(cell: Vector2i, faction_id: String, boss := false) -> Raider:
 	var raider: Raider = RAIDER_SCENE.instantiate()

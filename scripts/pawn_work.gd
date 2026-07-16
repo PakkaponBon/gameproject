@@ -144,6 +144,8 @@ func _do_hunt() -> void:
 		job = null
 		JobManager.complete_job(caught)  # sfx/fx, then...
 		if is_instance_valid(prey):
+			if prey.fierce:
+				pawn.take_damage(Balance.BOAR_BITE)  # the boar bites back
 			prey.hunted()  # ...drops the meat
 
 func _approach_work_spot() -> void:

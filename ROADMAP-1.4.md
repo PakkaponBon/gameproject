@@ -20,11 +20,14 @@
       random from the known set (recipe "output_pool" support). Assembly
       stays expedition-gated — magic is never crafted from raw materials.
 
-## Phase W3 — Bestiary
-- [ ] Ash-wolves: winter packs test the walls (beast raids — no faction,
-      no loot-stealing, fast and fragile).
-- [ ] Boars: hunting bites back — some game wounds the hunter.
-- [ ] Legion elites: big Ashen Legion raids bring armored ranks.
+## Phase W3 — Bestiary ✓
+- [x] Ash-wolves: winter mornings may loose a pack of 3-4 (no faction, no
+      scout warning, no gate-battering — walls fully answer wolves). Fast,
+      fragile, hit softly; a felled wolf drops meat. Saved via a beast flag.
+- [x] Boars: a share of replenished game is a boar — extra meat, but it
+      wounds its hunter once when cornered (Balance.BOAR_BITE).
+- [x] Legion elites: Ashen Legion raids of 5+ field armored ranks
+      (armor 4, +20 hp, deep-red). Saved via an elite flag.
 
 ## Phase W4 — Expedition Prep
 - [ ] Provisioning: expeditions auto-pack spare food/herbs; supplies raise

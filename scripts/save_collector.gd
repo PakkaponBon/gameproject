@@ -51,6 +51,8 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 			"hp": raider.hp,
 			"boss": raider.is_boss,
 			"looter": raider.is_looter,
+			"beast": raider.is_beast,
+			"elite": raider.is_elite,
 			"loot": raider.carrying_loot,
 			"faction": raider.faction_id,
 			"atk_cd": raider.attack_cooldown,

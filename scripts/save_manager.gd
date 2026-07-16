@@ -95,6 +95,12 @@ func apply_pending_load() -> void:
 	for r: Dictionary in data.raiders:
 		var raider: Raider = spawner.spawn_raider(_vec(r.cell), bool(r.boss))
 		raider.faction_id = String(r.faction)
+		# Kind flags before hp: make_wolf/make_elite reset stats, then the
+		# saved hp below restores battle damage on top.
+		if bool(r.get("beast", false)):
+			raider.make_wolf()
+		if bool(r.get("elite", false)):
+			raider.make_elite()
 		raider.hp = float(r.hp)
 		raider.attack_cooldown = int(r.atk_cd)
 		raider.move_cooldown = int(r.move_cd)

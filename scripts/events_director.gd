@@ -23,6 +23,10 @@ const OATH_CHANCE := 0.08  # a friendly faction may propose kinship
 func _on_day_started(_day: int) -> void:
 	if GameClock.season_index() != 3 and randf() < FROST_CHANCE:
 		_frost_snap()
+	if GameClock.season_index() == 3 and not Balance.peaceful() \
+			and randf() < Balance.WOLF_PACK_CHANCE \
+			and get_tree().get_nodes_in_group("raiders").is_empty():
+		_wolf_pack()
 	var refugee_chance := REFUGEE_BASE_CHANCE + REFUGEE_RENOWN_BONUS * FactionManager.renown
 	if main.pawns.size() < VILLAGER_CAP and randf() < minf(refugee_chance, 0.3):
 		_refugee_arrives()
@@ -75,12 +79,20 @@ func _oath_offer() -> void:
 			accept, decline)
 
 ## Keep huntable game topped up: ambient life stays alive AND meat stays a
-## renewable trickle, so hunting never exterminates the meadow.
+## renewable trickle, so hunting never exterminates the meadow. Some of
+## what wanders in is a boar — more meat, but it bites.
 func _replenish_game() -> void:
 	var count := get_tree().get_nodes_in_group("game").size()
 	while count < Balance.CRITTER_TARGET:
-		main.spawner.spawn_one_critter(false)  # rabbits are the huntable kind
+		main.spawner.spawn_one_critter(false, randf() < Balance.BOAR_CHANCE)
 		count += 1
+
+## Winter's own raid: an ash-wolf pack breaks from the treeline.
+func _wolf_pack() -> void:
+	main.raid_director.spawn_beast_pack(randi_range(3, 4))
+	main.hud.set_event("Ash-wolves! A pack breaks from the treeline — get everyone inside.",
+			Color(0.75, 0.8, 0.95))
+	EventBus.chronicle_entry.emit("A wolf winter. The pack came down with the cold.")
 
 ## Decisions at the gate: pause, two buttons, consequences. This is the
 ## beat the sim can't generate on its own.

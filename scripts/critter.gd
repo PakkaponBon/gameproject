@@ -10,6 +10,8 @@ const FOOD_SCENE := preload("res://scenes/food_item.tscn")
 var cell: Vector2i
 var move_cooldown := 0
 var huntable := false  # set before add_child
+var fierce := false  # boar: bites its hunter once before falling
+var meat_count := Balance.MEAT_PER_KILL
 var hunt_job: Job = null
 
 func _ready() -> void:
@@ -31,7 +33,7 @@ func hunted() -> void:
 	if hunt_job:
 		JobManager.remove_job(hunt_job)
 		hunt_job = null
-	for i in Balance.MEAT_PER_KILL:
+	for i in meat_count:
 		var meat: FoodItem = FOOD_SCENE.instantiate()
 		var spot := cell + Pawn.DIRS[i % Pawn.DIRS.size()] if i > 0 else cell
 		if not WorldGrid.in_bounds(spot) or WorldGrid.is_wall(spot):
