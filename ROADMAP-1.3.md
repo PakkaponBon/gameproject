@@ -17,11 +17,15 @@
       value flows into existing damage math, shown on the card, dropped on
       death, survives expeditions, saved. SAVE_VERSION → 25.
 
-## Phase S2 — Traps
-- [ ] Spike pit: enemies stepping on it take damage; breaks after a few
-      triggers. Villagers path around it automatically.
-- [ ] Alarm bell: rings (horn + feed alert) when a raider comes near — the
-      early-warning building for players who missed the scout line.
+## Phase S2 — Traps ✓
+- [x] Spike Pit (tile 20): block_villagers + NOT block_enemies — the gate
+      trick in reverse. Raiders stepping on take 20 damage; 3 uses, then it
+      destroys itself through the normal building_destroyed path. Uses are
+      saved (trap_uses), so spent spikes stay spent.
+- [x] Alarm Bell (tile 21): rings once per raid (horn + clickable feed
+      alert) when a raider comes within radius 10.
+- [x] Destroyed-building message is now def-aware ("The Gate is destroyed!")
+      instead of hardcoded to gates.
 
 ## Phase S3 — Faces of the Realm
 - [ ] Named faction leaders with a quirk each (data in FactionDefs), shown

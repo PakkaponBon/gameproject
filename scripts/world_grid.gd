@@ -21,6 +21,7 @@ var reserved_storage := {}  # Set of Vector2i claimed as a haul destination
 var indoor_cells := {}  # Set of Vector2i sealed off from the map edge (rooms)
 var warmth_sources := {}  # Vector2i -> radius (hearth, brazier)
 var comfort_sources := {}  # Vector2i -> comfort value (furniture)
+var traps := {}  # Vector2i -> remaining uses (spike pits)
 
 func _ready() -> void:
 	for grid: AStarGrid2D in [astar, astar_enemy]:
@@ -41,6 +42,7 @@ func reset() -> void:
 	indoor_cells.clear()
 	warmth_sources.clear()
 	comfort_sources.clear()
+	traps.clear()
 	astar.fill_solid_region(astar.region, false)
 	astar_enemy.fill_solid_region(astar_enemy.region, false)
 	zones_changed.emit()
@@ -65,6 +67,8 @@ func register_building(cell: Vector2i, id: String) -> void:
 		warmth_sources[cell] = int(def.warmth_radius)
 	if def.has("comfort"):
 		comfort_sources[cell] = int(def.comfort)
+	if def.has("trap_damage"):
+		traps[cell] = int(def.trap_uses)
 	if def.block_villagers or def.block_enemies:
 		_recompute_rooms()
 	if def.storage:
@@ -81,11 +85,24 @@ func remove_building(cell: Vector2i) -> void:
 	astar_enemy.set_point_solid(cell, false)
 	warmth_sources.erase(cell)
 	comfort_sources.erase(cell)
+	traps.erase(cell)
 	if def.block_villagers or def.block_enemies:
 		_recompute_rooms()
 	if def.storage:
 		stockpile_cells.erase(cell)
 		zones_changed.emit()
+
+## An enemy stepped here: if it's a trap, the spikes bite. Spent traps
+## are destroyed through the normal building_destroyed path.
+func trigger_trap(cell: Vector2i, victim: Node) -> void:
+	if not traps.has(cell) or not buildings.has(cell):
+		return
+	var def: Dictionary = BuildingDefs.get_def(buildings[cell])
+	traps[cell] = int(traps[cell]) - 1
+	EventBus.play_sfx.emit("hit")
+	victim.take_damage(float(def.trap_damage))  # may free the victim
+	if traps.has(cell) and int(traps[cell]) <= 0:
+		EventBus.building_destroyed.emit(cell)
 
 ## Damage a breakable building. Emits building_destroyed at 0 HP.
 func damage_building(cell: Vector2i, amount: float) -> void:

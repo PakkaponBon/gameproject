@@ -6,6 +6,7 @@ extends Node
 signal raid_started(faction_name: String)
 signal raid_warning  # scouts spotted: ~1 real minute to prepare
 signal raid_ended
+signal bell_rang(world_pos: Vector2)  # an alarm bell noticed a raider
 
 const RAIDER_SCENE := preload("res://scenes/raider.tscn")
 const ALLY_SCENE := preload("res://scenes/ally.tscn")
@@ -24,11 +25,17 @@ var raid_count := 0
 var spawn_parent: Node2D = null  # assigned by Main
 
 var _warned := false
+var _rung := {}  # bell cell -> true; cleared when the field is quiet
+var _bell_check := 0
 
 func _ready() -> void:
 	GameClock.ticked.connect(_on_tick)
 
 func _on_tick() -> void:
+	_bell_check -= 1
+	if _bell_check <= 0:
+		_bell_check = 15
+		_check_bells()
 	if Balance.peaceful():
 		return  # the realm sleeps
 	ticks_until_raid -= 1
@@ -69,6 +76,28 @@ func _spawn_raid() -> void:
 		_spawn_allies()
 	EventBus.play_sfx.emit("horn")
 	raid_started.emit(FactionDefs.get_def(faction_id).name)
+
+## Each alarm bell rings once per raid when a raider comes within its
+## radius — early warning for players who missed the scout line.
+func _check_bells() -> void:
+	var raiders := get_tree().get_nodes_in_group("raiders")
+	if raiders.is_empty():
+		_rung.clear()
+		return
+	for cell: Vector2i in WorldGrid.buildings:
+		if _rung.has(cell):
+			continue
+		var def: Dictionary = BuildingDefs.get_def(WorldGrid.buildings[cell])
+		if not def.has("alarm_radius"):
+			continue
+		var radius := int(def.alarm_radius)
+		for node in raiders:
+			var d := ((node as Raider).cell - cell).abs()
+			if maxi(d.x, d.y) <= radius:
+				_rung[cell] = true
+				EventBus.play_sfx.emit("horn")
+				bell_rang.emit(WorldGrid.cell_to_world(cell))
+				break
 
 ## Prosperity attracts trouble: raids scale with what you've built, not
 ## just how long you've survived.

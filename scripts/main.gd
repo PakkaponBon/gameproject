@@ -54,6 +54,8 @@ func _ready() -> void:
 	raid_director.raid_warning.connect(func() -> void:
 		hud.set_event("Scouts sighted beyond the treeline — a raid is coming. Draft [R] and man the walls.",
 				Color(1.0, 0.75, 0.4)))
+	raid_director.bell_rang.connect(func(world_pos: Vector2) -> void:
+		hud.set_event("The alarm bell rings — raiders near!", Color(1.0, 0.55, 0.3), world_pos))
 	raid_director.raid_ended.connect(func() -> void:
 		FactionManager.add_renown(1)
 		hud.set_event("The raid is beaten. Word of your village spreads.", Color(0.7, 0.95, 0.7))
@@ -346,15 +348,17 @@ func _on_building_built(cell: Vector2i, building_id: String) -> void:
 		hud.set_event("The %s is stocked — its animals settle in." % def.name, Color(0.9, 0.85, 0.6))
 		EventBus.chronicle_entry.emit("A %s was raised, and its animals came home." % def.name)
 
-## Smashed by enemies: gone, no refund.
+## Smashed by enemies (or a trap spending itself): gone, no refund.
 func _on_building_destroyed(cell: Vector2i) -> void:
+	var bname: String = BuildingDefs.get_def(WorldGrid.buildings[cell]).name \
+			if WorldGrid.buildings.has(cell) else "building"
 	if decon_orders.has(cell):
 		decon_orders[cell].cancel()
 		decon_orders.erase(cell)
 	WorldGrid.remove_building(cell)
 	walls.erase_cell(cell)
 	_remove_light(cell)
-	hud.set_event("A gate has been smashed!", Color(1.0, 0.6, 0.3), WorldGrid.cell_to_world(cell))
+	hud.set_event("The %s is destroyed!" % bname, Color(1.0, 0.6, 0.3), WorldGrid.cell_to_world(cell))
 
 func _on_building_deconstructed(cell: Vector2i) -> void:
 	decon_orders.erase(cell)

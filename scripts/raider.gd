@@ -95,6 +95,7 @@ func _on_tick() -> void:
 		if move_cooldown <= 0:
 			move_cooldown = MOVE_EVERY_TICKS
 			cell = path[1]
+			WorldGrid.trigger_trap(cell, self)  # spike pits bite (may free us)
 		return
 	var gate := _nearest_breakable()
 	if gate == WorldGrid.INVALID_CELL:
@@ -144,6 +145,7 @@ func _step_toward(target_cell: Vector2i) -> void:
 	var path: Array[Vector2i] = WorldGrid.astar_enemy.get_id_path(cell, target_cell, true)
 	if path.size() >= 2:
 		cell = path[1]
+		WorldGrid.trigger_trap(cell, self)  # looters aren't spared the spikes
 
 func _nearest_loose_item() -> ResourceItem:
 	var best: ResourceItem = null

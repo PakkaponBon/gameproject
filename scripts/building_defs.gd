@@ -10,7 +10,7 @@ extends RefCounted
 
 const ORDER := ["wall", "door", "gate", "bed", "barn", "forge", "stove", "watchtower",
 		"hearth", "brazier", "table", "chair", "shrine", "trophy_wall", "brewery", "coop",
-		"pasture", "loom"]
+		"pasture", "loom", "spike_pit", "bell"]
 
 const DEFS := {
 	"wall": {
@@ -221,6 +221,33 @@ const DEFS := {
 		"storage": false,
 		"workstation": true,  # weaves wool/hide into armor (station "loom")
 	},
+	"spike_pit": {
+		"name": "Spike Pit",
+		"cost": {"wood": 1, "iron_ingot": 1},
+		"refund": {},
+		"build_ticks": 25,
+		"tile": Vector2i(20, 0),
+		"ghost": Color(0.35, 0.3, 0.25),
+		# The gate trick in reverse: villagers path around it, enemies
+		# walk straight onto the spikes.
+		"block_villagers": true,
+		"block_enemies": false,
+		"storage": false,
+		"trap_damage": 20.0,
+		"trap_uses": 3,
+	},
+	"bell": {
+		"name": "Alarm Bell",
+		"cost": {"wood": 2},
+		"refund": {"wood": 1},
+		"build_ticks": 20,
+		"tile": Vector2i(21, 0),
+		"ghost": Color(0.8, 0.7, 0.4),
+		"block_villagers": false,
+		"block_enemies": false,
+		"storage": false,
+		"alarm_radius": 10,  # rings when a raider comes this close
+	},
 	"watchtower": {
 		"name": "Watchtower",
 		"cost": {"wood": 3, "stone": 2},
@@ -256,6 +283,8 @@ const DESC := {
 	"coop": "Comes stocked with hens. They lay an egg (food) about once a day — steady food with no field needed.",
 	"pasture": "Comes stocked with sheep. They grow wool — the loom turns it into armor.",
 	"loom": "Weaves wool into padded coats and hides into leather jerkins. Armor makes your fighters survive raids.",
+	"spike_pit": "Villagers walk around it; raiders walk onto it and get hurt. Breaks after a few triggers — put it in their path.",
+	"bell": "Rings loudly when a raider comes near. Early warning for the edge of your land.",
 }
 
 static func get_def(id: String) -> Dictionary:

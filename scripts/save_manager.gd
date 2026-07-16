@@ -65,6 +65,8 @@ func apply_pending_load() -> void:
 		main.place_building(_vec(b.cell), b.id)
 	for d: Dictionary in data.building_hp:
 		WorldGrid.building_hp[_vec(d.cell)] = float(d.hp)  # keep battle damage
+	for t: Dictionary in data.get("trap_uses", []):
+		WorldGrid.traps[_vec(t.cell)] = int(t.uses)  # keep spent spikes spent
 	for s: Array in data.stockpiles:
 		WorldGrid.set_stockpile(_vec(s), true)
 	for s: Array in data.safety:

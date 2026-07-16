@@ -11,6 +11,9 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 	var damaged: Array = []
 	for cell: Vector2i in WorldGrid.building_hp:
 		damaged.append({"cell": _v(cell), "hp": WorldGrid.building_hp[cell]})
+	var trap_uses: Array = []
+	for cell: Vector2i in WorldGrid.traps:
+		trap_uses.append({"cell": _v(cell), "uses": WorldGrid.traps[cell]})
 	var trees: Array = []
 	for node in tree.get_nodes_in_group("trees"):
 		var t := node as TreeEntity
@@ -102,6 +105,7 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 		"raid_count": main.raid_director.raid_count,
 		"realm": FactionManager.serialize(),
 		"building_hp": damaged,
+		"trap_uses": trap_uses,
 		"ground_seed": main.spawner.ground_seed,
 		"buildings": built,
 		"stockpiles": WorldGrid.stockpile_cells.keys().map(_v),
