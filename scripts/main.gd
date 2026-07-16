@@ -9,6 +9,7 @@ const DECON_SCENE := preload("res://scenes/deconstruct_order.tscn")
 
 var pawns: Array[Pawn] = []
 var selected: Pawn = null
+var commands_issued := 0  # move orders given (the tutorial watches this)
 var _last_raid_faction := "bandit"
 var blueprints := {}  # cell -> Blueprint
 var decon_orders := {}  # cell -> DeconstructOrder
@@ -37,6 +38,7 @@ var _lights := {}  # cell -> PointLight2D (workstation glow)
 @onready var chronicle_panel: ChroniclePanel = $ChroniclePanel
 @onready var choice_panel: ChoicePanel = $ChoicePanel
 @onready var weather_director: WeatherDirector = $WeatherDirector
+@onready var tutorial: TutorialDirector = $TutorialDirector
 
 func _ready() -> void:
 	UiTheme.apply_to_layers(self)  # children built their UI in their _ready
@@ -131,6 +133,7 @@ func handle_command_click(cell: Vector2i) -> void:
 		selected.attack(raider)
 	elif selected:
 		selected.move_to(cell)
+		commands_issued += 1
 
 func select(pawn: Pawn) -> void:
 	if selected and is_instance_valid(selected):

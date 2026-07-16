@@ -125,6 +125,8 @@ func apply_pending_load() -> void:
 	main.field_keeper.sync_all()  # plant jobs for empty, non-winter field cells
 	main.weather_director.set_weather(String(data.get("weather", "clear")))
 	main.chronicle_director.entries = data.get("chronicle", [])
+	# Saves that predate the tutorial default to finished — no nagging.
+	main.tutorial.restore(int(data.get("tutorial_step", 0)), bool(data.get("tutorial_done", true)))
 	for p: Dictionary in data.pawns:
 		_restore_pawn(p)
 	main.select_pawn(int(data.selected))

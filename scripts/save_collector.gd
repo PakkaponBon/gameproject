@@ -126,6 +126,8 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 		"fields": field_zones,
 		"crops": crops,
 		"chronicle": main.chronicle_director.entries,
+		"tutorial_step": main.tutorial.step,
+		"tutorial_done": main.tutorial.finished,
 		"pawns": main.pawns.map(_pawn_data),
 		"selected": main.pawns.find(main.selected),
 		"camera": {"pos": [camera.position.x, camera.position.y], "zoom": camera.zoom.x},
