@@ -21,6 +21,7 @@ const HEAL_ON_GROUND := 0.02
 var hp := HP_MAX
 var attack_damage := WeaponDefs.UNARMED_DAMAGE
 var armor := 0.0
+var armor_id := ""  # worn armor item ("" = unarmored); armor holds its value
 var weapon_id := ""  # "" = unarmed
 var ammo := 0  # arrow shots remaining (bows only)
 var relic_id := ""  # carried magic relic ("" = none)
@@ -78,6 +79,17 @@ func equip(id: String) -> void:
 	weapon_id = id
 	attack_damage = float(WeaponDefs.get_def(id).damage)
 	pawn.update_held()
+
+## Wear armor; a swap drops the old piece for someone else to claim.
+func equip_armor(id: String) -> void:
+	if armor_id != "":
+		var old: ResourceItem = preload("res://scenes/resource_item.tscn").instantiate()
+		old.resource_id = armor_id
+		old.position = WorldGrid.cell_to_world(pawn.cell)
+		pawn.get_parent().add_child(old)
+	armor_id = id
+	armor = float(ResourceDefs.get_def(id).armor)
+	pawn.stats_changed.emit()
 
 ## Drop the weapon at our feet (gear reassignment via the panel).
 func unequip() -> void:

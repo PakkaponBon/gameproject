@@ -9,7 +9,8 @@ extends RefCounted
 ## recipes there. cost/refund are per-resource dictionaries.
 
 const ORDER := ["wall", "door", "gate", "bed", "barn", "forge", "stove", "watchtower",
-		"hearth", "brazier", "table", "chair", "shrine", "trophy_wall", "brewery", "coop"]
+		"hearth", "brazier", "table", "chair", "shrine", "trophy_wall", "brewery", "coop",
+		"pasture", "loom"]
 
 const DEFS := {
 	"wall": {
@@ -195,6 +196,31 @@ const DEFS := {
 		"livestock": "chicken",  # stocked with hens when built; they lay eggs
 		"livestock_count": 2,
 	},
+	"pasture": {
+		"name": "Pasture",
+		"cost": {"wood": 2},
+		"refund": {"wood": 1},
+		"build_ticks": 30,
+		"tile": Vector2i(18, 0),
+		"ghost": Color(0.7, 0.6, 0.4),
+		"block_villagers": false,
+		"block_enemies": false,
+		"storage": false,
+		"livestock": "sheep",
+		"livestock_count": 2,
+	},
+	"loom": {
+		"name": "Loom",
+		"cost": {"wood": 3},
+		"refund": {"wood": 1},
+		"build_ticks": 40,
+		"tile": Vector2i(19, 0),
+		"ghost": Color(0.75, 0.6, 0.45),
+		"block_villagers": false,
+		"block_enemies": false,
+		"storage": false,
+		"workstation": true,  # weaves wool/hide into armor (station "loom")
+	},
 	"watchtower": {
 		"name": "Watchtower",
 		"cost": {"wood": 3, "stone": 2},
@@ -228,6 +254,8 @@ const DESC := {
 	"trophy_wall": "Prestige furniture — big comfort, needs renown. The centerpiece of a proud hall.",
 	"brewery": "Brews barley into ale. Villagers drink a mug on breaks for a real joy boost.",
 	"coop": "Comes stocked with hens. They lay an egg (food) about once a day — steady food with no field needed.",
+	"pasture": "Comes stocked with sheep. They grow wool — the loom turns it into armor.",
+	"loom": "Weaves wool into padded coats and hides into leather jerkins. Armor makes your fighters survive raids.",
 }
 
 static func get_def(id: String) -> Dictionary:

@@ -212,6 +212,7 @@ func _snapshot(pawn: Pawn) -> Dictionary:
 		"name": String(pawn.name),
 		"hp": pawn.combat.hp,
 		"weapon": pawn.combat.weapon_id,
+		"armor": pawn.combat.armor_id,
 		"ammo": pawn.combat.ammo,
 		"relic": pawn.combat.relic_id,
 		"skills": pawn.skills.xp.duplicate(),

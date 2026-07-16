@@ -17,6 +17,8 @@ const CRITTER_TARGET := 5       # huntable game kept topped up (ambiance + renew
 
 # --- livestock ---
 const EGG_LAY_DAYS := 1.0       # a hen lays an egg (raw food) about once a day
+const WOOL_DAYS := 1.5          # a sheep grows a bundle of wool this often
+const HIDE_CHANCE := 0.4        # chance a hunted rabbit also yields a hide
 
 static var mode := "Normal"
 

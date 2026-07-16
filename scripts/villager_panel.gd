@@ -63,6 +63,8 @@ func refresh() -> void:
 	var gear := pawn.combat.weapon_id if pawn.combat.weapon_id != "" else "unarmed"
 	if pawn.combat.is_ranged():
 		gear += " (%d arrows)" % pawn.combat.ammo
+	if pawn.combat.armor_id != "":
+		gear += " · %s" % ResourceDefs.get_def(pawn.combat.armor_id).name
 	if pawn.combat.relic_id != "":
 		gear += " + %s" % ResourceDefs.get_def(pawn.combat.relic_id).name
 	_gear_label.text = "Gear: " + gear

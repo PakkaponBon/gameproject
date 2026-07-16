@@ -145,6 +145,7 @@ static func _pawn_data(pawn: Pawn) -> Dictionary:
 		"hp": pawn.combat.hp,
 		"atk_cd": pawn.combat.attack_cooldown,
 		"weapon": pawn.combat.weapon_id,
+		"armor": pawn.combat.armor_id,
 		"ammo": pawn.combat.ammo,
 		"relic": pawn.combat.relic_id,
 		"relic_cd": pawn.combat.relic_cooldown,

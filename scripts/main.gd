@@ -241,6 +241,8 @@ func return_expedition_member(pdata: Dictionary) -> void:
 		pawn.skills.xp[skill_id] = float(pdata.skills[skill_id])
 	if String(pdata.weapon) != "":
 		pawn.combat.equip(pdata.weapon)
+	if String(pdata.get("armor", "")) != "":
+		pawn.combat.equip_armor(String(pdata.armor))
 	pawn.combat.ammo = int(pdata.ammo)
 	pawn.combat.relic_id = String(pdata.relic)
 	pawn.combat.hp = maxf(float(pdata.hp) * 0.8, 30.0)  # battle-worn
@@ -297,6 +299,8 @@ func _on_pawn_died(pawn: Pawn) -> void:
 	spawner.spawn_entity(spawner.GRAVE_SCENE, pawn.cell)
 	if pawn.combat.weapon_id != "":
 		spawner.drop_resource(pawn.cell, pawn.combat.weapon_id, 1)  # gear outlives its owner
+	if pawn.combat.armor_id != "":
+		spawner.drop_resource(pawn.cell, pawn.combat.armor_id, 1)
 	pawns.erase(pawn)
 	for other in pawns:
 		# Loss is real: colony-wide mood hit, and friends grieve deeper.
@@ -339,8 +343,8 @@ func _on_building_built(cell: Vector2i, building_id: String) -> void:
 	if def.has("livestock"):
 		for i in int(def.get("livestock_count", 2)):
 			spawner.spawn_livestock(_free_cell_near(cell), def.livestock)
-		hud.set_event("The coop is stocked with hens — eggs will come.", Color(0.9, 0.85, 0.6))
-		EventBus.chronicle_entry.emit("A coop was raised, and the first hens came to roost.")
+		hud.set_event("The %s is stocked — its animals settle in." % def.name, Color(0.9, 0.85, 0.6))
+		EventBus.chronicle_entry.emit("A %s was raised, and its animals came home." % def.name)
 
 ## Smashed by enemies: gone, no refund.
 func _on_building_destroyed(cell: Vector2i) -> void:

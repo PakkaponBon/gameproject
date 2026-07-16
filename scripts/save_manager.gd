@@ -4,7 +4,7 @@ extends Node
 ## Loading reloads the main scene; `pending_load` survives the reload
 ## because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 24
+const SAVE_VERSION := 25
 ## Keys a save must carry; anything less is corrupt, and corrupt saves
 ## get an error message — never a crash to desktop.
 const REQUIRED_KEYS := ["clock_ticks", "ground_seed", "buildings", "pawns", "realm", "items", "fields"]
@@ -144,6 +144,8 @@ func _restore_pawn(p: Dictionary) -> void:
 	pawn.combat.attack_cooldown = int(p.atk_cd)
 	if String(p.weapon) != "":
 		pawn.combat.equip(p.weapon)
+	if String(p.get("armor", "")) != "":
+		pawn.combat.equip_armor(String(p.armor))
 	pawn.combat.ammo = int(p.ammo)
 	pawn.combat.relic_id = String(p.relic)
 	pawn.combat.relic_cooldown = int(p.relic_cd)

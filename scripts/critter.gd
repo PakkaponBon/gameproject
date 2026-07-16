@@ -25,7 +25,8 @@ func _ready() -> void:
 		JobManager.add_job(hunt_job)
 	GameClock.ticked.connect(_on_tick)
 
-## Caught: drop meat (raw food) with a dust puff — no gore, per tone rule.
+## Caught: drop meat (raw food), sometimes a hide for the loom — with a
+## dust puff, no gore, per tone rule.
 func hunted() -> void:
 	if hunt_job:
 		JobManager.remove_job(hunt_job)
@@ -37,6 +38,11 @@ func hunted() -> void:
 			spot = cell
 		meat.position = WorldGrid.cell_to_world(spot)
 		get_parent().add_child(meat)
+	if randf() < Balance.HIDE_CHANCE:
+		var hide: ResourceItem = preload("res://scenes/resource_item.tscn").instantiate()
+		hide.resource_id = "hide"
+		hide.position = WorldGrid.cell_to_world(cell)
+		get_parent().add_child(hide)
 	Fx.burst(get_parent(), position, Color(0.72, 0.55, 0.42))
 	queue_free()
 

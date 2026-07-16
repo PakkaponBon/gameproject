@@ -46,7 +46,8 @@ func request_job(seeker: Pawn, reserve := true) -> Job:
 		elif job.type == Job.Type.MINE or job.type == Job.Type.HUNT:
 			prio_type = Job.Type.CHOP  # both are gathering work
 		elif job.type == Job.Type.EQUIP or job.type == Job.Type.AMMO \
-				or job.type == Job.Type.RELIC or job.type == Job.Type.TREAT:
+				or job.type == Job.Type.RELIC or job.type == Job.Type.TREAT \
+				or job.type == Job.Type.ARMOR:
 			prio_type = Job.Type.HAUL
 		elif job.type == Job.Type.CRAFT:
 			prio_type = Job.Type.BUILD
@@ -74,6 +75,11 @@ func request_job(seeker: Pawn, reserve := true) -> Job:
 				continue  # not trained enough for this weapon
 		if job.type == Job.Type.AMMO and (not seeker.combat.is_ranged() or seeker.combat.ammo >= 5):
 			continue
+		if job.type == Job.Type.ARMOR:
+			# Take it only if it's an upgrade over what we wear.
+			var adef: Dictionary = ResourceDefs.get_def((job.target as ResourceItem).resource_id)
+			if seeker.combat.armor >= float(adef.armor):
+				continue
 		if job.type == Job.Type.RELIC and (seeker.combat.relic_id != "" \
 				or not TraitDefs.has_flag(seeker.traits, "magic")):
 			continue  # relics answer only to the gifted

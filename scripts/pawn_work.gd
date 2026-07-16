@@ -99,7 +99,7 @@ func _do_job() -> void:
 			_ensure_food_fetch()
 		Job.Type.TREAT:
 			_ensure_herb_fetch()
-		Job.Type.EQUIP, Job.Type.AMMO, Job.Type.RELIC:
+		Job.Type.EQUIP, Job.Type.AMMO, Job.Type.RELIC, Job.Type.ARMOR:
 			_claim_here()
 		Job.Type.DECONSTRUCT, Job.Type.MINE:
 			_do_adjacent_work()
@@ -203,6 +203,8 @@ func _claim_here() -> void:
 			pawn.combat.ammo += int(ResourceDefs.get_def(item.resource_id).shots)
 		Job.Type.RELIC:
 			pawn.combat.relic_id = item.resource_id
+		Job.Type.ARMOR:
+			pawn.combat.equip_armor(item.resource_id)
 	item.queue_free()  # lives in gear now, not on the ground
 	JobManager.complete_job(job)
 	job = null

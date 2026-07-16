@@ -55,6 +55,8 @@ func _settle() -> void:
 		_register_claim_job(Job.Type.AMMO)
 	elif ResourceDefs.get_def(resource_id).get("relic", false):
 		_register_claim_job(Job.Type.RELIC)
+	elif ResourceDefs.get_def(resource_id).has("armor"):
+		_register_claim_job(Job.Type.ARMOR)
 
 func _register_haul_job() -> void:
 	haul_job = Job.new()
