@@ -27,10 +27,13 @@
 - [x] Destroyed-building message is now def-aware ("The Gate is destroyed!")
       instead of hardcoded to gates.
 
-## Phase S3 — Faces of the Realm
-- [ ] Named faction leaders with a quirk each (data in FactionDefs), shown
-      on the world-map detail panel; envoy/gift lines mention them.
-- [ ] Leader gift preferences sharpen the personality math.
+## Phase S3 — Faces of the Realm ✓
+- [x] Named leaders with a quirk each (data in FactionDefs): Varga Redmark,
+      Lord Alden Vale, Mother Fern, Thane Borvik, the Cindermarked. Shown on
+      the world-map detail panel; envoy/alliance/conquest lines name them.
+- [x] Gift preferences: each leader prizes one good (sword / wool / ingots /
+      ale) — gifting it earns +25 attitude and a chronicle line, giving the
+      production chains political weight. Falls back to the wood gift.
 
 ## Phase S4 — Oaths & Wars
 - [ ] Faction wars: neighbors skirmish over time; strengths drift against

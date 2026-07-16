@@ -7,6 +7,7 @@ signal announced(text: String)
 signal realm_ruled
 
 const GIFT_WOOD := 10
+const LIKED_GIFT_BONUS := 25.0  # a leader's prized gift lands far harder
 const TRIBUTE_WOOD := 15
 const ENVOY_COOLDOWN_TICKS := 3000  # one envoy per faction per day
 const DEMAND_CHANCE_PER_DAY := 0.2
@@ -83,6 +84,15 @@ func send_gift(id: String) -> void:
 		add_renown(1)
 		_shift_attitude(id, 30.0)
 		return
+	# The leader's prized gift, if we can spare it, beats a cart of wood.
+	var def := FactionDefs.get_def(id)
+	if def.has("likes") and _consume(String(def.likes), int(def.likes_count)):
+		announced.emit("%s prizes such a gift above all. %s warms to the village." \
+				% [String(def.leader), _fname(id)])
+		EventBus.chronicle_entry.emit("A gift of %s went to %s. It was the right one." \
+				% [ResourceDefs.get_def(String(def.likes)).name, String(def.leader)])
+		_shift_attitude(id, LIKED_GIFT_BONUS)
+		return
 	if not _consume("wood", GIFT_WOOD):
 		announced.emit("Not enough spare wood for a gift (%d needed)." % GIFT_WOOD)
 		return
@@ -98,7 +108,7 @@ func send_envoy(id: String) -> void:
 		announced.emit("Your envoy to %s needs time before returning." % _fname(id))
 		return
 	f.envoy_ready = GameClock.ticks + ENVOY_COOLDOWN_TICKS
-	announced.emit("An envoy rides for %s." % _fname(id))
+	announced.emit("An envoy rides to %s of %s." % [_leader(id), _fname(id)])
 	_shift_attitude(id, 6.0 if _personality(id) == "honorable" else 4.0)
 
 func pay_tribute(id: String) -> void:
@@ -150,6 +160,8 @@ func damage_strength(id: String, amount: float) -> void:
 		f.resolved = "destroyed"
 		renown += 5
 		announced.emit("%s is broken! Their stores are absorbed into the village." % _fname(id))
+		EventBus.chronicle_entry.emit("%s is broken, and %s's banner burns with them." \
+				% [_fname(id), _leader(id)])
 		if is_instance_valid(main):
 			var center: Vector2i = WorldGrid.MAP_SIZE / 2
 			main.spawner.drop_resource(center, "wood", 8)
@@ -320,6 +332,8 @@ func _shift_attitude(id: String, amount: float) -> void:
 		f.resolved = "allied"
 		renown += 5
 		announced.emit("%s pledges alliance! Their warriors will answer big raids." % _fname(id))
+		EventBus.chronicle_entry.emit("%s of %s clasped hands with the village. An alliance is sworn." \
+				% [_leader(id), _fname(id)])
 		_check_victory()
 	factions_changed.emit()
 
@@ -331,6 +345,9 @@ func _personality(id: String) -> String:
 
 func _fname(id: String) -> String:
 	return FactionDefs.get_def(id).name
+
+func _leader(id: String) -> String:
+	return String(FactionDefs.get_def(id).get("leader", "their chief"))
 
 func _count(id: String) -> int:
 	var total := 0

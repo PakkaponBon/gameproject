@@ -292,8 +292,18 @@ func _refresh_detail() -> void:
 		_reset_confirm(_d_expedition)
 	elif is_faction:
 		var f: Dictionary = FactionManager.factions[_selected]
+		var def := FactionDefs.get_def(_selected)
+		# The face across the table: leader, their quirk, then the numbers.
+		if def.has("leader"):
+			_d_flavor.text = "%s — %s\n%s" % [String(def.leader), String(def.quirk), String(place.flavor)]
 		_d_stats.text = "Attitude %d · Strength %d\nTemperament: %s" \
-				% [int(f.attitude), int(f.strength), FactionDefs.get_def(_selected).personality]
+				% [int(f.attitude), int(f.strength), String(def.personality)]
+		if def.has("likes"):
+			_d_gift.tooltip_text = "%s prizes %s (%d) — that gift earns deep favor. Otherwise: %d wood." \
+					% [String(def.leader), ResourceDefs.get_def(String(def.likes)).name,
+					int(def.likes_count), FactionManager.GIFT_WOOD]
+		else:
+			_d_gift.tooltip_text = "Spend stored wood to warm their attitude."
 		var open: bool = f.resolved == ""
 		_d_gift.visible = open
 		_d_envoy.visible = open
