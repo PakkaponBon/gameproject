@@ -50,6 +50,7 @@
 | VISION.md | The FULL game (post-1.0): acts, endings, update ladder v1.1→v2.0. Never code from it directly — slice into mini-roadmaps |
 | ART_DIRECTION.md | Palette, sprite specs, animation caps |
 | IDEAS.md | Scope parking lot — cool-but-not-now goes here, never into code |
+| MODDING.md | How to add content to each data catalog (crops, buildings, recipes, factions, sites, scenarios…) with copy-paste examples |
 | PROMPTS.md / WORKFLOW.md | Bo's manuals — how he drives you |
 
 ## Working rules for Claude Code
