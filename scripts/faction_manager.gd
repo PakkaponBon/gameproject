@@ -57,13 +57,13 @@ func reset() -> void:
 	factions_changed.emit()
 
 func add_renown(amount: int) -> void:
-	renown += amount
+	renown += int(ceil(amount * ScenarioDefs.renown_mult()))
 	factions_changed.emit()
 
 func serialize() -> Dictionary:
 	return {"factions": factions, "expedition": expedition, "request": request,
 			"sites": sites, "victory_shown": victory_shown, "long_night": long_night,
-			"renown": renown, "difficulty": Balance.mode}
+			"renown": renown, "difficulty": Balance.mode, "scenario": ScenarioDefs.selected}
 
 func deserialize(data: Dictionary) -> void:
 	factions = data.factions
@@ -71,6 +71,8 @@ func deserialize(data: Dictionary) -> void:
 	request = data.get("request", {})
 	sites = data.get("sites", {})
 	long_night = bool(data.get("long_night", false))
+	if ScenarioDefs.DEFS.has(String(data.get("scenario", ""))):
+		ScenarioDefs.selected = String(data.scenario)
 	victory_shown = bool(data.victory_shown)
 	renown = int(data.renown)
 	Balance.mode = String(data.difficulty)

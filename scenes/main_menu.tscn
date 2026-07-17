@@ -33,6 +33,17 @@ horizontal_alignment = 1
 text = "Born from ashes. Rebuild the village. Rule the world."
 horizontal_alignment = 1
 
+[node name="ScenarioButton" type="Button" parent="VBox"]
+unique_name_in_owner = true
+text = "Scenario: Standard"
+
+[node name="ScenarioBlurb" type="Label" parent="VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+autowrap_mode = 3
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.7, 0.68, 0.62, 1)
+
 [node name="NewGameButton" type="Button" parent="VBox"]
 unique_name_in_owner = true
 text = "New Game"

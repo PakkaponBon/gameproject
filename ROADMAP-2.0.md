@@ -20,9 +20,12 @@
 - [x] Vhal Reclaimed (true ending): survive the Long Night → a warm, quiet
       multi-page epilogue returning to the ruined city. Told, never shown.
 
-## Phase N3 — Scenarios  *(future)*
-- [ ] Standard / Hard Winter (autumn start, 2 pawns) / Wanderers (no wagon
-      larder, high renown) — pick on the main menu. Data over code.
+## Phase N3 — Scenarios ✓
+- [x] ScenarioDefs catalog (pawns / start season / start food / renown mult /
+      blurb). Standard, Hard Winter (autumn start, 2 founders, thin larder),
+      Wanderers (bare larder, 1.5× renown). Cycle button + blurb on the main
+      menu; choice rides a static through the scene change and saves in the
+      realm blob. new_game reads it (season offset, pawn count, forage).
 
 ## Phase N4 — Ship it  *(future)*
 - [ ] Balance the siege from playtest (wave sizes vs a well-armed village).

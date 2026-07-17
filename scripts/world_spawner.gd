@@ -38,12 +38,15 @@ var ground_seed := 0
 @onready var entities: Node2D = main.get_node("Entities")
 
 func new_game() -> void:
+	var scenario := ScenarioDefs.current()
+	# Start in the chosen season (Hard Winter opens in autumn — winter looms).
+	GameClock.ticks = int(scenario.start_season) * GameClock.DAYS_PER_SEASON * GameClock.TICKS_PER_DAY
 	ground_seed = randi()
 	generate_ground()
 	var used := {}
-	_spawn_pawns(used)
+	_spawn_pawns(used, int(scenario.pawns))
 	_scatter(TREE_SCENE, TREE_COUNT, used)
-	_scatter_bushes(Balance.START_FOOD, used)
+	_scatter_bushes(int(scenario.start_food), used)
 	_scatter_ore("stone", STONE_NODES, used)
 	_scatter_ore("iron_ore", IRON_NODES, used)
 	_guarantee_start_resources(used)
@@ -229,7 +232,7 @@ func create_pawn(cell: Vector2i, pawn_name: String, priorities: Dictionary) -> P
 	pawn_created.emit(pawn)
 	return pawn
 
-func _spawn_pawns(used: Dictionary) -> void:
+func _spawn_pawns(used: Dictionary, pawn_count := PAWN_COUNT) -> void:
 	# Showcase priorities: a lumberjack, a hauler, and a builder-farmer.
 	var presets: Array[Dictionary] = [
 		{Job.Type.CHOP: 1, Job.Type.HAUL: 2, Job.Type.BUILD: 2, Job.Type.PLANT: 2},
@@ -238,7 +241,7 @@ func _spawn_pawns(used: Dictionary) -> void:
 	]
 	var center := WorldGrid.MAP_SIZE / 2
 	var count := 0
-	while count < PAWN_COUNT:
+	while count < pawn_count:
 		var cell := center + Vector2i(
 			randi_range(-PAWN_SPAWN_RADIUS, PAWN_SPAWN_RADIUS),
 			randi_range(-PAWN_SPAWN_RADIUS, PAWN_SPAWN_RADIUS))
