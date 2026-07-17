@@ -379,6 +379,8 @@ func _check_victory() -> void:
 func _check_long_night() -> void:
 	if long_night or not factions.has("ashen_legion"):
 		return
+	if Balance.peaceful():
+		return  # Peaceful promises no raids — the Legion is resolved by treaty, not siege
 	if factions["ashen_legion"].resolved != "":
 		return  # the Legion was itself resolved — no siege (e.g. the Long Peace)
 	for id: String in factions:

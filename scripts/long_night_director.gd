@@ -78,7 +78,8 @@ func _on_tick() -> void:
 func _start_wave() -> void:
 	phase = Phase.WAVE
 	var wave: Dictionary = WAVES[wave_index]
-	main.raid_director.spawn_legion_wave(int(wave.size), bool(wave.boss))
+	var size := int(ceil(int(wave.size) * Balance.siege_wave_mult()))  # Hard sieges harder
+	main.raid_director.spawn_legion_wave(size, bool(wave.boss))
 	var label := "The Cindermarked leads the last wave — everything, now!" if bool(wave.boss) \
 			else "Wave %d of %d — the Legion comes!" % [wave_index + 1, WAVES.size()]
 	main.hud.set_event(label, Color(1.0, 0.4, 0.35))

@@ -27,8 +27,12 @@
       menu; choice rides a static through the scene change and saves in the
       realm blob. new_game reads it (season offset, pawn count, forage).
 
-## Phase N4 — Ship it  *(future)*
-- [ ] Balance the siege from playtest (wave sizes vs a well-armed village).
+## Phase N4 — Ship it
+- [x] Difficulty scales the finale: Hard sieges 1.4× wave sizes; Peaceful
+      never sieges — the Legion is resolved by treaty/expedition instead, so
+      "no raids" holds all the way to the end (endings stay correct).
+- [ ] Numeric balance from playtest (wave sizes / lull length vs a fully
+      armored, trapped village) — needs real play.
 - [ ] Music pass (human): village / winter / raid / festival / map / Long Night.
 - [ ] DoD (human): resolve four factions, survive the Long Night, see Vhal
       Reclaimed. Then tag v2.0 — and the game is done.

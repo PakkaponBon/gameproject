@@ -38,3 +38,7 @@ static func enemy_damage_mult() -> float:
 
 static func raid_interval_mult() -> float:
 	return 0.75 if mode == "Hard" else 1.0
+
+## Long Night wave sizes scale with difficulty (Peaceful never sieges).
+static func siege_wave_mult() -> float:
+	return 1.4 if mode == "Hard" else 1.0
