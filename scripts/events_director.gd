@@ -15,10 +15,13 @@ var spawn_parent: Node2D = null  # assigned by Main
 func _ready() -> void:
 	GameClock.day_started.connect(_on_day_started)
 
+const FOOD_SCENE := preload("res://scenes/food_item.tscn")
 const BARD_CHANCE := 0.07
 const STAR_CHANCE := 0.04
 const DILEMMA_CHANCE := 0.3  # roughly one decision knocking every few days
 const OATH_CHANCE := 0.08  # a friendly faction may propose kinship
+const OMEN_CHANCE := 0.06
+const HARVEST_CHANCE := 0.05
 
 func _on_day_started(_day: int) -> void:
 	if main.raid_director.siege_active:
@@ -40,7 +43,30 @@ func _on_day_started(_day: int) -> void:
 		_roll_dilemma()
 	elif randf() < OATH_CHANCE and get_tree().get_nodes_in_group("raiders").is_empty():
 		_oath_offer()
+	if randf() < OMEN_CHANCE:
+		_an_omen()
+	if randf() < HARVEST_CHANCE:
+		_fine_harvest()
 	_replenish_game()
+
+## Ambient colour — a shared mood swing the elders read in the sky.
+func _an_omen() -> void:
+	var good := randf() < 0.5
+	var delta := 6.0 if good else -5.0
+	for pawn: Pawn in main.pawns:
+		pawn.needs.mood = clampf(pawn.needs.mood + delta, 0.0, 100.0)
+	main.hud.set_event("A red dawn — the elders call it %s." \
+			% ("a good omen" if good else "an ill omen"),
+			Color(0.9, 0.8, 0.6) if good else Color(0.72, 0.62, 0.72))
+
+## A windfall in the fields: a small basket of food appears near home.
+func _fine_harvest() -> void:
+	var center: Vector2i = WorldGrid.MAP_SIZE / 2
+	for i in 4:
+		var food: FoodItem = FOOD_SCENE.instantiate()
+		food.position = WorldGrid.cell_to_world(center + Vector2i(randi_range(-3, 3), randi_range(-3, 3)))
+		main.entities.add_child(food)
+	main.hud.set_event("A fine day in the fields — the baskets come back full.", Color(0.7, 0.9, 0.6))
 
 ## S4 — oath of kinship: a friendly faction asks for a marriage bond.
 ## A real villager leaves for a permanent friendship. Tone: text, warm,
@@ -99,8 +125,86 @@ func _wolf_pack() -> void:
 ## Decisions at the gate: pause, two buttons, consequences. This is the
 ## beat the sim can't generate on its own.
 func _roll_dilemma() -> void:
-	var dilemmas: Array[Callable] = [_wounded_stranger, _deserter, _merchants_map, _strange_lights]
+	var dilemmas: Array[Callable] = [_wounded_stranger, _deserter, _merchants_map,
+			_strange_lights, _the_fever, _the_feud, _buried_cache, _the_scholar]
 	(dilemmas.pick_random() as Callable).call()
+
+func _the_fever() -> void:
+	var treat := func() -> void:
+		if not _consume("herb", 2):
+			main.hud.set_event("No herbs to spare — the fever runs its course.", Color(0.8, 0.7, 0.6))
+			_fever_spreads()
+			return
+		main.hud.set_event("The herb-stores answer the fever. It breaks by morning.", Color(0.7, 0.95, 0.7))
+		EventBus.chronicle_entry.emit("A fever came in the night. The herb-stores turned it back.")
+	var ride := func() -> void:
+		_fever_spreads()
+		EventBus.chronicle_entry.emit("A fever swept the village. They bore it, and most rose again.")
+	main.choice_panel.open("A FEVER IN THE VILLAGE",
+			"Two villagers wake burning, and it will spread. Healing herbs would break it — "
+			+ "or you let it run its course and hope.",
+			"Treat it (2 herbs)", "Ride it out (they'll suffer)", treat, ride)
+
+func _fever_spreads() -> void:
+	for pawn: Pawn in main.pawns:
+		pawn.combat.drain(6.0)  # weakness, not wounds — no gore
+		pawn.needs.mood = maxf(pawn.needs.mood - 6.0, 0.0)
+
+func _the_feud() -> void:
+	if main.pawns.size() < 2:
+		return
+	var two: Array = main.pawns.duplicate()
+	two.shuffle()
+	var a: Pawn = two[0]
+	var b: Pawn = two[1]
+	var side := func() -> void:
+		a.needs.mood = minf(a.needs.mood + 10.0, 100.0)
+		b.needs.mood = maxf(b.needs.mood - 12.0, 0.0)
+		main.hud.set_event("You side with %s. %s stews, but the matter's closed." % [a.name, b.name])
+	var settle := func() -> void:
+		a.needs.mood = maxf(a.needs.mood - 4.0, 0.0)
+		b.needs.mood = maxf(b.needs.mood - 4.0, 0.0)
+		main.hud.set_event("You let %s and %s settle it themselves." % [a.name, b.name])
+		EventBus.chronicle_entry.emit("%s and %s came to blows, then to a wary peace." % [a.name, b.name])
+	main.choice_panel.open("A FEUD",
+			"%s and %s are at each other's throats over an old slight, and the village is taking sides. "
+			% [a.name, b.name] + "They're waiting to see what you'll do.",
+			"Side with %s" % a.name, "Let them settle it", side, settle)
+
+func _buried_cache() -> void:
+	var center: Vector2i = WorldGrid.MAP_SIZE / 2
+	var keep := func() -> void:
+		main.spawner.drop_resource(center, "iron_ingot", 2)
+		main.spawner.drop_resource(center + Vector2i(1, 0), "stone", 3)
+		main.hud.set_event("You pocket the cache. No one need know.", Color(0.9, 0.85, 0.5))
+	var share := func() -> void:
+		main.spawner.drop_resource(center, "stone", 3)
+		for pawn: Pawn in main.pawns:
+			pawn.needs.mood = minf(pawn.needs.mood + 6.0, 100.0)
+		main.hud.set_event("You share the find. The village stands a little taller.", Color(0.7, 0.95, 0.7))
+		EventBus.chronicle_entry.emit("A cache was found in the old foundations, and shared openly.")
+	main.choice_panel.open("A CACHE IN THE FOUNDATIONS",
+			"Digging a footing, a villager strikes a buried strongbox — iron and worked stone. "
+			+ "Only the two of you saw it come up.",
+			"Keep it quiet (more goods)", "Share it (spirits lift)", keep, share)
+
+func _the_scholar() -> void:
+	if main.pawns.is_empty():
+		return
+	var pawn: Pawn = main.pawns.pick_random()
+	var teach := func() -> void:
+		if not _consume_food(8):
+			main.hud.set_event("You can't feed the scholar. She moves on down the road.")
+			return
+		var skill: String = ["melee", "archery"].pick_random()
+		pawn.skills.gain(skill, 300.0)
+		main.hud.set_event("%s studies with the scholar and sharpens their %s." % [pawn.name, skill],
+				Color(0.7, 0.85, 0.95))
+		EventBus.chronicle_entry.emit("A wandering scholar taught %s what the long road had taught her." % pawn.name)
+	main.choice_panel.open("A WANDERING SCHOLAR",
+			"A scholar of the old roads offers to teach, for a few good meals. "
+			+ "%s has the look of someone eager to learn." % pawn.name,
+			"Host her (8 food) — train %s" % pawn.name, "Send her on", teach, Callable())
 
 func _wounded_stranger() -> void:
 	var accept := func() -> void:
