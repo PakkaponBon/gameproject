@@ -5,6 +5,7 @@ extends Node
 signal factions_changed
 signal announced(text: String)
 signal realm_ruled
+signal long_night_begins  # the four others resolved; the Legion comes
 
 const GIFT_WOOD := 10
 const LIKED_GIFT_BONUS := 25.0  # a leader's prized gift lands far harder
@@ -27,6 +28,7 @@ var expedition := {}  # {} when none; else target/return_tick/party/power
 var request := {}  # {} or {id, resource, amount, deadline}: a faction's standing ask
 var sites := {}  # wild site id -> tick when it's worth raiding again
 var victory_shown := false
+var long_night := false  # Act III siege has been triggered (persists through it)
 var renown := 0  # village fame: unlocks buildings, attracts refugees
 var main: Node2D = null  # current Main scene; re-registers itself each load
 
@@ -50,6 +52,7 @@ func reset() -> void:
 	request = {}
 	sites.clear()
 	victory_shown = false
+	long_night = false
 	renown = 0
 	factions_changed.emit()
 
@@ -59,14 +62,15 @@ func add_renown(amount: int) -> void:
 
 func serialize() -> Dictionary:
 	return {"factions": factions, "expedition": expedition, "request": request,
-			"sites": sites, "victory_shown": victory_shown, "renown": renown,
-			"difficulty": Balance.mode}
+			"sites": sites, "victory_shown": victory_shown, "long_night": long_night,
+			"renown": renown, "difficulty": Balance.mode}
 
 func deserialize(data: Dictionary) -> void:
 	factions = data.factions
 	expedition = data.expedition
 	request = data.get("request", {})
 	sites = data.get("sites", {})
+	long_night = bool(data.get("long_night", false))
 	victory_shown = bool(data.victory_shown)
 	renown = int(data.renown)
 	Balance.mode = String(data.difficulty)
@@ -191,6 +195,7 @@ func damage_strength(id: String, amount: float) -> void:
 			main.spawner.drop_resource(center + Vector2i(2, 0), "stone", 5)
 			main.spawner.drop_resource(center + Vector2i(-2, 0), "iron_ingot", 3)
 		_check_victory()
+		_check_long_night()
 	factions_changed.emit()
 
 # --- expeditions ------------------------------------------------------------
@@ -367,6 +372,31 @@ func _check_victory() -> void:
 	victory_shown = true
 	realm_ruled.emit()
 
+## Act III trigger: the four other powers settled, the Legion alone unbroken.
+## Fires once; the LongNightDirector takes it from there.
+func _check_long_night() -> void:
+	if long_night or not factions.has("ashen_legion"):
+		return
+	if factions["ashen_legion"].resolved != "":
+		return  # the Legion was itself resolved — no siege (e.g. the Long Peace)
+	for id: String in factions:
+		if id != "ashen_legion" and factions[id].resolved == "":
+			return
+	long_night = true
+	long_night_begins.emit()
+
+## The siege is survived: the Legion breaks at the gates. → realm_ruled.
+func break_the_legion() -> void:
+	var f: Dictionary = factions["ashen_legion"]
+	if f.resolved != "":
+		return
+	f.resolved = "destroyed"
+	renown += 10
+	announced.emit("The Ashen Legion breaks against your walls. The Long Night is over.")
+	EventBus.chronicle_entry.emit("The Ashen Legion broke against Ashfall, and did not rise again.")
+	factions_changed.emit()
+	_check_victory()
+
 # --- internals --------------------------------------------------------------
 
 func _on_tick() -> void:
@@ -450,6 +480,7 @@ func _shift_attitude(id: String, amount: float) -> void:
 		EventBus.chronicle_entry.emit("%s of %s clasped hands with the village. An alliance is sworn." \
 				% [_leader(id), _fname(id)])
 		_check_victory()
+		_check_long_night()
 	factions_changed.emit()
 
 func _resolved(id: String) -> bool:

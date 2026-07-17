@@ -127,6 +127,9 @@ func apply_pending_load() -> void:
 	main.chronicle_director.entries = data.get("chronicle", [])
 	# Saves that predate the tutorial default to finished — no nagging.
 	main.tutorial.restore(int(data.get("tutorial_step", 0)), bool(data.get("tutorial_done", true)))
+	var siege: Dictionary = data.get("siege", {})
+	if not siege.is_empty():
+		main.long_night.restore(int(siege.phase), int(siege.wave), int(siege.timer))
 	for p: Dictionary in data.pawns:
 		_restore_pawn(p)
 	main.select_pawn(int(data.selected))

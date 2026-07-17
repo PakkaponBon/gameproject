@@ -39,6 +39,7 @@ var _lights := {}  # cell -> PointLight2D (workstation glow)
 @onready var choice_panel: ChoicePanel = $ChoicePanel
 @onready var weather_director: WeatherDirector = $WeatherDirector
 @onready var tutorial: TutorialDirector = $TutorialDirector
+@onready var long_night: LongNightDirector = $LongNightDirector
 
 func _ready() -> void:
 	UiTheme.apply_to_layers(self)  # children built their UI in their _ready
@@ -59,6 +60,8 @@ func _ready() -> void:
 	raid_director.bell_rang.connect(func(world_pos: Vector2) -> void:
 		hud.set_event("The alarm bell rings — raiders near!", Color(1.0, 0.55, 0.3), world_pos))
 	raid_director.raid_ended.connect(func() -> void:
+		if raid_director.siege_active:
+			return  # the Long Night has its own wave messaging
 		FactionManager.add_renown(1)
 		hud.set_event("The raid is beaten. Word of your village spreads.", Color(0.7, 0.95, 0.7))
 		EventBus.chronicle_entry.emit("The %s raid was broken at the gates." % _last_raid_faction))
@@ -374,8 +377,35 @@ func _on_building_deconstructed(cell: Vector2i) -> void:
 
 func _on_realm_ruled() -> void:
 	EventBus.chronicle_entry.emit("The last banner bowed. The realm is ours.")
-	story_panel.show_story("RULER OF THE REALM",
-			"Every banner in the realm bows or burns.\n\n"
-			+ "From three survivors and a wagon to this: the roads are yours,\n"
-			+ "the tributes flow, and the ones who lit the fire are answered.\n\n"
-			+ "The hearth you built still burns. Warmer now, for all of it.")
+	var all_allied := true
+	for id: String in FactionManager.factions:
+		if FactionManager.factions[id].resolved != "allied":
+			all_allied = false
+			break
+	if all_allied:
+		story_panel.show_ending("THE LONG PEACE",
+				"Not one banner in the realm was burned.\n\n"
+				+ "Five powers that would have eaten each other now share your roads,\n"
+				+ "your festivals, your fires. Even the ashes of the old war grow cold.\n\n"
+				+ "You did not conquer the realm. You ended its war. The hearth burns on.")
+	elif FactionManager.long_night:
+		# The siege was survived — the true ending: return to Vhal.
+		story_panel.show_ending_pages([
+			{"title": "THE LONG NIGHT ENDS", "body":
+				"The last of the Cindermarked falls in the mud before your gate.\n\n"
+				+ "The Legion that burned a thousand-year city could not take\n"
+				+ "one meadow with a wall around it. Dawn comes gray and quiet."},
+			{"title": "VHAL RECLAIMED", "body":
+				"In the spring you go back — not as refugees now, but as a people.\n"
+				+ "You walk the ash streets where it started, and you do not flee.\n\n"
+				+ "You lay the First Ember in the old hearth of Vhal,\n"
+				+ "and light it. The city will take years. You have years.\n\n"
+				+ "Born from ashes. The village stands. The realm is yours.\n"
+				+ "And every name the fire took is remembered by the light."},
+		])
+	else:
+		story_panel.show_story("RULER OF THE REALM",
+				"Every banner in the realm bows or burns.\n\n"
+				+ "From three survivors and a wagon to this: the roads are yours,\n"
+				+ "the tributes flow, and the ones who lit the fire are answered.\n\n"
+				+ "The hearth you built still burns. Warmer now, for all of it.")

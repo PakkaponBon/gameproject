@@ -128,6 +128,8 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 		"chronicle": main.chronicle_director.entries,
 		"tutorial_step": main.tutorial.step,
 		"tutorial_done": main.tutorial.finished,
+		"siege": {"phase": main.long_night.phase, "wave": main.long_night.wave_index,
+				"timer": main.long_night.timer},
 		"pawns": main.pawns.map(_pawn_data),
 		"selected": main.pawns.find(main.selected),
 		"camera": {"pos": [camera.position.x, camera.position.y], "zoom": camera.zoom.x},

@@ -39,6 +39,11 @@ func show_ending(title: String, body: String) -> void:
 	show_story(title, body)
 	_to_menu = true
 
+## Multi-page terminal beat (the true ending epilogue).
+func show_ending_pages(pages: Array) -> void:
+	show_pages(pages)
+	_to_menu = true
+
 func _on_continue() -> void:
 	_page += 1
 	if _page < _pages.size():

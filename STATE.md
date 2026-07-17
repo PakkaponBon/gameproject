@@ -13,7 +13,14 @@
 | v1.2 Field & Flock (ROADMAP-1.2.md) | done | v1.2-field-flock |
 | v1.3 Steel & Oath (ROADMAP-1.3.md) | done | v1.3-steel-oath |
 | v1.4 The Wilds (ROADMAP-1.4.md) | **code-complete, untagged** — human DoD pending | — |
-| v2.0 The Long Night | **next on the VISION ladder** (Act III siege, 3 endings, scenarios) | — |
+| v2.0 The Long Night (ROADMAP-2.0.md) | **N1+N2 built** (siege + 3 endings); N3 scenarios / N4 music+DoD remain | — |
+
+The Long Night: trigger = the four non-Legion factions resolved while the Ashen Legion
+stands → FactionManager.long_night_begins → LongNightDirector (DORMANT→WARNING→WAVE↔LULL→WON)
+runs a 4-wave siege via raid_director.spawn_legion_wave (siege_active suspends normal raids
++ events). Survive → break_the_legion → realm_ruled. Endings in main._on_realm_ruled: all-allied
+= Long Peace, siege-survived = Vhal Reclaimed (true, 2-page), else Ruler of the Realm. Siege
+state saved additively (siege{phase,wave,timer} + faction long_night bool).
 
 - **SAVE_VERSION = 25** (history: 21 bushes, 22 warmth/joy/bonds/chronicle,
   23 food kinds, 24 livestock, 25 armor; trap_uses / sites / oath /

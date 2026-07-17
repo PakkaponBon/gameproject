@@ -21,6 +21,8 @@ const DILEMMA_CHANCE := 0.3  # roughly one decision knocking every few days
 const OATH_CHANCE := 0.08  # a friendly faction may propose kinship
 
 func _on_day_started(_day: int) -> void:
+	if main.raid_director.siege_active:
+		return  # the Long Night owns the field — no frost, wolves, or dilemmas
 	if GameClock.season_index() != 3 and randf() < FROST_CHANCE:
 		_frost_snap()
 	if GameClock.season_index() == 3 and not Balance.peaceful() \

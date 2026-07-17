@@ -24,6 +24,7 @@ var ticks_until_raid := FIRST_RAID_AT
 var raid_count := 0
 var spawn_parent: Node2D = null  # assigned by Main
 
+var siege_active := false  # the Long Night: LongNightDirector drives spawns
 var _warned := false
 var _rung := {}  # bell cell -> true; cleared when the field is quiet
 var _bell_check := 0
@@ -36,8 +37,8 @@ func _on_tick() -> void:
 	if _bell_check <= 0:
 		_bell_check = 15
 		_check_bells()
-	if Balance.peaceful():
-		return  # the realm sleeps
+	if Balance.peaceful() or siege_active:
+		return  # the realm sleeps, or the Long Night owns the field
 	ticks_until_raid -= 1
 	# Tension beat: the player gets a warning window to draft and repair.
 	if not _warned and ticks_until_raid <= RAID_WARNING_TICKS and ticks_until_raid > 0 \
@@ -105,6 +106,28 @@ func _check_bells() -> void:
 ## just how long you've survived.
 func _wealth_pressure() -> int:
 	return clampi(WorldGrid.buildings.size() / 12 + FactionManager.renown / 3, 0, 3)
+
+## A Long Night wave: Legion raiders from every edge, half of them elites,
+## the last wave led by the Cindermarked. Allies and oath-kin answer.
+func spawn_legion_wave(count: int, with_boss: bool) -> void:
+	var made := 0
+	var attempts := 0
+	var boss_made := false
+	while made < count and attempts < 300:
+		attempts += 1
+		var cell := _random_edge_cell()
+		if not WorldGrid.in_bounds(cell) or WorldGrid.is_wall(cell):
+			continue
+		var boss := with_boss and not boss_made
+		var raider := _spawn_bandit(cell, "ashen_legion", boss)
+		if boss:
+			boss_made = true
+		elif made % 2 == 1:
+			raider.make_elite()
+		made += 1
+	if FactionManager.has_ally():
+		_spawn_allies()
+	EventBus.play_sfx.emit("horn")
 
 ## A beast pack (ash-wolves): no faction, no warning scouts — winter's own
 ## raid. They share the raiders group, so defenses and raid_ended apply.
