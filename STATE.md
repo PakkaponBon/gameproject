@@ -93,6 +93,15 @@ GDI+ pitfall: never Save() over a file still open via FromFile — clone to a ne
    already-themed Control, or theme them explicitly.
 8. Scene-tscn edits: bump load_steps when adding ext_resources.
 
+## Duo-agent setup (since 2026-07-16)
+- A second agent (Codex) may work the ASSETS lane only: contract in AGENTS.md,
+  brief + cell authority in ASSET_SPEC.md, pipeline = assets/incoming/*.png →
+  tools/import_assets.ps1. It never touches scripts/scenes/tres.
+- Each session: `git pull` first (the other agent pushes too), and check
+  ASSET_SPEC.md "Requests to Claude" for code-hook asks (new cells, animation
+  frames, villager variants). After adding cells, update BOTH cell tables
+  (here and in ASSET_SPEC.md) and the importer's max indices.
+
 ## Workflow conventions (owner: Bo, solo, tests via F5 and pastes errors)
 - Per phase: build → tick mini-roadmap boxes → commit (message = what + why) → push.
 - Tag per update when moving past it (v1.X-name). Leave human DoD boxes unchecked.
