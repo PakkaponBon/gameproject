@@ -99,28 +99,52 @@ func _new_game() -> void:
 	GameClock.set_speed(1.0)
 	GameClock.set_sim_paused(false)
 	spawner.new_game()
-	story_panel.show_pages([
+	story_panel.show_pages(_intro_pages())
+
+## The Fall of Vhal intro, its middle beats coloured by the chosen scenario
+## (how many fled, what they carried, what season they arrive into).
+func _intro_pages() -> Array:
+	var s: String = ScenarioDefs.selected
+	var road: String
+	var meadow: String
+	if s == "hard_winter":
+		road = "Two of you slipped through the smoke —\n" \
+			+ "a few tools, a handful of seed, and each other.\n\n" \
+			+ "No time to grieve. The leaves are already turning."
+		meadow = "Beyond the hills: a quiet meadow, going gold.\n" \
+			+ "Wood, stone, water — and a hard frost coming.\n\n" \
+			+ "Winter is a week away. Be ready, or don't last it."
+	elif s == "wanderers":
+		road = "Three of you slipped through the smoke —\n" \
+			+ "no wagon, no stores. Only what you could carry and run.\n\n" \
+			+ "You'll live off the land. But word of the survivors\n" \
+			+ "who would not lie down travels fast."
+		meadow = "Beyond the hills: a quiet meadow.\n" \
+			+ "Wood, stone, water — and empty hands.\n\n" \
+			+ "Forage. Hunt. Build a name faster than a larder."
+	else:
+		road = "Three of you slipped through the smoke —\n" \
+			+ "a wagon, tools, seed, and each other.\n\n" \
+			+ "Everyone carries something from that night.\n" \
+			+ "None of it as heavy as what they left."
+		meadow = "Beyond the hills: a quiet meadow.\n" \
+			+ "Wood, stone, water.\n\n" \
+			+ "A place to build. A place to endure.\n" \
+			+ "A place to remember."
+	return [
 		{"title": "VHAL BURNED", "body":
 			"The city of Vhal stood a thousand years.\n"
 			+ "It took one night to fall.\n\n"
 			+ "The Ashen Legion came with fire,\n"
 			+ "and the bells rang until they melted."},
-		{"title": "THE ROAD OUT", "body":
-			"Three of you slipped through the smoke —\n"
-			+ "a wagon, tools, seed, and each other.\n\n"
-			+ "Everyone carries something from that night.\n"
-			+ "None of it as heavy as what they left."},
-		{"title": "THE MEADOW", "body":
-			"Beyond the hills: a quiet meadow.\n"
-			+ "Wood, stone, water.\n\n"
-			+ "A place to build. A place to endure.\n"
-			+ "A place to remember."},
+		{"title": "THE ROAD OUT", "body": road},
+		{"title": "THE MEADOW", "body": meadow},
 		{"title": "ONE DAY", "body":
 			"Grow food. Raise walls. Keep the hearth warm.\n"
 			+ "Five powers surround you — win them or break them.\n\n"
 			+ "And when you are strong enough... answer Vhal.\n\n"
 			+ "(Press H anytime for the controls.)"},
-	])
+	]
 
 # --- world API (called by PlayerInput / SaveManager / FactionManager) -------
 
