@@ -40,6 +40,9 @@ func tick() -> void:
 		if TraitDefs.has_flag(pawn.traits, "solitary") \
 				or TraitDefs.has_flag(other.traits, "solitary"):
 			drift = DRIFT_SOLITARY
+		elif TraitDefs.has_flag(pawn.traits, "gregarious") \
+				or TraitDefs.has_flag(other.traits, "gregarious"):
+			drift *= 1.6  # a Warm soul in the pair bonds faster
 		var key := String(other.name)
 		var prev := float(bonds.get(key, 0.0))
 		bonds[key] = clampf(prev + drift, -CAP, CAP)

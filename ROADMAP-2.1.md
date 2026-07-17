@@ -15,12 +15,13 @@
       (pay food to teach a villager a skill).
 - [x] New ambient beats (feed-only): a fine harvest, a good/ill omen.
 
-## Phase LR2 — Character Depth  *(trait_defs; no art)*
-- [ ] Expand traits toward ~20: more quirks (nimble, tough, green-thumb,
-      hot-headed, kindly, night-owl) and more fall-of-Vhal backstories, each
-      with a stat/mood key already read by the game.
-- [ ] Wire any new modifier keys the traits introduce (e.g. a farming or
-      cooking speed key) where the game applies work speed.
+## Phase LR2 — Character Depth  *(trait_defs; no art)* ✓
+- [x] Traits 10 → 20. New quirks: Swift, Marksman, Hot-Blooded, Warm, Clumsy
+      (a negative, for variety), Old Blood. New backstories: Bellringer,
+      Gravedigger, Physician, Runaway. Each uses a key the game already reads
+      (work/melee/ranged mult, magic).
+- [x] One new key wired: "gregarious" (the Warm trait) speeds bond growth in
+      PawnSocial — the mirror of the existing Loner. No art, no save bump.
 
 ## Phase LR3 — Magic Variety  *(relic_defs + a little combat; reuses cell 12)*
 - [ ] Dispatch relics by an explicit "kind" (back-compat with the 3 originals).
