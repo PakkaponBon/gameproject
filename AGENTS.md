@@ -28,12 +28,17 @@
 
 ## Git protocol (two agents, one repo)
 1. `git pull` before every work session — Claude pushes frequently.
-2. Commit only your lane: `assets/incoming/`, the two atlases, CREDITS.md,
+2. **The working tree AND the git index are shared.** `git add x; git commit`
+   commits the WHOLE staged index — including files the OTHER agent has staged.
+   ALWAYS commit with an explicit pathspec so you only capture your own work:
+   `git commit -- assets/incoming/ CREDITS.md` (never a bare `git commit`
+   or `git commit -am` while the other agent is active).
+3. Commit only your lane: `assets/incoming/`, the two atlases, CREDITS.md,
    your section of ASSET_SPEC.md. Message prefix: `assets: <what>`.
-3. Push after each finished batch. Never force-push. Never rebase shared history.
-4. PNG conflicts don't merge: on conflict, `git checkout --theirs` the atlas,
+4. Push after each finished batch. Never force-push. Never rebase shared history.
+5. PNG conflicts don't merge: on conflict, `git checkout --theirs` the atlas,
    re-run the importer over your incoming files, commit the result.
-5. If unsure whether something is your lane: it isn't. File a request.
+6. If unsure whether something is your lane: it isn't. File a request.
 
 ## How requests flow
 Append to ASSET_SPEC.md → "## Requests to Claude" (e.g. "need a new cell for

@@ -108,6 +108,11 @@ GDI+ pitfall: never Save() over a file still open via FromFile — clone to a ne
   ASSET_SPEC.md "Requests to Claude" for code-hook asks (new cells, animation
   frames, villager variants). After adding cells, update BOTH cell tables
   (here and in ASSET_SPEC.md) and the importer's max indices.
+- **CRITICAL git gotcha (learned the hard way):** the working tree and git
+  INDEX are shared between the two agents. `git add <myfiles>; git commit`
+  commits the ENTIRE index — it will sweep up the other agent's staged files.
+  ALWAYS commit with an explicit pathspec: `git commit <files...> -m ...` or
+  `git commit -- <files>`. Never a bare `git commit` while Codex is active.
 
 ## Workflow conventions (owner: Bo, solo, tests via F5 and pastes errors)
 - Per phase: build → tick mini-roadmap boxes → commit (message = what + why) → push.
