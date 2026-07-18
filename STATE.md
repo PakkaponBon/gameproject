@@ -45,11 +45,13 @@ state saved additively (siege{phase,wave,timer} + faction long_night bool).
   seasons), interactive tutorial (TutorialDirector, 8 do-it steps, saved, old saves skip).
 
 ## Atlas maps (indices are load-bearing — code refers to cell*16)
-**tiles.png (22 cells, 352px):** 0 grass · 1 dirt · 2 wall(custom brick) · 3 gate ·
+**tiles.png (25 cells, 400px):** 0 grass · 1 dirt · 2 wall(custom brick) · 3 gate(closed) ·
 4 bedroll · 5 barn-chest · 6 forge-anvil · 7 watchtower · 8 stove-furnace · 9 door ·
 10 hearth-glowpot · 11 table · 12 chair · 13 shrine-pedestal · 14 trophy-crest ·
 15 brazier-torch · 16 brewery-barrel(custom) · 17 coop-hut(custom) ·
-18 pasture-fence(custom) · 19 loom(custom) · 20 spike-pit(custom) · 21 alarm-bell(custom)
+18 pasture-fence(custom) · 19 loom(custom) · 20 spike-pit(custom) · 21 alarm-bell(custom) ·
+22 gate-transition-A · 23 gate-transition-B · 24 gate-open — GateAnimator swaps 3→22→23→24
+as a villager passes; cells 22-24 reserved transparent, asset agent draws them
 
 **sprites.png (28 cells, 448px):** 0 villager · 1 tree · 2 rock(proc) · 3 crop-sprigs ·
 4 wood-logs(custom) · 5 stone-chunk(proc) · 6 ingot-disc(also wool/hide tinted) · 7 sword ·

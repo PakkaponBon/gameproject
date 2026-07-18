@@ -19,7 +19,7 @@
 | 00 | grass (full-bleed) | fine |
 | 01 | dirt (full-bleed) | fine |
 | 02 | stone wall (brick courses) | fine |
-| 03 | gate (stone arch + wooden door) | fine |
+| 03 | gate — CLOSED frame (stone arch + wooden door) | fine |
 | 04 | bed (bedroll) | **wanted: a real bed frame** |
 | 05 | barn/storage (chest) | **wanted: a barn that reads as a building** |
 | 06 | forge (anvil) | fine |
@@ -38,6 +38,17 @@
 | 19 | loom (frame + threads) | fine |
 | 20 | spike pit | fine |
 | 21 | alarm bell | fine |
+| 22 | gate — transition frame A (part-open) | **RESERVED, transparent — DRAW ME** |
+| 23 | gate — transition frame B (more open) | **RESERVED, transparent — DRAW ME** |
+| 24 | gate — fully OPEN frame | **RESERVED, transparent — DRAW ME** |
+
+## Gate frames (cells 22–24)
+GateAnimator swaps the gate cell through 3(closed)→22→23→24 as a villager
+passes, and back. Keep the side masonry aligned with tile_02 (walls) so
+connected walls don't gap; the door area clears progressively to fully open
+at 24. Filenames: `tile_22_gate_open_a.png`, `tile_23_gate_open_b.png`,
+`tile_24_gate_open.png` → drop in `assets/incoming/`, run
+`tools/import_assets.ps1`.
 
 ## sprites.png — 28 cells (entities & items)
 | NN | Meaning | State |
@@ -79,12 +90,11 @@
    door open/close frames, work-swing frames, 32×32 portraits.
 
 ## Requests to Claude (append below; Claude clears handled items)
-- Gate animation: please reserve new tile-atlas cells and add the code/state hook
-  for a short opening/closing animation using existing tile_03 as the closed
-  frame. Two transition frames plus one fully open frame should be enough.
-  Keep the gate's side masonry compatible with tile_02 so connected walls do
-  not develop gaps. Once the cell table is updated, the asset agent can draw
-  the approved 16x16 frames.
+- [DONE] Gate animation: cells 22–24 reserved (transparent), tileset updated,
+  importer tile-max bumped to 24, GateAnimator hook live (swaps 3→22→23→24 as
+  a villager passes). Draw tile_22/23/24 gate frames per the "Gate frames"
+  section above, keeping side masonry aligned with tile_02, then run the
+  importer.
 - Whole-game animation pass requested: please define and reserve named atlas
   cells, extend the importer limits, and add playback hooks for the complete
   ART_DIRECTION.md animation budget. Preserve sprite_00 + sprite_14 as the

@@ -9,15 +9,23 @@ $incoming = Join-Path $repo "assets\incoming"
 if (-not (Test-Path $incoming)) { New-Item -ItemType Directory $incoming | Out-Null }
 
 $targets = @{
-    "tile" = @{ "path" = (Join-Path $repo "assets\tiles.png"); "max" = 21 }
+    "tile" = @{ "path" = (Join-Path $repo "assets\tiles.png"); "max" = 24 }
     "sprite" = @{ "path" = (Join-Path $repo "assets\sprites.png"); "max" = 27 }
 }
-# Clone-open both atlases (never Save over a file still open via FromFile).
+# Open each atlas onto a canvas wide enough for all declared cells, so newly
+# reserved cells exist (transparent) and packing never clips. Clone-copy
+# (never Save over a file still open via FromFile).
 $atlases = @{}
 foreach ($kind in $targets.Keys) {
     $f = [System.Drawing.Bitmap]::FromFile($targets[$kind].path)
-    $atlases[$kind] = New-Object System.Drawing.Bitmap($f)
-    $f.Dispose()
+    $w = ($targets[$kind].max + 1) * 16
+    $canvas = New-Object System.Drawing.Bitmap($w, 16)
+    $g = [System.Drawing.Graphics]::FromImage($canvas)
+    $g.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceCopy
+    $g.DrawImage($f, (New-Object System.Drawing.Rectangle(0, 0, [Math]::Min($f.Width, $w), 16)),
+        (New-Object System.Drawing.Rectangle(0, 0, [Math]::Min($f.Width, $w), 16)), [System.Drawing.GraphicsUnit]::Pixel)
+    $g.Dispose(); $f.Dispose()
+    $atlases[$kind] = $canvas
 }
 
 $imported = 0
