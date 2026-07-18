@@ -158,6 +158,7 @@ func relic_tick() -> void:
 		"heal": cast = _cast_heal(def)
 		"ward": cast = _cast_ward(def)
 	if cast:
+		Fx.relic_effect(pawn.get_parent(), pawn.position, ResourceDefs.get_def(relic_id).color)
 		EventBus.play_sfx.emit("spell")
 		relic_cooldown = int(def.cooldown)
 

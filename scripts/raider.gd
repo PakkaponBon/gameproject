@@ -70,6 +70,7 @@ func make_elite() -> void:
 func take_damage(amount: float) -> void:
 	Fx.flash($Body)
 	Fx.damage_number(self, amount)
+	Fx.hit_spark(get_parent(), position)
 	hp -= maxf(amount - armor, 1.0)
 	if hp <= 0.0:
 		if faction_id != "":

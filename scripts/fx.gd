@@ -3,6 +3,38 @@ extends RefCounted
 ## One-shot juice helpers: hit flashes, floating damage numbers, particle
 ## bursts, item drop hops, and (tone rule: no gore) ash marks for deaths.
 
+const SPRITES := preload("res://assets/sprites.png")
+
+## Play a short frame animation from the sprite atlas at a world position,
+## then free it. Frames are cell indices; blank (undrawn) cells simply show
+## nothing, so this is safe to call before the art exists.
+static func frames(parent: Node, world_pos: Vector2, cells: Array, tint: Color,
+		per_frame := 0.08, z := 55) -> void:
+	if cells.is_empty():
+		return
+	var sprite := Sprite2D.new()
+	sprite.texture = SPRITES
+	sprite.region_enabled = true
+	sprite.region_rect = Rect2(int(cells[0]) * 16, 0, 16, 16)
+	sprite.modulate = tint
+	sprite.position = world_pos
+	sprite.z_index = z
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	parent.add_child(sprite)
+	var tween := sprite.create_tween()
+	for cell: int in cells:
+		tween.tween_callback(func() -> void: sprite.region_rect.position.x = cell * 16)
+		tween.tween_interval(per_frame)
+	tween.tween_callback(sprite.queue_free)
+
+## The shared relic effect (atlas cells 38–41), tinted per relic.
+static func relic_effect(parent: Node, world_pos: Vector2, tint: Color) -> void:
+	frames(parent, world_pos, [38, 39, 40, 41], tint, 0.07, 58)
+
+## A tiny two-frame spark where a blow lands (cells 42–43).
+static func hit_spark(parent: Node, world_pos: Vector2) -> void:
+	frames(parent, world_pos, [42, 43], Color.WHITE, 0.06, 52)
+
 static func flash(sprite: CanvasItem) -> void:
 	var prev := sprite.modulate
 	sprite.modulate = Color(2.5, 2.5, 2.5, 1.0)

@@ -101,6 +101,7 @@ func take_damage(amount: float) -> void:
 	if not dead:
 		Fx.flash(body)
 		Fx.damage_number(self, amount)
+		Fx.hit_spark(get_parent(), position)
 		combat.take_damage(amount)
 
 ## Fed by a rescuer: back on your feet, hungry but alive.
