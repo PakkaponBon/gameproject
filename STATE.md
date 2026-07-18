@@ -62,8 +62,12 @@ sheep/boar/wolf tinted) · 24 bird(also chicken tinted) · 25 knight-ally · 26 
 27 armor-crest · **28-43 animation frames (reserved, asset agent draws):** 28 villager-work ·
 29 villager-melee · 30 villager-bow · 31 bandit-walk · 32 bandit-attack · 33 knight-walk ·
 34 knight-attack · 35 elder-walk · 36 rabbit-walk · 37 bird-walk · 38-41 relic-fx(4) ·
-42-43 hit-puff(2). sprites.png now 44 cells (704px); importer sprite-max 43, auto-extends.
-Playback hooks land incrementally (villager work/attack, creature walk, relic fx, hit puff).
+42-43 hit-puff(2) · **44-49 world-map markers:** 44 settlement · 45 faction · 46 site ·
+47 selected · 48 locked · 49 completed. sprites.png now 50 cells (800px); importer
+sprite-max 49, auto-extends. FX hooks (relic 38-41, puff 42-43) + map markers 47/48/49
+wired (graceful blank); entity walk/work/attack (28-37) and map type-markers (44-46) land
+once drawn. World-map backdrop: standalone res://assets/worldmap.png (load-if-exists).
+World map has discovery (sites reveal by renown, derived), hover tooltips, route highlight.
 
 **Regenerating art:** tools/*.ps1 (rescued from session scratchpad). Order if rebuilding
 from Kenney zips: compose_kenney → make_brewery(16) → make_coop(17) → make_s1_art(18/19,

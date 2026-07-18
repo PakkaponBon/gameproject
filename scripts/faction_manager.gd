@@ -57,8 +57,18 @@ func reset() -> void:
 	factions_changed.emit()
 
 func add_renown(amount: int) -> void:
+	var before := renown
 	renown += int(ceil(amount * ScenarioDefs.renown_mult()))
+	# Fame reveals the wild places — announce each as its rumor reaches you.
+	for id: String in SiteDefs.ORDER:
+		var req := int(SiteDefs.get_def(id).get("reveal_renown", 0))
+		if before < req and renown >= req:
+			announced.emit("Travelers speak of %s — it appears on your map." % SiteDefs.get_def(id).name)
 	factions_changed.emit()
+
+## Wild sites are discovered as renown grows (derived — renown only rises).
+func site_discovered(id: String) -> bool:
+	return renown >= int(SiteDefs.get_def(id).get("reveal_renown", 0))
 
 func serialize() -> Dictionary:
 	return {"factions": factions, "expedition": expedition, "request": request,

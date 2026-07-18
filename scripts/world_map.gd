@@ -130,12 +130,25 @@ func _build_node(id: String) -> void:
 			place.tint, String(place.flavor), Vector2(44, 40))
 	icon.pressed.connect(_select.bind(id))
 	center.add_child(icon)
+	# State marker (selected / locked / completed) — reserved atlas cells
+	# 47/48/49, blank until the asset agent draws them, harmless meanwhile.
+	var marker := TextureRect.new()
+	var matlas := AtlasTexture.new()
+	matlas.atlas = SPRITES
+	matlas.region = Rect2(47 * 16, 0, 16, 16)
+	marker.texture = matlas
+	marker.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	marker.custom_minimum_size = Vector2(12, 12)
+	marker.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	marker.visible = false
+	center.add_child(marker)
 	var name_label := Label.new()
 	name_label.theme_type_variation = "Header"
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.text = _place_name(id)
 	root.add_child(name_label)
-	var widgets := {"root": root, "icon": icon, "name": name_label}
+	var widgets := {"root": root, "icon": icon, "name": name_label, "marker": marker}
 	if FactionDefs.DEFS.has(id):
 		widgets["strength"] = _mini_bar(root, 0.0, 100.0, Color(0.75, 0.35, 0.3),
 				"Strength — attack and kill raiders to grind it down")
@@ -248,29 +261,47 @@ func _draw_roads() -> void:
 				color = Color(0.3, 0.3, 0.32, 0.5)
 			elif float(f.attitude) < 0.0:
 				color = Color(0.75, 0.3, 0.25, 0.55)
-		_map.draw_line(home, Vector2(PLACES[id].pos) * _map.size, color, 2.0)
+		var width := 2.0
+		if id == _selected:  # highlight the route to the selected place
+			color = color.lightened(0.4)
+			width = 4.0
+		_map.draw_line(home, Vector2(PLACES[id].pos) * _map.size, color, width)
 
 func _refresh() -> void:
 	if not visible:
 		return
 	_map.queue_redraw()
 	for id: String in _nodes:
-		if not FactionManager.factions.has(id):
-			continue
+		_refresh_node(id)
+	_refresh_detail()
+	if FactionManager.expedition_active():
+		_expedition_label.text = "Expedition in the field — back at dawn."
+	else:
+		var party := FactionManager.party_preview()
+		_expedition_label.text = "Party ready: %s" % party if party != "" \
+				else "No expedition possible (needs 2+ armed villagers)."
+
+## One node's live state: name/marks, the state marker (selected/locked/
+## completed — reserved cells 47/48/49), dimming, and a rich hover tooltip.
+func _refresh_node(id: String) -> void:
+	var w: Dictionary = _nodes[id]
+	var name_label: Label = w.name
+	var icon: Button = w.icon
+	icon.modulate = Color.WHITE
+	var mcell := 47 if id == _selected else -1  # default: the selected ring
+	if FactionManager.factions.has(id):
 		var f: Dictionary = FactionManager.factions[id]
-		var w: Dictionary = _nodes[id]
 		w.strength.value = float(f.strength)
 		w.attitude.value = float(f.attitude)
-		var name_label: Label = w.name
-		var icon: Button = w.icon
-		icon.modulate = Color.WHITE
 		if f.resolved == "allied":
 			name_label.text = _place_name(id) + " (ALLIED)"
 			name_label.modulate = Color(0.9, 0.78, 0.4)
+			mcell = 49
 		elif f.resolved == "destroyed":
 			name_label.text = _place_name(id) + " (BROKEN)"
 			name_label.modulate = Color(0.5, 0.5, 0.52)
 			icon.modulate = Color(0.45, 0.45, 0.45)
+			mcell = 49
 		else:
 			var marks := ""
 			if FactionManager.has_oath(id):
@@ -281,13 +312,56 @@ func _refresh() -> void:
 				marks += " ?"
 			name_label.text = _place_name(id) + marks
 			name_label.modulate = Color(0.95, 0.85, 0.55) if marks != "" else Color.WHITE
-	_refresh_detail()
-	if FactionManager.expedition_active():
-		_expedition_label.text = "Expedition in the field — back at dawn."
+		icon.tooltip_text = _faction_tooltip(id)
+	elif SiteDefs.DEFS.has(id):
+		if not FactionManager.site_discovered(id):
+			name_label.text = "???"
+			name_label.modulate = Color(0.6, 0.6, 0.62)
+			icon.modulate = Color(0.32, 0.32, 0.35)
+			mcell = 48  # locked
+			icon.tooltip_text = "An unknown place. Grow your renown to hear of it."
+		else:
+			name_label.text = _place_name(id)
+			name_label.modulate = Color.WHITE
+			if FactionManager.site_ready_in(id) > 0:
+				mcell = 49  # recently raided — cooling
+			icon.tooltip_text = _site_tooltip(id)
+	else:  # the village
+		icon.tooltip_text = "%s — your hearth. Renown %d." % [_place_name(id), FactionManager.renown]
+	_set_marker(w, mcell)
+
+func _set_marker(w: Dictionary, cell: int) -> void:
+	var marker: TextureRect = w.marker
+	marker.visible = cell >= 0
+	if cell >= 0:
+		(marker.texture as AtlasTexture).region = Rect2(cell * 16, 0, 16, 16)
+
+func _faction_tooltip(id: String) -> String:
+	var f: Dictionary = FactionManager.factions[id]
+	if f.resolved == "allied":
+		return "%s — allied" % _place_name(id)
+	if f.resolved == "destroyed":
+		return "%s — broken" % _place_name(id)
+	var def := FactionDefs.get_def(id)
+	var t := "%s\n%s\nAttitude %d · Strength %d" \
+			% [_place_name(id), String(def.get("leader", "")), int(f.attitude), int(f.strength)]
+	var odds := FactionManager.expedition_odds(id)
+	if odds != "":
+		t += "\nAttack: " + odds.to_lower()
+	return t
+
+func _site_tooltip(id: String) -> String:
+	var sdef := SiteDefs.get_def(id)
+	var t := "%s\nDanger %d · Shards %d · Relic %d%%" \
+			% [String(sdef.name), int(sdef.strength), int(sdef.shards), int(float(sdef.relic_chance) * 100.0)]
+	var ready_in := FactionManager.site_ready_in(id)
+	if ready_in > 0:
+		t += "\nTrail cold — %.1f days" % (float(ready_in) / GameClock.TICKS_PER_DAY)
 	else:
-		var party := FactionManager.party_preview()
-		_expedition_label.text = "Party ready: %s" % party if party != "" \
-				else "No expedition possible (needs 2+ armed villagers)."
+		var odds := FactionManager.expedition_odds(id)
+		if odds != "":
+			t += "\n" + odds
+	return t
 
 func _refresh_detail() -> void:
 	var place: Dictionary = PLACES[_selected]
@@ -307,6 +381,13 @@ func _refresh_detail() -> void:
 			lines += "\nOpen request: %d %s for %s." \
 					% [int(r.amount), String(r.resource), _place_name(String(r.id))]
 		_d_stats.text = lines
+	elif is_site and not FactionManager.site_discovered(_selected):
+		# A locked wild site — no name, no actions, until renown reveals it.
+		_d_title.text = "An Unknown Place"
+		_d_flavor.text = "Somewhere beyond the maps. Your name isn't yet known enough to hear of it."
+		_d_stats.text = "Revealed at renown %d — you have %d." \
+				% [int(SiteDefs.get_def(_selected).get("reveal_renown", 0)), FactionManager.renown]
+		_d_expedition.visible = false
 	elif is_site:
 		var sdef := SiteDefs.get_def(_selected)
 		var ready_in := FactionManager.site_ready_in(_selected)

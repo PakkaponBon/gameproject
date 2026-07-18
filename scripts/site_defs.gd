@@ -11,6 +11,7 @@ const DEFS := {
 	"ruins": {
 		"name": "Ruins of Vhal",
 		"strength": 50.0,
+		"reveal_renown": 0,  # your own burned city — known from the first day
 		"cooldown_days": 4,
 		"relic_chance": 0.5,
 		"shards": 1,
@@ -21,6 +22,7 @@ const DEFS := {
 	"witchfen": {
 		"name": "The Witchfen",
 		"strength": 65.0,
+		"reveal_renown": 2,  # word of it reaches you as your name spreads
 		"cooldown_days": 3,
 		"relic_chance": 0.15,
 		"shards": 1,
@@ -31,6 +33,7 @@ const DEFS := {
 	"dwarf_road": {
 		"name": "The Dwarf-road",
 		"strength": 55.0,
+		"reveal_renown": 1,
 		"cooldown_days": 3,
 		"relic_chance": 0.1,
 		"shards": 1,
@@ -41,6 +44,7 @@ const DEFS := {
 	"howling_barrow": {
 		"name": "The Howling Barrow",
 		"strength": 80.0,
+		"reveal_renown": 4,  # only the well-known hear the old rumor
 		"cooldown_days": 5,
 		"relic_chance": 0.25,
 		"shards": 2,

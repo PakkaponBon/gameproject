@@ -50,7 +50,7 @@ at 24. Filenames: `tile_22_gate_open_a.png`, `tile_23_gate_open_b.png`,
 `tile_24_gate_open.png` → drop in `assets/incoming/`, run
 `tools/import_assets.ps1`.
 
-## sprites.png — 44 cells (0–27 entities & items; 28–43 animation frames)
+## sprites.png — 50 cells (0–27 items; 28–43 animation frames; 44–49 map markers)
 | NN | Meaning | State |
 |---|---|---|
 | 00 | villager (also the portrait, scaled 3×: keep the face readable) | **wanted: 2–3 villager variants need code hook — request first** |
@@ -97,6 +97,12 @@ at 24. Filenames: `tile_22_gate_open_a.png`, `tile_23_gate_open_b.png`,
 | 41 | relic effect — frame 4 | **RESERVED — DRAW ME** |
 | 42 | hit puff — frame A | **RESERVED — DRAW ME** |
 | 43 | hit puff — frame B | **RESERVED — DRAW ME** |
+| 44 | world-map marker — settlement | **RESERVED — DRAW ME** |
+| 45 | world-map marker — faction/banner | **RESERVED — DRAW ME** |
+| 46 | world-map marker — wild site | **RESERVED — DRAW ME** |
+| 47 | world-map marker — SELECTED (ring/highlight) | **RESERVED — DRAW ME** |
+| 48 | world-map marker — LOCKED (undiscovered) | **RESERVED — DRAW ME** |
+| 49 | world-map marker — COMPLETED (resolved/raided) | **RESERVED — DRAW ME** |
 
 ## Animation frames (cells 28–43)
 Two-frame animations pair an existing base cell with one new frame here
@@ -131,17 +137,22 @@ the importer auto-extends the atlas — no manual resize needed).
   against the real frames — a blank reserved cell just shows nothing until you
   fill it, so drawing and hooking can proceed in parallel. Idle/crops/terrain/
   decor stay static; procedural bob/lean/glow is kept, not duplicated.
-- [BACKDROP RESERVED — full rework pending] Interactive illustrated world map:
-  the backdrop is reserved and hooked NOW — draw a ~320x180 (or larger, any
-  aspect) hand-drawn realm and save it at **`res://assets/worldmap.png`** (a
-  standalone image, NOT a 16x16 atlas cell — drop it straight in `assets/`,
-  Godot imports it on focus). WorldMap already loads it if present and draws it
-  behind the existing roads + markers (which stay data-driven), so the map
-  upgrades the moment the art lands; no code needed for that part. The richer
-  interaction the request asks for — discovered/locked state, travel-time/risk/
-  reward hover, from-Vhal route highlighting, shape-coded reachable/selected/
-  hostile/allied/completed markers — is a genuine UI feature pass Claude will
-  slice into a mini-roadmap after the animation hooks; the current map already
-  covers name, attitude, strength, odds, cooldowns, and the per-place actions.
-  If that rework needs new 16x16 crest/marker cells, Claude will reserve and
-  document them here first (as with the gate + animation cells).
+- [APPROVED — draw now] Interactive illustrated world map. Two art deliverables:
+  1. **Background:** one illustrated realm PNG (~320x180 or larger, any aspect)
+     at **`res://assets/worldmap.png`** — a standalone image, NOT a 16x16 atlas
+     cell; drop it straight in `assets/`, Godot imports it on focus. WorldMap
+     loads it if present and draws it behind the roads + markers.
+  2. **Markers:** 16x16 atlas cells **44–49** (see the sprite table):
+     `sprite_44_map_settlement.png`, `sprite_45_map_faction.png`,
+     `sprite_46_map_site.png`, `sprite_47_map_selected.png`,
+     `sprite_48_map_locked.png`, `sprite_49_map_completed.png` → drop in
+     `assets/incoming/`, run `tools/import_assets.ps1` (sprite-max is now 49).
+  Code hooks live NOW (no load-bearing cells or game code change needed to draw):
+  markers are clickable; hover shows a rich tooltip (name, leader, attitude/
+  strength or danger/shards/relic-odds, attack odds, cooldown); the route to the
+  selected place is highlighted; wild sites are discovered as renown grows
+  (locked ones show cell 48 + hide their name/actions until revealed); resolved
+  factions and cooled sites show the completed marker (49); the selected place
+  shows the selected marker (47). Cells 47/48/49 are wired and render nothing
+  until drawn; 44/45/46 (type markers) are reserved for a later pass that may
+  swap the per-place icons — draw them and Claude will wire them in.
