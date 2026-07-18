@@ -312,7 +312,7 @@ func _deliver_to_site() -> void:
 func _start_storage_carry(item: ResourceItem) -> void:
 	item.pick_up(pawn)  # removes its haul job from the pool
 	job = null
-	var dest := WorldGrid.get_free_stockpile_cell(pawn.cell)
+	var dest := WorldGrid.get_free_stockpile_cell(pawn.cell, item.resource_id)
 	if dest == WorldGrid.INVALID_CELL:
 		item.drop_at(pawn.cell)  # storage vanished since we took the job
 		return
@@ -323,12 +323,12 @@ func _start_storage_carry(item: ResourceItem) -> void:
 
 func _deliver_to_stockpile() -> void:
 	_release_dest()
-	if WorldGrid.is_cell_free_for_storage(pawn.cell):
+	if WorldGrid.is_cell_free_for_storage(pawn.cell, carrying.resource_id):
 		carrying.drop_at(pawn.cell)
 		carrying = null
 		return
 	# Destination was filled or unzoned mid-carry; try another cell.
-	var dest := WorldGrid.get_free_stockpile_cell(pawn.cell)
+	var dest := WorldGrid.get_free_stockpile_cell(pawn.cell, carrying.resource_id)
 	if dest == WorldGrid.INVALID_CELL:
 		carrying.drop_at(pawn.cell)
 		carrying = null

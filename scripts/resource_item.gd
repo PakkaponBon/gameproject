@@ -25,7 +25,7 @@ func _ready() -> void:
 	_settle()
 
 func pick_up(carrier: Node) -> void:  # pawns carry; managers consume
-	WorldGrid.unregister_item(cell)
+	WorldGrid.unregister_item(cell, self)
 	if haul_job:
 		JobManager.remove_job(haul_job)
 		haul_job = null
@@ -45,8 +45,10 @@ func drop_at(drop_cell: Vector2i) -> void:
 
 func _settle() -> void:
 	# Check storage BEFORE registering, or our own presence marks the cell taken.
-	var stored := WorldGrid.is_cell_free_for_storage(cell)
+	var stored := WorldGrid.is_cell_free_for_storage(cell, resource_id)
 	WorldGrid.register_item(cell, self)
+	# Stack visual: sit a little higher for each item already on the tile.
+	position = WorldGrid.cell_to_world(cell) + Vector2(0.0, -3.0 * (WorldGrid.item_count(cell) - 1))
 	if not stored:
 		_register_haul_job()
 	if WeaponDefs.DEFS.has(resource_id):

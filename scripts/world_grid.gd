@@ -233,11 +233,24 @@ func nearest_safety_cell(from_cell: Vector2i) -> Vector2i:
 func is_stockpile(cell: Vector2i) -> bool:
 	return stockpile_cells.has(cell)
 
-func register_item(cell: Vector2i, item: Node2D) -> void:
-	items[cell] = item
+const STACK_MAX := 4  # items of one kind a single stockpile tile can hold
 
-func unregister_item(cell: Vector2i) -> void:
-	items.erase(cell)
+func register_item(cell: Vector2i, item: Node2D) -> void:
+	if not items.has(cell):
+		items[cell] = []
+	(items[cell] as Array).append(item)
+
+func unregister_item(cell: Vector2i, item: Node2D) -> void:
+	if not items.has(cell):
+		return
+	var stack: Array = items[cell]
+	stack.erase(item)
+	if stack.is_empty():
+		items.erase(cell)
+
+## How many items sit on a cell (0 if none) — drives the stack visual.
+func item_count(cell: Vector2i) -> int:
+	return (items[cell] as Array).size() if items.has(cell) else 0
 
 func reserve_storage(cell: Vector2i) -> void:
 	reserved_storage[cell] = true
@@ -245,16 +258,25 @@ func reserve_storage(cell: Vector2i) -> void:
 func release_storage(cell: Vector2i) -> void:
 	reserved_storage.erase(cell)
 
-func is_cell_free_for_storage(cell: Vector2i) -> bool:
-	return is_stockpile(cell) and not items.has(cell) \
-		and not reserved_storage.has(cell) and not is_wall(cell)
+## A stockpile tile takes an item if it's empty, or already holds the same
+## resource with room in the stack (pass the kind to allow stacking).
+func is_cell_free_for_storage(cell: Vector2i, kind := "") -> bool:
+	if not is_stockpile(cell) or is_wall(cell) or reserved_storage.has(cell):
+		return false
+	if not items.has(cell):
+		return true
+	if kind == "":
+		return false  # occupied and the caller isn't stacking
+	var stack: Array = items[cell]
+	return stack.size() < STACK_MAX and (stack[0] as ResourceItem).resource_id == kind
 
-## Nearest reachable stockpile cell with no item on it, or INVALID_CELL.
-func get_free_stockpile_cell(from_cell: Vector2i) -> Vector2i:
+## Nearest reachable stockpile cell that will take an item of `kind` (empty,
+## or a matching stack with room). INVALID_CELL if none.
+func get_free_stockpile_cell(from_cell: Vector2i, kind := "") -> Vector2i:
 	var best := INVALID_CELL
 	var best_dist := INF
 	for cell: Vector2i in stockpile_cells:
-		if not is_cell_free_for_storage(cell):
+		if not is_cell_free_for_storage(cell, kind):
 			continue
 		var dist := float((cell - from_cell).length_squared())
 		if dist < best_dist and not astar.get_id_path(from_cell, cell).is_empty():

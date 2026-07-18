@@ -23,8 +23,9 @@ func remove_job(job: Job) -> void:
 func request_job(seeker: Pawn, reserve := true) -> Job:
 	var from_cell := seeker.cell
 	var priorities := seeker.work_priorities
-	# Haul jobs are only valid while somewhere exists to put the item.
-	var storage_available := WorldGrid.get_free_stockpile_cell(from_cell) != WorldGrid.INVALID_CELL
+	# Haul jobs are only valid while somewhere exists to put the item — a
+	# free tile OR a matching stack with room (per resource, lazily computed).
+	var storage_ok := {}  # resource id -> bool
 	var supply_ok := {}  # resource id -> bool, lazily computed
 	var best: Job = null
 	var best_prio := 0
@@ -55,7 +56,10 @@ func request_job(seeker: Pawn, reserve := true) -> Job:
 		if prio <= 0:
 			continue
 		if job.type == Job.Type.HAUL:
-			if not storage_available:
+			var hk := (job.target as ResourceItem).resource_id
+			if not storage_ok.has(hk):
+				storage_ok[hk] = WorldGrid.get_free_stockpile_cell(from_cell, hk) != WorldGrid.INVALID_CELL
+			if not storage_ok[hk]:
 				continue
 			if (job.target as ResourceItem).reserved:
 				continue  # claimed as blueprint material
