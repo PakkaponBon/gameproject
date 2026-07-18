@@ -23,11 +23,14 @@
 - [x] One new key wired: "gregarious" (the Warm trait) speeds bond growth in
       PawnSocial — the mirror of the existing Loner. No art, no save bump.
 
-## Phase LR3 — Magic Variety  *(relic_defs + a little combat; reuses cell 12)*
-- [ ] Dispatch relics by an explicit "kind" (back-compat with the 3 originals).
-- [ ] Frost (blast + slows raiders), Stormcall (chain — the N nearest each
-      take a hit), Ward Totem (a stronger, wider barrier). Toward 3→~6 relics;
-      all reuse the relic sprite, tinted per color. Add to the shrine pool.
+## Phase LR3 — Magic Variety  *(relic_defs + a little combat; reuses cell 12)* ✓
+- [x] relic_tick now dispatches on an explicit "kind" (blast/frost/storm/heal/
+      ward); the three originals got their kind, no behavior change.
+- [x] Frost (blast + chills — struck raiders act every other tick via a new
+      raider.apply_slow), Stormcall (chain — the nearest few each take a hit),
+      Ward Totem (wider, more frequent barrier than Barrier). Relics 3 → 6,
+      all reuse the relic sprite tinted per color; added to the shrine pool,
+      boss drops, and the falling-star event automatically (they read ORDER).
 
 ## Phase LR4 — Arms Variety  *(weapon_defs; reuses the sword/bow sprites)*
 - [ ] Club (cheap tier-1), Spear (tier-1, small reach edge), Warhammer

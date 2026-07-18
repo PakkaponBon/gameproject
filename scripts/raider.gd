@@ -24,6 +24,8 @@ var carrying_loot := false
 var faction_id := ""  # who sent this bandit (attrition on death)
 var attack_cooldown := 0
 var move_cooldown := 0
+var slow_ticks := 0  # frost relic: acts every other tick while > 0
+var _slow_parity := false
 
 func _ready() -> void:
 	add_to_group("raiders")
@@ -95,9 +97,20 @@ func _drop_item(id: String) -> void:
 	item.position = WorldGrid.cell_to_world(cell)
 	get_parent().add_child(item)
 
+## Frost relic: chilled. Longest chill wins if hit again.
+func apply_slow(ticks: int) -> void:
+	slow_ticks = maxi(slow_ticks, ticks)
+	Fx.emote(self, "*", Color(0.6, 0.8, 1.0))
+
 func _on_tick() -> void:
 	if attack_cooldown > 0:
 		attack_cooldown -= 1
+	# Chilled: skip every other tick — half move and attack speed.
+	if slow_ticks > 0:
+		slow_ticks -= 1
+		_slow_parity = not _slow_parity
+		if _slow_parity:
+			return
 	if is_looter and _looter_tick():
 		return
 	# Fight whatever defender is closest — villager or allied warrior.

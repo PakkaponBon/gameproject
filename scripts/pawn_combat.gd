@@ -132,45 +132,95 @@ func ranged_tick() -> bool:
 	return true
 
 ## Auto-cast the carried relic when its moment comes. Long cooldowns and
-## scarcity keep magic decisive, not routine.
+## scarcity keep magic decisive, not routine. Dispatched by the relic's
+## "kind" (blast / frost / storm / heal / ward).
 func relic_tick() -> void:
 	if relic_id == "" or relic_cooldown > 0 or pawn.survival.sleeping:
 		return
 	var def := RelicDefs.get_def(relic_id)
-	if def.has("damage"):  # fireball: blast the nearest cluster
-		var target := _nearest_raider_within(int(def.range))
-		if target == null:
-			return
-		for node in get_tree().get_nodes_in_group("raiders"):
-			var raider := node as Raider
-			var d := (raider.cell - target.cell).abs()
-			if d.x + d.y <= int(def.radius):
-				raider.take_damage(float(def.damage))
+	var cast := false
+	match String(def.get("kind", "blast")):
+		"blast": cast = _cast_blast(def)
+		"frost": cast = _cast_frost(def)
+		"storm": cast = _cast_storm(def)
+		"heal": cast = _cast_heal(def)
+		"ward": cast = _cast_ward(def)
+	if cast:
 		EventBus.play_sfx.emit("spell")
 		relic_cooldown = int(def.cooldown)
-	elif def.has("heal"):  # mend the most wounded villager nearby
-		var worst: Pawn = null
-		for node in get_tree().get_nodes_in_group("pawns"):
-			var other := node as Pawn
-			if other.dead or other.combat.hp >= HP_MAX * 0.6:
-				continue
-			var d := (other.cell - pawn.cell).abs()
-			if d.x + d.y <= int(def.range) and (worst == null or other.combat.hp < worst.combat.hp):
-				worst = other
-		if worst:
-			worst.combat.heal(float(def.heal))
-			EventBus.play_sfx.emit("spell")
-			relic_cooldown = int(def.cooldown)
-	elif def.has("armor"):  # barrier: shield nearby villagers during raids
-		if not raid_active():
-			return
-		for node in get_tree().get_nodes_in_group("pawns"):
-			var other := node as Pawn
-			var d := (other.cell - pawn.cell).abs()
-			if not other.dead and d.x + d.y <= int(def.radius):
-				other.combat.apply_barrier(float(def.armor), int(def.duration))
-		EventBus.play_sfx.emit("spell")
-		relic_cooldown = int(def.cooldown)
+
+## Fireball: blast every raider in a radius around the nearest one.
+func _cast_blast(def: Dictionary) -> bool:
+	var target := _nearest_raider_within(int(def.range))
+	if target == null:
+		return false
+	for node in get_tree().get_nodes_in_group("raiders"):
+		var raider := node as Raider
+		var d := (raider.cell - target.cell).abs()
+		if d.x + d.y <= int(def.radius):
+			raider.take_damage(float(def.damage))
+	return true
+
+## Frost: a blast that also chills — struck raiders move and swing at
+## half speed for a while.
+func _cast_frost(def: Dictionary) -> bool:
+	var target := _nearest_raider_within(int(def.range))
+	if target == null:
+		return false
+	for node in get_tree().get_nodes_in_group("raiders"):
+		var raider := node as Raider
+		var d := (raider.cell - target.cell).abs()
+		if d.x + d.y <= int(def.radius):
+			raider.take_damage(float(def.damage))
+			raider.apply_slow(int(def.slow))
+	return true
+
+## Stormcall: a chain that strikes the few nearest raiders, one hit each.
+func _cast_storm(def: Dictionary) -> bool:
+	var raiders := _raiders_within_sorted(int(def.range))
+	if raiders.is_empty():
+		return false
+	var hits := mini(int(def.get("chain", 3)), raiders.size())
+	for i in hits:
+		(raiders[i] as Raider).take_damage(float(def.damage))
+	return true
+
+## Healing: mend the most wounded villager within reach.
+func _cast_heal(def: Dictionary) -> bool:
+	var worst: Pawn = null
+	for node in get_tree().get_nodes_in_group("pawns"):
+		var other := node as Pawn
+		if other.dead or other.combat.hp >= HP_MAX * 0.6:
+			continue
+		var d := (other.cell - pawn.cell).abs()
+		if d.x + d.y <= int(def.range) and (worst == null or other.combat.hp < worst.combat.hp):
+			worst = other
+	if worst == null:
+		return false
+	worst.combat.heal(float(def.heal))
+	return true
+
+## Ward: shield nearby villagers during a raid.
+func _cast_ward(def: Dictionary) -> bool:
+	if not raid_active():
+		return false
+	for node in get_tree().get_nodes_in_group("pawns"):
+		var other := node as Pawn
+		var d := (other.cell - pawn.cell).abs()
+		if not other.dead and d.x + d.y <= int(def.radius):
+			other.combat.apply_barrier(float(def.armor), int(def.duration))
+	return true
+
+func _raiders_within_sorted(reach: int) -> Array:
+	var list: Array = []
+	for node in get_tree().get_nodes_in_group("raiders"):
+		var raider := node as Raider
+		var d := (raider.cell - pawn.cell).abs()
+		if d.x + d.y <= reach:
+			list.append(raider)
+	list.sort_custom(func(a: Raider, b: Raider) -> bool:
+		return (a.cell - pawn.cell).length_squared() < (b.cell - pawn.cell).length_squared())
+	return list
 
 func apply_barrier(amount: float, ticks: int) -> void:
 	armor_buff = amount

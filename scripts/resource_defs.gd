@@ -28,6 +28,9 @@ const DEFS := {
 	"relic_fireball": {"name": "Fireball Relic", "color": Color(0.95, 0.5, 0.25), "sprite": 12, "relic": true},
 	"relic_heal": {"name": "Healing Relic", "color": Color(0.45, 0.9, 0.55), "sprite": 12, "relic": true},
 	"relic_barrier": {"name": "Barrier Relic", "color": Color(0.55, 0.6, 1.0), "sprite": 12, "relic": true},
+	"relic_frost": {"name": "Frost Relic", "color": Color(0.6, 0.85, 1.0), "sprite": 12, "relic": true},
+	"relic_storm": {"name": "Stormcall Relic", "color": Color(0.95, 0.9, 0.4), "sprite": 12, "relic": true},
+	"relic_ward": {"name": "Ward Totem", "color": Color(0.7, 0.95, 0.7), "sprite": 12, "relic": true},
 }
 
 static func get_def(id: String) -> Dictionary:
