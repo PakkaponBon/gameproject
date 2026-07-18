@@ -389,6 +389,19 @@ func _check_long_night() -> void:
 	long_night = true
 	long_night_begins.emit()
 
+## Debug/testing (PlayerInput F7): settle the four non-Legion factions and
+## trigger the Long Night, so the finale is reachable in seconds.
+func debug_resolve_others() -> void:
+	for id: String in factions:
+		if id == "ashen_legion":
+			continue
+		factions[id].attitude = 100.0
+		if factions[id].resolved == "":
+			factions[id].resolved = "allied"
+	factions_changed.emit()
+	announced.emit("[debug] The realm is settled — the Long Night stirs.")
+	_check_long_night()
+
 ## The siege is survived: the Legion breaks at the gates. → realm_ruled.
 func break_the_legion() -> void:
 	var f: Dictionary = factions["ashen_legion"]

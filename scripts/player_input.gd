@@ -48,6 +48,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		GameClock.set_speed(3.0 if GameClock.speed == 1.0 else 1.0)
 	elif event.is_action_pressed("debug_spawn_relic"):
 		main.spawner.spawn_resource(mouse_cell(), RelicDefs.ORDER.pick_random())
+	elif event is InputEventKey and event.pressed and not event.echo and _debug_hotkey(event.keycode):
+		pass  # F6/F7/F8 test shortcuts (see _debug_hotkey)
 	elif event.is_action_pressed("toggle_world_map"):
 		main.world_map.toggle()
 	elif event.is_action_pressed("toggle_priority_grid"):
@@ -64,6 +66,21 @@ func _unhandled_input(event: InputEvent) -> void:
 			_apply_tool(MOUSE_BUTTON_LEFT, true)
 		elif event.button_mask & MOUSE_BUTTON_MASK_RIGHT:
 			_apply_tool(MOUSE_BUTTON_RIGHT, true)
+
+## Testing shortcuts — jump to the states that normally take hours to reach.
+## F6 grant goods+gear, F7 start the Long Night, F8 spawn a Legion wave.
+## Returns true when it handled the key.
+func _debug_hotkey(keycode: int) -> bool:
+	match keycode:
+		KEY_F6:
+			main.debug_grant()
+		KEY_F7:
+			FactionManager.debug_resolve_others()
+		KEY_F8:
+			main.raid_director.spawn_legion_wave(4, false)
+		_:
+			return false
+	return true
 
 func _apply_tool(button_index: int, dragging := false) -> void:
 	var cell := mouse_cell()

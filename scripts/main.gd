@@ -399,6 +399,21 @@ func _on_building_deconstructed(cell: Vector2i) -> void:
 	for id: String in refund:
 		spawner.drop_resource(cell, id, int(refund[id]))
 
+# --- debug / testing hotkeys (PlayerInput F6-F8) ---------------------------
+
+## F6: drop a bundle of goods and gear near home so the late game and combat
+## can be reached without hours of play. Villagers auto-claim the gear.
+func debug_grant() -> void:
+	var c: Vector2i = WorldGrid.MAP_SIZE / 2
+	spawner.drop_resource(c, "wood", 12)
+	spawner.drop_resource(c + Vector2i(1, 0), "stone", 8)
+	spawner.drop_resource(c + Vector2i(-1, 0), "iron_ingot", 6)
+	spawner.drop_resource(c + Vector2i(0, 1), "herb", 5)
+	spawner.drop_resource(c + Vector2i(2, 0), "sword", 2)
+	spawner.drop_resource(c + Vector2i(-2, 0), "iron_mail", 2)
+	spawner.drop_resource(c + Vector2i(0, 2), RelicDefs.ORDER.pick_random(), 1)
+	hud.set_event("[debug] A bundle of goods and gear appears.", Color(0.8, 0.8, 0.95))
+
 func _on_realm_ruled() -> void:
 	EventBus.chronicle_entry.emit("The last banner bowed. The realm is ours.")
 	var all_allied := true

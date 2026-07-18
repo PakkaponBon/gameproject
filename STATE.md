@@ -114,6 +114,13 @@ GDI+ pitfall: never Save() over a file still open via FromFile — clone to a ne
   ALWAYS commit with an explicit pathspec: `git commit <files...> -m ...` or
   `git commit -- <files>`. Never a bare `git commit` while Codex is active.
 
+## Debug/test hotkeys (in-game, always on for now)
+- F6: drop a bundle of goods + gear near home (reach late game / combat fast).
+- F7: settle the four non-Legion factions and trigger the Long Night siege.
+- F8: spawn a 4-strong Legion wave (test a fight right now).
+- F9: spawn a random relic at the cursor (pre-existing).
+Gate these behind a debug flag before any public release.
+
 ## Workflow conventions (owner: Bo, solo, tests via F5 and pastes errors)
 - Per phase: build → tick mini-roadmap boxes → commit (message = what + why) → push.
 - Tag per update when moving past it (v1.X-name). Leave human DoD boxes unchecked.
