@@ -85,3 +85,15 @@
   Keep the gate's side masonry compatible with tile_02 so connected walls do
   not develop gaps. Once the cell table is updated, the asset agent can draw
   the approved 16x16 frames.
+- Whole-game animation pass requested: please define and reserve named atlas
+  cells, extend the importer limits, and add playback hooks for the complete
+  ART_DIRECTION.md animation budget. Preserve sprite_00 + sprite_14 as the
+  villager's two walk frames; add the two-frame villager work set and two-frame
+  melee/bow attacks; add two-frame walk sets for bandit, knight, elder, rabbit,
+  sheep, boar, ash-wolf, bird, and chicken plus two-frame attacks for combatants;
+  add one shared palette-tinted 3-4 frame relic effect and a two-frame hit puff.
+  The gate request above remains part of this pass. Keep crops, ordinary idle
+  poses, terrain, decor, and non-interactive buildings static per the hard cap;
+  use existing procedural bob/lean/glow where possible rather than allocating
+  duplicate frames. Update the cell tables with exact filenames before the
+  asset agent draws any of these 16x16 frames.
