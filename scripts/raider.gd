@@ -82,9 +82,16 @@ func take_damage(amount: float) -> void:
 			if carrying_loot:
 				_drop_item("wood")  # cut down mid-theft: the goods stay home
 			if randf() < SWORD_DROP_CHANCE:
-				_drop_item("sword")
+				_drop_item(_weapon_drop())
 		gone.emit()
 		queue_free()
+
+## Fallen raiders leave a mix of tier-1 arms (swords common, the crushing
+## warhammer rare) — so the armory grows from what you kill.
+const WEAPON_DROPS := ["sword", "sword", "club", "club", "spear", "warhammer"]
+
+func _weapon_drop() -> String:
+	return String(WEAPON_DROPS.pick_random())
 
 func _drop_meat() -> void:
 	var meat: FoodItem = preload("res://scenes/food_item.tscn").instantiate()

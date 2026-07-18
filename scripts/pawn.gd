@@ -71,12 +71,14 @@ func attack(raider: Raider) -> void:
 	if drafted:
 		combat.attack_target = raider
 
-## Show the equipped weapon in hand.
+## Show the equipped weapon in hand, tinted so the tier-1 arms (club,
+## spear, warhammer — same sprite) still read apart.
 func update_held() -> void:
 	held.visible = combat.weapon_id != ""
 	if held.visible:
-		var idx := int(ResourceDefs.get_def(combat.weapon_id).sprite)
-		held.region_rect = Rect2(idx * 16, 0, 16, 16)
+		var def := ResourceDefs.get_def(combat.weapon_id)
+		held.region_rect = Rect2(int(def.sprite) * 16, 0, 16, 16)
+		held.modulate = def.color
 
 func set_sleep_visual(on: bool) -> void:
 	if not dead:

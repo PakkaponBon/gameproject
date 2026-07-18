@@ -3,7 +3,8 @@ extends RefCounted
 ## Crafting catalog — data over code. ORDER is priority: a workstation
 ## picks the first recipe whose inputs exist as free items.
 
-const ORDER := ["forge_sword", "craft_bow", "craft_arrows", "forge_mail", "smelt_iron",
+const ORDER := ["forge_sword", "forge_warhammer", "forge_spear", "forge_club",
+		"craft_bow", "craft_arrows", "forge_mail", "smelt_iron",
 		"brew_ale", "cut_leather", "weave_padded", "awaken_relic"]
 
 const DEFS := {
@@ -22,6 +23,30 @@ const DEFS := {
 		"output": "sword",
 		"craft_ticks": 50,
 		"max_stock": 3,
+	},
+	"forge_club": {
+		"name": "Forge Club",
+		"station": "forge",
+		"inputs": {"iron_ingot": 1},
+		"output": "club",
+		"craft_ticks": 30,
+		"max_stock": 2,
+	},
+	"forge_spear": {
+		"name": "Forge Spear",
+		"station": "forge",
+		"inputs": {"iron_ingot": 1, "wood": 2},  # iron-light option
+		"output": "spear",
+		"craft_ticks": 45,
+		"max_stock": 2,
+	},
+	"forge_warhammer": {
+		"name": "Forge Warhammer",
+		"station": "forge",
+		"inputs": {"iron_ingot": 3},
+		"output": "warhammer",
+		"craft_ticks": 60,
+		"max_stock": 1,
 	},
 	"craft_bow": {
 		"name": "Craft Bow",

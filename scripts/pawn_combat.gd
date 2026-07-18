@@ -49,7 +49,7 @@ func engage_adjacent() -> bool:
 	if raider == null:
 		return false
 	if attack_cooldown <= 0:
-		attack_cooldown = ATTACK_COOLDOWN_TICKS
+		attack_cooldown = _melee_cooldown()
 		Fx.lunge(pawn.body, raider.position - pawn.position)
 		var lvl := pawn.skills.level("melee")
 		if randf() < BASE_HIT_CHANCE + HIT_PER_MELEE_LEVEL * lvl:
@@ -74,6 +74,12 @@ func drain(amount: float) -> void:
 
 func heal(amount: float) -> void:
 	hp = minf(hp + amount, HP_MAX)
+
+## Swing speed: a weapon's attack_ticks, or the unarmed baseline.
+func _melee_cooldown() -> int:
+	if weapon_id == "":
+		return ATTACK_COOLDOWN_TICKS
+	return int(WeaponDefs.get_def(weapon_id).get("attack_ticks", ATTACK_COOLDOWN_TICKS))
 
 func equip(id: String) -> void:
 	weapon_id = id

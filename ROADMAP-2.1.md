@@ -32,11 +32,16 @@
       all reuse the relic sprite tinted per color; added to the shrine pool,
       boss drops, and the falling-star event automatically (they read ORDER).
 
-## Phase LR4 — Arms Variety  *(weapon_defs; reuses the sword/bow sprites)*
-- [ ] Club (cheap tier-1), Spear (tier-1, small reach edge), Warhammer
-      (tier-1, heavy, slow). Each = WeaponDefs + ResourceDefs (reuse sword
-      sprite, tinted) + a forge recipe. If distinct icons are wanted later,
-      file an ASSET_SPEC request.
+## Phase LR4 — Arms Variety  *(weapon_defs; reuses the sword sprite)* ✓
+- [x] Three tier-1 melee weapons via a new weapon "attack_ticks" (swing
+      speed): Club (cheap/fast/weak — 1 ingot), Spear (iron-light, solid —
+      1 ingot + 2 wood), Warhammer (slow/crushing — 3 ingots). Because armor
+      subtracts per hit, the Warhammer's big hits beat elites while the Club
+      clears swarms — real tactical spread from the existing armor math.
+- [x] Entry via loot AND forge: fallen raiders drop a random tier-1 arm
+      (swords common, warhammer rare), and each has a forge recipe. Held
+      sprite now tints per weapon so they read apart (all reuse the sword
+      cell). ResourceDefs + RecipeDefs + WeaponDefs, no art, no save bump.
 
 ## Phase LR5 — Ship it
 - [ ] DoD (human): play a long game and confirm the new events, traits,
