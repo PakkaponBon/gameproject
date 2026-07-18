@@ -42,9 +42,12 @@ const PLACES := {
 			"flavor": "The oldest grave in the realm. Rich in shards; poor in mercy."},
 }
 
+const BG_PATH := "res://assets/worldmap.png"  # reserved for the asset agent's illustrated realm
+
 var _map: Control
 var _nodes := {}  # place id -> {root, icon, name, strength?, attitude?}
 var _selected := "village"
+var _bg: Texture2D = null  # illustrated backdrop, drawn behind the roads once it exists
 
 var _d_title: Label
 var _d_flavor: Label
@@ -59,6 +62,10 @@ var _expedition_label: Label
 func _ready() -> void:
 	visible = false
 	layer = 8
+	# Graceful hook: use the illustrated realm backdrop once the asset agent
+	# provides it; until then the map is the plain node graph.
+	if ResourceLoader.exists(BG_PATH):
+		_bg = load(BG_PATH)
 	_build_ui()
 	FactionManager.factions_changed.connect(_refresh)
 
@@ -224,8 +231,10 @@ func _layout_nodes() -> void:
 		root.position = Vector2(PLACES[id].pos) * _map.size - Vector2(48, 22)
 	_map.queue_redraw()
 
-## Roads from the village outward, tinted by standing.
+## The illustrated backdrop (if any), then roads from the village outward.
 func _draw_roads() -> void:
+	if _bg:
+		_map.draw_texture_rect(_bg, Rect2(Vector2.ZERO, _map.size), false)
 	var home: Vector2 = Vector2(PLACES["village"].pos) * _map.size
 	for id: String in PLACES:
 		if id == "village":

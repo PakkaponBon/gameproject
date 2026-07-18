@@ -131,17 +131,17 @@ the importer auto-extends the atlas — no manual resize needed).
   against the real frames — a blank reserved cell just shows nothing until you
   fill it, so drawing and hooking can proceed in parallel. Idle/crops/terrain/
   decor stay static; procedural bob/lean/glow is kept, not duplicated.
-- Interactive illustrated world map requested: please upgrade the existing
-  node map to use a 320x180-ish hand-drawn realm background with clickable
-  settlement, faction, and wild-site markers. Hover/focus should show the
-  location name, discovered/locked state, faction relationship, travel time,
-  risk, and likely rewards; selecting a discovered marker should expose the
-  actions already supported by the game (travel/expedition, trade, scout, or
-  inspect) without duplicating game systems. Highlight routes from Vhal and
-  clearly distinguish reachable, selected, hostile, allied, and completed
-  locations with shape as well as color. Preserve keyboard/controller access
-  and saved discovery state. The asset lane currently authorizes only 16x16
-  incoming PNGs, so please define an approved filename/import path for the
-  illustrated 320x180 background and reserve named 16x16 crest/marker cells if
-  the UI needs new ones. Once those entries are added to this spec, the asset
-  agent can produce the map and marker art.
+- [BACKDROP RESERVED — full rework pending] Interactive illustrated world map:
+  the backdrop is reserved and hooked NOW — draw a ~320x180 (or larger, any
+  aspect) hand-drawn realm and save it at **`res://assets/worldmap.png`** (a
+  standalone image, NOT a 16x16 atlas cell — drop it straight in `assets/`,
+  Godot imports it on focus). WorldMap already loads it if present and draws it
+  behind the existing roads + markers (which stay data-driven), so the map
+  upgrades the moment the art lands; no code needed for that part. The richer
+  interaction the request asks for — discovered/locked state, travel-time/risk/
+  reward hover, from-Vhal route highlighting, shape-coded reachable/selected/
+  hostile/allied/completed markers — is a genuine UI feature pass Claude will
+  slice into a mini-roadmap after the animation hooks; the current map already
+  covers name, attitude, strength, odds, cooldowns, and the per-place actions.
+  If that rework needs new 16x16 crest/marker cells, Claude will reserve and
+  document them here first (as with the gate + animation cells).
