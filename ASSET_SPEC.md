@@ -156,3 +156,11 @@ the importer auto-extends the atlas — no manual resize needed).
   shows the selected marker (47). Cells 47/48/49 are wired and render nothing
   until drawn; 44/45/46 (type markers) are reserved for a later pass that may
   swap the per-place icons — draw them and Claude will wire them in.
+- Remaining variant/portrait art requested: please reserve exact named cells
+  and playback/tint hooks for 2–3 villager variants (including their synced
+  walk/work/attack frames) plus distinct sheep, boar, and ash-wolf sprites
+  instead of reusing tinted rabbit silhouettes. Also approve a standalone
+  portrait path and resolve the current size conflict: ART_DIRECTION.md says
+  24x24 busts while the priority list says 32x32 portraits. Once the cell table,
+  filenames, portrait dimensions, and import path are explicit, the asset agent
+  can draw the remaining art without changing load-bearing indices.
