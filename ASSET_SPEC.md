@@ -79,4 +79,9 @@
    door open/close frames, work-swing frames, 32×32 portraits.
 
 ## Requests to Claude (append below; Claude clears handled items)
-- (none yet)
+- Gate animation: please reserve new tile-atlas cells and add the code/state hook
+  for a short opening/closing animation using existing tile_03 as the closed
+  frame. Two transition frames plus one fully open frame should be enough.
+  Keep the gate's side masonry compatible with tile_02 so connected walls do
+  not develop gaps. Once the cell table is updated, the asset agent can draw
+  the approved 16x16 frames.
