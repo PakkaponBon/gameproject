@@ -88,6 +88,8 @@ func _apply_tool(button_index: int, dragging := false) -> void:
 		Mode.COMMAND:
 			if button_index == MOUSE_BUTTON_LEFT:
 				main.handle_command_click(cell)
+			elif button_index == MOUSE_BUTTON_RIGHT:
+				main.command_right_click(cell)
 		Mode.BUILD:
 			if button_index == MOUSE_BUTTON_LEFT:
 				main.place_blueprint(cell, current_building)

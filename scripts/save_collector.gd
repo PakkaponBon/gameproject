@@ -91,6 +91,9 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 			"delivered": order.delivered,
 			"work": order.craft_job.work_ticks if order.craft_job else -1,
 		})
+	var forced_recipes: Array = []
+	for cell: Vector2i in main.forge_keeper.forced:
+		forced_recipes.append({"cell": _v(cell), "recipe": main.forge_keeper.forced[cell]})
 	var field_zones: Array = []
 	for cell: Vector2i in WorldGrid.fields:
 		field_zones.append({"cell": _v(cell), "crop": WorldGrid.fields[cell]})
@@ -123,6 +126,7 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 		"blueprints": blueprints,
 		"decon_orders": decon,
 		"craft_orders": craft_orders,
+		"forced_recipes": forced_recipes,
 		"fields": field_zones,
 		"crops": crops,
 		"chronicle": main.chronicle_director.entries,

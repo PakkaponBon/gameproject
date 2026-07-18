@@ -8,6 +8,7 @@ const ORDER_SCENE := preload("res://scenes/craft_order.tscn")
 const CHECK_EVERY_TICKS := 20
 
 var orders := {}  # workstation cell -> CraftOrder
+var forced := {}  # workstation cell -> recipe id the player pinned ("auto" = default)
 var spawn_parent: Node2D = null  # assigned by Main
 var _cooldown := 0
 
@@ -26,11 +27,38 @@ func _on_tick() -> void:
 		elif not _is_workstation(cell):
 			orders[cell].cancel()
 			orders.erase(cell)
+	for cell: Vector2i in forced.keys():  # forget pins on removed stations
+		if not _is_workstation(cell):
+			forced.erase(cell)
 	for cell: Vector2i in WorldGrid.buildings:
 		if _is_workstation(cell) and not orders.has(cell):
-			var recipe := _pick_recipe(WorldGrid.buildings[cell])
+			var recipe := _pick_recipe(WorldGrid.buildings[cell], cell)
 			if recipe != "":
 				start_order(cell, recipe)
+
+## Right-click a workstation to cycle what it makes: auto → each recipe it
+## can run → back to auto. Returns the human-readable new setting.
+func cycle_recipe(cell: Vector2i) -> String:
+	if not _is_workstation(cell):
+		return ""
+	var station: String = WorldGrid.buildings[cell]
+	var options: Array[String] = ["auto"]
+	for id: String in RecipeDefs.ORDER:
+		if String(RecipeDefs.get_def(id).get("station", "")) == station:
+			options.append(id)
+	var cur: String = forced.get(cell, "auto")
+	forced[cell] = options[(options.find(cur) + 1) % options.size()]
+	# Re-pick next tick: drop the running order if it no longer fits the pin.
+	if orders.has(cell) and is_instance_valid(orders[cell]):
+		orders[cell].cancel()
+		orders.erase(cell)
+	var pinned: String = forced[cell]
+	return "auto" if pinned == "auto" else String(RecipeDefs.get_def(pinned).name)
+
+## What a workstation is set to make (for the hover readout).
+func recipe_label(cell: Vector2i) -> String:
+	var pinned: String = forced.get(cell, "auto")
+	return "auto" if pinned == "auto" else String(RecipeDefs.get_def(pinned).name)
 
 func start_order(cell: Vector2i, recipe: String) -> CraftOrder:
 	var order: CraftOrder = ORDER_SCENE.instantiate()
@@ -47,7 +75,13 @@ func _is_workstation(cell: Vector2i) -> bool:
 
 ## Pick a recipe this station can actually make — each recipe names the
 ## building it belongs to, so a brewery never forges swords and vice versa.
-func _pick_recipe(station_id: String) -> String:
+func _pick_recipe(station_id: String, cell: Vector2i) -> String:
+	# A pinned recipe: make only that, when its inputs are in stock.
+	var pinned: String = forced.get(cell, "auto")
+	if pinned != "auto":
+		var pdef := RecipeDefs.get_def(pinned)
+		return pinned if _inputs_available(pdef.inputs) else ""
+	# Auto: the first station recipe with inputs and room to stock.
 	for id: String in RecipeDefs.ORDER:
 		var def := RecipeDefs.get_def(id)
 		if String(def.get("station", "")) != station_id:

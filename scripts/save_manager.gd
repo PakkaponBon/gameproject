@@ -117,6 +117,8 @@ func apply_pending_load() -> void:
 	for d: Dictionary in data.decon_orders:
 		main.mark_deconstruct(_vec(d.cell))
 		main.decon_orders[_vec(d.cell)].restore(int(d.work))
+	for fr: Dictionary in data.get("forced_recipes", []):
+		main.forge_keeper.forced[_vec(fr.cell)] = String(fr.recipe)
 	for f: Dictionary in data.fields:
 		WorldGrid.set_field(_vec(f.cell), f.crop)
 	for c: Dictionary in data.crops:

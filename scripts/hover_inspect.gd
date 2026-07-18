@@ -35,6 +35,8 @@ func _describe(cell: Vector2i) -> String:
 		var text: String = BuildingDefs.get_def(id).name
 		if WorldGrid.building_hp.has(cell):
 			text += " (%d hp)" % int(WorldGrid.building_hp[cell])
+		if BuildingDefs.get_def(id).get("workstation", false):
+			text += " — makes %s (RMB to change)" % main.forge_keeper.recipe_label(cell)
 		parts.append(text)
 	if main.blueprints.has(cell):
 		parts.append("Blueprint: %s (awaiting materials/build)" \

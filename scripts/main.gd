@@ -162,6 +162,14 @@ func handle_command_click(cell: Vector2i) -> void:
 		selected.move_to(cell)
 		commands_issued += 1
 
+## Right-click in command mode: cycle a workstation's recipe (auto → each
+## thing it can make → auto). Does nothing on non-workstation cells.
+func command_right_click(cell: Vector2i) -> void:
+	var setting := forge_keeper.cycle_recipe(cell)
+	if setting != "":
+		hud.set_event("%s → makes %s" % [BuildingDefs.get_def(WorldGrid.buildings[cell]).name, setting],
+				Color(0.85, 0.85, 0.7))
+
 func select(pawn: Pawn) -> void:
 	if selected and is_instance_valid(selected):
 		selected.set_selected(false)

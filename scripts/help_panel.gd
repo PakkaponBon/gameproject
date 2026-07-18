@@ -29,7 +29,7 @@ The map shows the five factions. Send gifts and envoys to warm them toward allia
 
 const KEYS_TEXT := """MOUSE
   Left click — select villager / move / attack (drafted) / talk to merchant
-  Right click — remove, cancel, or (in a zone) erase
+  Right click — remove, cancel, (in a zone) erase, or set a workstation's recipe
 
 TOOLS (or click the bottom toolbar)
   B — build      Z — stockpile zone      F — fields      X — safety zone
