@@ -131,7 +131,7 @@ func _roll_dilemma() -> void:
 
 func _the_fever() -> void:
 	var treat := func() -> void:
-		if not _consume("herb", 2):
+		if not _consume_items("herb", 2):
 			main.hud.set_event("No herbs to spare — the fever runs its course.", Color(0.8, 0.7, 0.6))
 			_fever_spreads()
 			return
