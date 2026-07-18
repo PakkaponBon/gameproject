@@ -107,3 +107,17 @@ at 24. Filenames: `tile_22_gate_open_a.png`, `tile_23_gate_open_b.png`,
   use existing procedural bob/lean/glow where possible rather than allocating
   duplicate frames. Update the cell tables with exact filenames before the
   asset agent draws any of these 16x16 frames.
+- Interactive illustrated world map requested: please upgrade the existing
+  node map to use a 320x180-ish hand-drawn realm background with clickable
+  settlement, faction, and wild-site markers. Hover/focus should show the
+  location name, discovered/locked state, faction relationship, travel time,
+  risk, and likely rewards; selecting a discovered marker should expose the
+  actions already supported by the game (travel/expedition, trade, scout, or
+  inspect) without duplicating game systems. Highlight routes from Vhal and
+  clearly distinguish reachable, selected, hostile, allied, and completed
+  locations with shape as well as color. Preserve keyboard/controller access
+  and saved discovery state. The asset lane currently authorizes only 16x16
+  incoming PNGs, so please define an approved filename/import path for the
+  illustrated 320x180 background and reserve named 16x16 crest/marker cells if
+  the UI needs new ones. Once those entries are added to this spec, the asset
+  agent can produce the map and marker art.
