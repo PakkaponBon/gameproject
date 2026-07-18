@@ -13,7 +13,7 @@
 - Filenames: `tile_NN_anything.png` or `sprite_NN_anything.png` where NN is
   the two-digit cell index below. The importer places by NN only.
 
-## tiles.png — 22 cells (buildings & terrain; drawn on the Walls layer)
+## tiles.png — 25 cells (buildings & terrain; drawn on the Walls layer)
 | NN | Meaning | State |
 |---|---|---|
 | 00 | grass (full-bleed) | fine |
@@ -50,7 +50,7 @@ at 24. Filenames: `tile_22_gate_open_a.png`, `tile_23_gate_open_b.png`,
 `tile_24_gate_open.png` → drop in `assets/incoming/`, run
 `tools/import_assets.ps1`.
 
-## sprites.png — 28 cells (entities & items)
+## sprites.png — 44 cells (0–27 entities & items; 28–43 animation frames)
 | NN | Meaning | State |
 |---|---|---|
 | 00 | villager (also the portrait, scaled 3×: keep the face readable) | **wanted: 2–3 villager variants need code hook — request first** |
@@ -81,6 +81,34 @@ at 24. Filenames: `tile_22_gate_open_a.png`, `tile_23_gate_open_b.png`,
 | 25 | knight (allied warrior) | fine |
 | 26 | elder (merchant) | fine |
 | 27 | armor crest (tinted: padded/leather/mail) | fine |
+| 28 | villager — WORK frame (mid work-swing) | **RESERVED — DRAW ME** |
+| 29 | villager — MELEE attack frame | **RESERVED — DRAW ME** |
+| 30 | villager — BOW loose frame | **RESERVED — DRAW ME** |
+| 31 | bandit — WALK frame | **RESERVED — DRAW ME** |
+| 32 | bandit — ATTACK frame | **RESERVED — DRAW ME** |
+| 33 | knight — WALK frame | **RESERVED — DRAW ME** |
+| 34 | knight — ATTACK frame | **RESERVED — DRAW ME** |
+| 35 | elder/merchant — WALK frame | **RESERVED — DRAW ME** |
+| 36 | rabbit — WALK frame (sheep/boar/wolf reuse, tinted) | **RESERVED — DRAW ME** |
+| 37 | bird — WALK frame (chicken reuses, tinted) | **RESERVED — DRAW ME** |
+| 38 | relic effect — frame 1 (shared, palette-tinted) | **RESERVED — DRAW ME** |
+| 39 | relic effect — frame 2 | **RESERVED — DRAW ME** |
+| 40 | relic effect — frame 3 | **RESERVED — DRAW ME** |
+| 41 | relic effect — frame 4 | **RESERVED — DRAW ME** |
+| 42 | hit puff — frame A | **RESERVED — DRAW ME** |
+| 43 | hit puff — frame B | **RESERVED — DRAW ME** |
+
+## Animation frames (cells 28–43)
+Two-frame animations pair an existing base cell with one new frame here
+(walk: base + 28/31/33/35/36/37; work: idle 00 + 28; attacks flash the
+attack frame during the existing procedural lunge). Idle poses, crops,
+terrain, decor, and non-interactive buildings stay STATIC — keep the
+procedural bob/lean/glow already in the game rather than drawing duplicate
+idle frames. The relic effect (38–41) is one shared set tinted per relic
+color; the hit puff (42–43) is a tiny two-frame spark. Filenames follow the
+table: `sprite_28_villager_work.png` … `sprite_43_hit_puff_b.png` → drop in
+`assets/incoming/`, run `tools/import_assets.ps1` (sprite-max is now 43, and
+the importer auto-extends the atlas — no manual resize needed).
 
 ## Priorities (highest value first)
 1. The "wanted" replacements above marked *programmer art* (rocks, grave, stone chunk).
@@ -95,18 +123,14 @@ at 24. Filenames: `tile_22_gate_open_a.png`, `tile_23_gate_open_b.png`,
   a villager passes). Draw tile_22/23/24 gate frames per the "Gate frames"
   section above, keeping side masonry aligned with tile_02, then run the
   importer.
-- Whole-game animation pass requested: please define and reserve named atlas
-  cells, extend the importer limits, and add playback hooks for the complete
-  ART_DIRECTION.md animation budget. Preserve sprite_00 + sprite_14 as the
-  villager's two walk frames; add the two-frame villager work set and two-frame
-  melee/bow attacks; add two-frame walk sets for bandit, knight, elder, rabbit,
-  sheep, boar, ash-wolf, bird, and chicken plus two-frame attacks for combatants;
-  add one shared palette-tinted 3-4 frame relic effect and a two-frame hit puff.
-  The gate request above remains part of this pass. Keep crops, ordinary idle
-  poses, terrain, decor, and non-interactive buildings static per the hard cap;
-  use existing procedural bob/lean/glow where possible rather than allocating
-  duplicate frames. Update the cell tables with exact filenames before the
-  asset agent draws any of these 16x16 frames.
+- [RESERVED — draw now, hooks landing] Whole-game animation pass: 16 named
+  animation cells reserved (28–43, see the sprite table + "Animation frames"
+  section for exact filenames), importer sprite-max bumped to 43, atlas
+  auto-extends. DRAW those frames now. Claude is adding the playback hooks
+  (villager work/attack, creature walk, relic effect, hit puff) incrementally
+  against the real frames — a blank reserved cell just shows nothing until you
+  fill it, so drawing and hooking can proceed in parallel. Idle/crops/terrain/
+  decor stay static; procedural bob/lean/glow is kept, not duplicated.
 - Interactive illustrated world map requested: please upgrade the existing
   node map to use a 320x180-ish hand-drawn realm background with clickable
   settlement, faction, and wild-site markers. Hover/focus should show the

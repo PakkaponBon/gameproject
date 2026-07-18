@@ -59,7 +59,11 @@ as a villager passes; cells 22-24 reserved transparent, asset agent draws them
 13 grave(proc) · 14 villager-walk(1px bob) · 15 bandit · 16 pine · 17 jagged-rock(proc) ·
 18 mature-crop · 19 flowers · 20 pebbles · 21 berry-bush · 22 mushrooms · 23 rabbit(also
 sheep/boar/wolf tinted) · 24 bird(also chicken tinted) · 25 knight-ally · 26 elder-merchant ·
-27 armor-crest
+27 armor-crest · **28-43 animation frames (reserved, asset agent draws):** 28 villager-work ·
+29 villager-melee · 30 villager-bow · 31 bandit-walk · 32 bandit-attack · 33 knight-walk ·
+34 knight-attack · 35 elder-walk · 36 rabbit-walk · 37 bird-walk · 38-41 relic-fx(4) ·
+42-43 hit-puff(2). sprites.png now 44 cells (704px); importer sprite-max 43, auto-extends.
+Playback hooks land incrementally (villager work/attack, creature walk, relic fx, hit puff).
 
 **Regenerating art:** tools/*.ps1 (rescued from session scratchpad). Order if rebuilding
 from Kenney zips: compose_kenney → make_brewery(16) → make_coop(17) → make_s1_art(18/19,

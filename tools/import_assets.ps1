@@ -10,7 +10,7 @@ if (-not (Test-Path $incoming)) { New-Item -ItemType Directory $incoming | Out-N
 
 $targets = @{
     "tile" = @{ "path" = (Join-Path $repo "assets\tiles.png"); "max" = 24 }
-    "sprite" = @{ "path" = (Join-Path $repo "assets\sprites.png"); "max" = 27 }
+    "sprite" = @{ "path" = (Join-Path $repo "assets\sprites.png"); "max" = 43 }
 }
 # Open each atlas onto a canvas wide enough for all declared cells, so newly
 # reserved cells exist (transparent) and packing never clips. Clone-copy
