@@ -174,53 +174,6 @@ script = ExtResource("37_longnight")
 layer = 5
 script = ExtResource("14_panel")
 
-[node name="TradeBox" type="PanelContainer" parent="TradePanel"]
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -280.0
-offset_top = -140.0
-offset_right = -12.0
-offset_bottom = 140.0
-grow_horizontal = 0
-grow_vertical = 2
-
-[node name="VBox" type="VBoxContainer" parent="TradePanel/TradeBox"]
-theme_override_constants/separation = 8
-
-[node name="TradeTitle" type="Label" parent="TradePanel/TradeBox/VBox"]
-text = "TRAVELING MERCHANT"
-horizontal_alignment = 1
-
-[node name="TradeStockLabel" type="Label" parent="TradePanel/TradeBox/VBox"]
-unique_name_in_owner = true
-text = "Colony wood: 0"
-
-[node name="BuySwordButton" type="Button" parent="TradePanel/TradeBox/VBox"]
-unique_name_in_owner = true
-text = "Buy Sword — 8 wood"
-
-[node name="BuyArrowsButton" type="Button" parent="TradePanel/TradeBox/VBox"]
-unique_name_in_owner = true
-text = "Buy Arrows — 3 wood"
-
-[node name="BuyRelicButton" type="Button" parent="TradePanel/TradeBox/VBox"]
-unique_name_in_owner = true
-text = "Buy Relic — 25 wood"
-
-[node name="SellStoneButton" type="Button" parent="TradePanel/TradeBox/VBox"]
-unique_name_in_owner = true
-text = "Sell 5 Stone — 3 wood"
-
-[node name="SellOreButton" type="Button" parent="TradePanel/TradeBox/VBox"]
-unique_name_in_owner = true
-text = "Sell 2 Iron Ore — 3 wood"
-
-[node name="CloseTradeButton" type="Button" parent="TradePanel/TradeBox/VBox"]
-unique_name_in_owner = true
-text = "Close"
-
 [node name="WorldMap" type="CanvasLayer" parent="."]
 script = ExtResource("15_map")
 
