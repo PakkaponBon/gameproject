@@ -68,11 +68,18 @@ func request_job(seeker: Pawn, reserve := true) -> Job:
 		if job.type == Job.Type.FEED and find_fetchable_food(from_cell) == null:
 			continue
 		if job.type == Job.Type.EQUIP:
-			if seeker.combat.weapon_id != "":
-				continue  # already armed
 			var wdef: Dictionary = WeaponDefs.get_def((job.target as ResourceItem).resource_id)
-			if wdef.has("skill") and seeker.skills.level(wdef.skill) < int(wdef.skill_min):
-				continue  # not trained enough for this weapon
+			if wdef.get("ranged", false):
+				# A bow goes to an unarmed, trained villager only.
+				if seeker.combat.weapon_id != "":
+					continue
+				if wdef.has("skill") and seeker.skills.level(wdef.skill) < int(wdef.skill_min):
+					continue
+			elif seeker.combat.weapon_id != "":
+				# Melee: take it only as an upgrade over a weaker melee arm.
+				var cur: Dictionary = WeaponDefs.get_def(seeker.combat.weapon_id)
+				if cur.get("ranged", false) or float(cur.damage) >= float(wdef.damage):
+					continue  # never trade a bow down; not an upgrade otherwise
 		if job.type == Job.Type.AMMO and (not seeker.combat.is_ranged() or seeker.combat.ammo >= 5):
 			continue
 		if job.type == Job.Type.ARMOR:

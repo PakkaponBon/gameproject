@@ -82,6 +82,12 @@ func _melee_cooldown() -> int:
 	return int(WeaponDefs.get_def(weapon_id).get("attack_ticks", ATTACK_COOLDOWN_TICKS))
 
 func equip(id: String) -> void:
+	# Upgrading in-game: drop the old weapon for the next fighter to claim.
+	if weapon_id != "" and weapon_id != id:
+		var old: ResourceItem = preload("res://scenes/resource_item.tscn").instantiate()
+		old.resource_id = weapon_id
+		old.position = WorldGrid.cell_to_world(pawn.cell)
+		pawn.get_parent().add_child(old)
 	weapon_id = id
 	attack_damage = float(WeaponDefs.get_def(id).damage)
 	pawn.update_held()

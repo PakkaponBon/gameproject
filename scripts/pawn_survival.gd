@@ -126,17 +126,33 @@ func release_claims(clear_food := true) -> void:
 			food_target.reserved = false
 		food_target = null
 
+## Nearest reachable food. If not near starving, prefer the nearest COOKED
+## food (meals/stew give mood + joy) so the stove's payoff actually lands.
 func _find_food() -> FoodItem:
+	var desperate := pawn.needs.hunger < 15.0
 	var best: FoodItem = null
 	var best_dist := INF
+	var best_cooked: FoodItem = null
+	var best_cooked_dist := INF
 	for node in get_tree().get_nodes_in_group("food"):
 		var food := node as FoodItem
 		if food.reserved:
 			continue
 		var dist := float((food.cell - pawn.cell).length_squared())
-		if dist < best_dist and not WorldGrid.astar.get_id_path(pawn.cell, food.cell).is_empty():
+		var better_any := dist < best_dist
+		var better_cooked := food.is_cooked() and dist < best_cooked_dist
+		if not better_any and not better_cooked:
+			continue
+		if WorldGrid.astar.get_id_path(pawn.cell, food.cell).is_empty():
+			continue
+		if better_any:
 			best = food
 			best_dist = dist
+		if better_cooked:
+			best_cooked = food
+			best_cooked_dist = dist
+	if not desperate and best_cooked != null:
+		return best_cooked
 	return best
 
 func _find_free_bed() -> Vector2i:

@@ -13,6 +13,7 @@ var _bond_label: Label
 var _activity_label: Label
 var _gear_label: Label
 var _skills_label: Label
+var _mood_label: Label
 var _priority_buttons := {}
 var _draft_button: Button
 var _drop_button: Button
@@ -70,12 +71,33 @@ func refresh() -> void:
 	_gear_label.text = "Gear: " + gear
 	_skills_label.text = "Melee %d   Archery %d" \
 			% [pawn.skills.level("melee"), pawn.skills.level("archery")]
+	_mood_label.text = ", ".join(_mood_thoughts())
 	for type: int in _priority_buttons:
 		var value := int(pawn.work_priorities[type])
 		var btn: Button = _priority_buttons[type]
 		btn.text = "%s: %s" % [btn.get_meta("job_name"), "off" if value == 0 else str(value)]
 	_draft_button.text = "Undraft [R]" if pawn.drafted else "Draft [R]"
 	_drop_button.visible = pawn.combat.weapon_id != ""
+
+## Why the selected villager feels how they feel — read from live needs and
+## the ground under them. Turns the mood bar from a mystery into an answer.
+func _mood_thoughts() -> Array:
+	var t: Array = []
+	if pawn.needs.is_hungry():
+		t.append("hungry")
+	if pawn.needs.is_exhausted():
+		t.append("exhausted")
+	if pawn.needs.is_cold():
+		t.append("cold")
+	if pawn.needs.is_joyless():
+		t.append("restless")
+	if WorldGrid.is_warm_spot(pawn.cell):
+		t.append("warm by the fire")
+	if WorldGrid.comfort_at(pawn.cell) > 0.0:
+		t.append("somewhere pleasant")
+	if t.is_empty():
+		t.append("at ease")
+	return t
 
 func _build_ui() -> void:
 	# Bottom-right corner: never collides with objectives or the feed.
@@ -166,6 +188,11 @@ func _build_ui() -> void:
 	_gear_label.theme_type_variation = "Muted"
 	_skills_label = _label(_body)
 	_skills_label.theme_type_variation = "Muted"
+	_mood_label = _label(_body)
+	_mood_label.theme_type_variation = "Muted"
+	_mood_label.modulate = Color(0.82, 0.82, 0.7)
+	_mood_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_mood_label.custom_minimum_size = Vector2(240, 0)
 	# Priorities as a tight 2x2 grid.
 	var grid := GridContainer.new()
 	grid.columns = 2
