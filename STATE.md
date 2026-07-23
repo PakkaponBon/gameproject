@@ -94,8 +94,13 @@ sheep/boar/wolf tinted) · 24 bird(also chicken tinted) · 25 knight-ally · 26 
 29 villager-melee · 30 villager-bow · 31 bandit-walk · 32 bandit-attack · 33 knight-walk ·
 34 knight-attack · 35 elder-walk · 36 rabbit-walk · 37 bird-walk · 38-41 relic-fx(4) ·
 42-43 hit-puff(2) · **44-49 world-map markers:** 44 settlement · 45 faction · 46 site ·
-47 selected · 48 locked · 49 completed. sprites.png now 50 cells (800px); importer
-sprite-max 49, auto-extends. FX hooks (relic 38-41, puff 42-43) + map markers 47/48/49
+47 selected · 48 locked · 49 completed. **50-65 reserved (Codex drawing, hooks
+pending):** 50/51 sheep+walk · 52/53 boar+walk · 54/55 ash-wolf+walk · 56/57
+villager-variant-B+walk · 58/59 variant-C+walk · 60-65 landmark art (standing
+stones/ash grove/watchtower/cairn/shrine/cellar — LandmarkDefs.cell repoints from
+reused 17/1/2/5/12/22 to 60-65 when drawn). Portraits are standalone 24x24
+res://assets/portrait_00..02.png (not atlas cells). sprites.png now 66 cells
+(1056px); importer sprite-max 65, auto-extends. FX hooks (relic 38-41, puff 42-43) + map markers 47/48/49
 wired (graceful blank); entity walk/work/attack (28-37) and map type-markers (44-46) land
 once drawn. World-map backdrop: standalone res://assets/worldmap.png (load-if-exists).
 World map has discovery (sites reveal by renown, derived), hover tooltips, route highlight.

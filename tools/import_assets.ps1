@@ -2,15 +2,15 @@ Add-Type -AssemblyName System.Drawing
 # Asset importer (see ASSET_SPEC.md): packs assets/incoming/*.png into the
 # two atlases by filename index. Validates 16x16 and index range; skips
 # (with a reason) anything invalid. Safe to run repeatedly.
-#   tile_NN_name.png   -> assets/tiles.png   (cells 0..21)
-#   sprite_NN_name.png -> assets/sprites.png (cells 0..27)
+#   tile_NN_name.png   -> assets/tiles.png   (cells 0..24)
+#   sprite_NN_name.png -> assets/sprites.png (cells 0..65)
 $repo = "C:\colony-sim"
 $incoming = Join-Path $repo "assets\incoming"
 if (-not (Test-Path $incoming)) { New-Item -ItemType Directory $incoming | Out-Null }
 
 $targets = @{
     "tile" = @{ "path" = (Join-Path $repo "assets\tiles.png"); "max" = 24 }
-    "sprite" = @{ "path" = (Join-Path $repo "assets\sprites.png"); "max" = 49 }
+    "sprite" = @{ "path" = (Join-Path $repo "assets\sprites.png"); "max" = 65 }
 }
 # Open each atlas onto a canvas wide enough for all declared cells, so newly
 # reserved cells exist (transparent) and packing never clips. Clone-copy
