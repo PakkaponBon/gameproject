@@ -153,15 +153,25 @@ func handle_command_click(cell: Vector2i) -> void:
 	var clicked := pawn_at(cell)
 	var raider := _raider_at(cell)
 	var merchant := _merchant_at(cell)
+	var landmark := _landmark_at(cell)
 	if clicked:
 		select(clicked)
 	elif merchant:
 		trade_panel.open(merchant)
 	elif raider and selected and selected.drafted:
 		selected.attack(raider)
+	elif landmark:
+		landmark.request_investigation()  # send a villager out to explore it
 	elif selected:
 		selected.move_to(cell)
 		commands_issued += 1
+
+func _landmark_at(cell: Vector2i) -> Landmark:
+	for node in get_tree().get_nodes_in_group("landmarks"):
+		var lm := node as Landmark
+		if lm.cell == cell:
+			return lm
+	return null
 
 ## Right-click in command mode: cycle a workstation's recipe (auto → each
 ## thing it can make → auto). Does nothing on non-workstation cells.
@@ -369,6 +379,7 @@ const FX_COLORS := {
 	Job.Type.HARVEST: Color(0.5, 0.7, 0.35),
 	Job.Type.BUILD: Color(0.7, 0.7, 0.72),
 	Job.Type.DECONSTRUCT: Color(0.7, 0.7, 0.72),
+	Job.Type.INVESTIGATE: Color(0.9, 0.82, 0.5),  # a find uncovered — a golden puff
 }
 
 func _on_play_fx(job_type: int, cell: Vector2i) -> void:

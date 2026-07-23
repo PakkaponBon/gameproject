@@ -44,8 +44,9 @@ func request_job(seeker: Pawn, reserve := true) -> Job:
 			prio_type = Job.Type.PLANT
 		elif job.type == Job.Type.FEED:
 			prio_type = Job.Type.HAUL
-		elif job.type == Job.Type.MINE or job.type == Job.Type.HUNT:
-			prio_type = Job.Type.CHOP  # both are gathering work
+		elif job.type == Job.Type.MINE or job.type == Job.Type.HUNT \
+				or job.type == Job.Type.INVESTIGATE:
+			prio_type = Job.Type.CHOP  # gathering work: mine, hunt, and explore a landmark
 		elif job.type == Job.Type.EQUIP or job.type == Job.Type.AMMO \
 				or job.type == Job.Type.RELIC or job.type == Job.Type.TREAT \
 				or job.type == Job.Type.ARMOR:

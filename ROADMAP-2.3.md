@@ -27,14 +27,20 @@ map grew: they give scouting a payoff and turn empty tiles into a frontier.
       of the start cluster (min-distance from center), so the reward is *out there*.
 - [x] Save/load: id + cell + discovered + claimed + regrow state, additive via get().
 
-## Phase F2 — Set Out  *(the investigate job + rewards)*
-- [ ] Click a discovered (or visible) landmark → issue an INVESTIGATE job; a
-      villager walks there and works it. Reuse the job/reservation system; new
-      Job.Type.INVESTIGATE mapped into an existing priority group.
-- [ ] On completion: roll the reward table — drop resources on the ground,
-      grant renown, maybe a relic shard / relic. Feedback via toast + chronicle
-      + StoryPanel for the rare finds. One-shot landmarks deplete (fade/marker);
-      renewable ones set regrow_ticks and return after their cooldown.
+## Phase F2 — Set Out  *(the investigate job + rewards)* ✓
+- [x] Click a (dim or revealed) landmark → issues an INVESTIGATE job; a villager
+      walks out and works it. Reuses the job/reservation system: new
+      Job.Type.INVESTIGATE, mapped to the CHOP (gathering) priority group,
+      handled by the standard stationary-work case in pawn_work.
+- [x] On completion: rolls the reward table (mirrors FactionManager._grant_site_loot)
+      — loose goods spill by the landmark for haulers to carry home, renown granted,
+      a relic shard / full relic on the odds. Feedback via toast + chronicle + a
+      gold FX puff. One-shot landmarks deplete (dim to spent); renewable ones set
+      regrow_ticks and re-open after their cooldown (with a "come back" toast).
+- Note (for playtest): INVESTIGATE rides CHOP priority, so villagers pull it by
+  nearest-reachable like any gathering job — a far landmark may wait while closer
+  wood exists. If it feels unresponsive, F3/tuning can give it a dedicated priority
+  or a "send the selected villager" push instead of a queued pull.
 
 ## Phase F3 — Frontier Flavor  *(content breadth, tone)*
 - [ ] Fill the catalog to ~8 places with distinct payoffs and authored vignettes

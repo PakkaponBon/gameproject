@@ -229,6 +229,7 @@ func spawn_landmark(cell: Vector2i, def_id: String, discovered := false,
 	node.discovered = discovered
 	node.claimed = claimed
 	node.regrow_ticks = regrow
+	node.spawner_ref = self  # so it can drop its reward goods on investigate
 	node.position = WorldGrid.cell_to_world(cell)
 	entities.add_child(node)
 	return node

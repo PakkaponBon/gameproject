@@ -24,15 +24,20 @@ VISION, new content has begun:
 
 | Beyond-VISION update | Status | File |
 |---|---|---|
-| v2.3 The Frontier (home-map landmarks) | **F1 built** (catalog + scatter + discovery + save); F2 investigate-job / rewards next | ROADMAP-2.3.md |
+| v2.3 The Frontier (home-map landmarks) | **F1+F2 built** (catalog, scatter, discovery, click-to-investigate job, reward payout, deplete/regrow, save); F3 flavor/danger next | ROADMAP-2.3.md |
 
 v2.3 F1: LandmarkDefs catalog (6 places, reuse sprite cells 17/1/2/5/12/22), class_name
 Landmark (code-built node, group "landmarks", dim-until-a-pawn-passes reveal via
 EventBus.notice→HUD + chronicle), world_spawner.spawn_landmark + _scatter_landmarks
 (area-scaled, per-def min-dist from center). Renamed the old cosmetic _place_landmarks
 → _place_scenery to free the name. New EventBus signal `notice(text,tint,jump)` wired to
-hud.set_event in main. **F2 next:** Job.Type.INVESTIGATE + reward roll (resources/renown/
-shard/relic), deplete one-shots, regrow renewables.
+hud.set_event in main. F2: Job.Type.INVESTIGATE (18th enum, → CHOP priority group,
+standard stationary-work case in pawn_work); click a landmark in main.handle_command_click
+→ landmark.request_investigation() queues the job; _on_investigated drops reward goods by
+the cell (haulers bring home), renown, shard/relic; one-shot dims to spent, renewable sets
+regrow_ticks then re-opens. spawner_ref set on the node so it can drop goods. **F3 next:**
+fill catalog to ~8, renown-gated rumor reveal for a far high-value place, optional data
+danger flag (rouse a beast/bandit on investigate, reusing raider/critter).
 
 **Open-world scale pass (2026-07-23):** MAP_SIZE 64→96 (world_grid.gd), TICKS_PER_SECOND
 10→7 (game_clock.gd, ~4.8 real min/day at 1x), scatter now area-scaled via
