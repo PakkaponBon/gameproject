@@ -43,6 +43,11 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 	for node in tree.get_nodes_in_group("livestock"):
 		var animal := node as Livestock
 		livestock.append({"cell": _v(animal.cell), "kind": animal.kind, "lay": animal.lay_timer})
+	var landmarks: Array = []
+	for node in tree.get_nodes_in_group("landmarks"):
+		var lm := node as Landmark
+		landmarks.append({"cell": _v(lm.cell), "id": lm.def_id, "found": lm.discovered,
+				"claimed": lm.claimed, "regrow": lm.regrow_ticks})
 	var raiders: Array = []
 	for node in tree.get_nodes_in_group("raiders"):
 		var raider := node as Raider
@@ -122,6 +127,7 @@ static func collect(main: Node2D, version: int) -> Dictionary:
 		"graves": graves,
 		"bushes": bushes,
 		"livestock": livestock,
+		"landmarks": landmarks,
 		"raiders": raiders,
 		"blueprints": blueprints,
 		"decon_orders": decon,

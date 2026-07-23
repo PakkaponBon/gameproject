@@ -4,7 +4,7 @@ extends Node
 ## Loading reloads the main scene; `pending_load` survives the reload
 ## because this is an autoload, and the fresh Main applies it.
 
-const SAVE_VERSION := 25
+const SAVE_VERSION := 26  # 26: frontier landmarks (id/cell/found/claimed/regrow)
 ## Keys a save must carry; anything less is corrupt, and corrupt saves
 ## get an error message — never a crash to desktop.
 const REQUIRED_KEYS := ["clock_ticks", "ground_seed", "buildings", "pawns", "realm", "items", "fields"]
@@ -92,6 +92,9 @@ func apply_pending_load() -> void:
 		bush.regrow_ticks = int(b.regrow)
 	for a: Dictionary in data.get("livestock", []):
 		spawner.spawn_livestock(_vec(a.cell), String(a.kind), int(a.lay))
+	for lm: Dictionary in data.get("landmarks", []):
+		spawner.spawn_landmark(_vec(lm.cell), String(lm.id), bool(lm.get("found", false)),
+				bool(lm.get("claimed", false)), int(lm.get("regrow", 0)))
 	for r: Dictionary in data.raiders:
 		var raider: Raider = spawner.spawn_raider(_vec(r.cell), bool(r.boss))
 		raider.faction_id = String(r.faction)

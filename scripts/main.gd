@@ -80,6 +80,7 @@ func _ready() -> void:
 	SaveManager.main = self
 	FactionManager.main = self
 	FactionManager.announced.connect(hud.set_event)
+	EventBus.notice.connect(hud.set_event)  # entities (landmarks, …) toast via the bus
 	FactionManager.realm_ruled.connect(_on_realm_ruled)
 	if SaveManager.pending_load.is_empty():
 		_new_game()

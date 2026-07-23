@@ -12,3 +12,4 @@ signal play_sfx(id: String)
 signal play_fx(job_type: int, cell: Vector2i)  # work-completion particles
 signal chronicle_entry(text: String)  # one line for the village's story
 signal raider_stole(world_pos: Vector2)  # a looter grabbed goods — chase!
+signal notice(text: String, tint: Color, jump: Vector2)  # transient HUD toast from any entity

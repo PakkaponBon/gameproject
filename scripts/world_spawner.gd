@@ -25,6 +25,7 @@ const SPRITES := preload("res://assets/sprites.png")
 const DECOR_SPRITES := [19, 20, 21, 22]  # flower, pebbles, bush, mushroom
 const DECOR_COUNT := 260  # density pass: almost no empty clusters
 const CRITTER_COUNT := 4
+const LANDMARK_COUNT := 6  # frontier places per 64x64; scaled up with map area
 const PAWN_SCENE := preload("res://scenes/pawn.tscn")
 const PAWN_COUNT := 3
 const PAWN_SPAWN_RADIUS := 5  # around map center
@@ -50,6 +51,7 @@ func new_game() -> void:
 	_scatter_ore("stone", scaled(STONE_NODES), used)
 	_scatter_ore("iron_ore", scaled(IRON_NODES), used)
 	_guarantee_start_resources(used)
+	_scatter_landmarks(scaled(LANDMARK_COUNT), used)  # the frontier: places to find out there
 
 ## Scale a count tuned for the original 64x64 map to the current map area,
 ## so a bigger world stays populated instead of barren (and auto-adjusts if
@@ -104,11 +106,12 @@ func _scatter_decor() -> void:
 		var cell := Vector2i(rng.randi() % WorldGrid.MAP_SIZE.x, rng.randi() % WorldGrid.MAP_SIZE.y)
 		sprite.position = WorldGrid.cell_to_world(cell)
 		ground.add_child(sprite)
-	_place_landmarks(rng)
+	_place_scenery(rng)
 
 ## 2-3 oversized features per map: a great tree, standing stones, a ruin.
-## Pure set dressing — breaks the grid feel, gives the map identity.
-func _place_landmarks(rng: RandomNumberGenerator) -> void:
+## Pure set dressing (cosmetic) — breaks the grid feel, gives the map identity.
+## Interactive frontier landmarks are a separate system (see _scatter_landmarks).
+func _place_scenery(rng: RandomNumberGenerator) -> void:
 	var specs := [
 		{"region": Rect2(16, 0, 16, 16), "scale": 3.0, "tint": Color(0.85, 0.95, 0.85)},   # great tree
 		{"region": Rect2(272, 0, 16, 16), "scale": 2.2, "tint": Color(0.8, 0.8, 0.9)},     # standing stone
@@ -216,6 +219,43 @@ func drop_resource(cell: Vector2i, id: String, count: int) -> void:
 	while spawned < count:  # fallback: stack on the original cell
 		spawn_resource(cell, id)
 		spawned += 1
+
+## Build a frontier landmark in code (no scene). def_id must be set before the
+## node enters the tree, so _ready can size/tint its sprite from the catalog.
+func spawn_landmark(cell: Vector2i, def_id: String, discovered := false,
+		claimed := false, regrow := 0) -> Landmark:
+	var node := Landmark.new()
+	node.def_id = def_id
+	node.discovered = discovered
+	node.claimed = claimed
+	node.regrow_ticks = regrow
+	node.position = WorldGrid.cell_to_world(cell)
+	entities.add_child(node)
+	return node
+
+## Scatter landmarks across the open map, each kept its own minimum distance
+## from home so the reward is genuinely *out there* (seeded, so a given world
+## seed lays them the same; they're also saved, so reloads are exact).
+func _scatter_landmarks(count: int, used: Dictionary) -> void:
+	var center := WorldGrid.MAP_SIZE / 2
+	var rng := RandomNumberGenerator.new()
+	rng.seed = ground_seed + 99
+	var placed := 0
+	var attempts := 0
+	while placed < count and attempts < 2000:
+		attempts += 1
+		var id := LandmarkDefs.random_id(rng)
+		var def := LandmarkDefs.get_def(id)
+		var min_dist: int = def.min_dist
+		var cell := Vector2i(4 + rng.randi() % (WorldGrid.MAP_SIZE.x - 8),
+				4 + rng.randi() % (WorldGrid.MAP_SIZE.y - 8))
+		if used.has(cell) or not WorldGrid.in_bounds(cell) or WorldGrid.is_wall(cell):
+			continue
+		if float((cell - center).length_squared()) < float(min_dist * min_dist):
+			continue
+		used[cell] = true
+		spawn_landmark(cell, id)
+		placed += 1
 
 func _scatter_ore(id: String, count: int, used: Dictionary) -> void:
 	var placed := 0

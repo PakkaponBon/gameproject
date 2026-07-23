@@ -19,10 +19,20 @@
 | v2.2 Quality & Clarity (ROADMAP-2.2.md) | **code-complete** (mood transparency, weapon upgrades, full-table dining); human DoD only | — |
 
 **The entire planned VISION ladder is code-complete.** Every remaining unchecked box
-across all roadmaps is a human DoD playtest or the music pass — no build item is
-pending. Next real work is either (a) Bo's playtests → tag the versions, (b) new
-content beyond VISION (needs a fresh mini-roadmap; park ideas in IDEAS.md first),
-or (c) targeted polish/robustness on what exists.
+across the v1.x/v2.0-2.2 roadmaps is a human DoD playtest or the music pass. Beyond
+VISION, new content has begun:
+
+| Beyond-VISION update | Status | File |
+|---|---|---|
+| v2.3 The Frontier (home-map landmarks) | **F1 built** (catalog + scatter + discovery + save); F2 investigate-job / rewards next | ROADMAP-2.3.md |
+
+v2.3 F1: LandmarkDefs catalog (6 places, reuse sprite cells 17/1/2/5/12/22), class_name
+Landmark (code-built node, group "landmarks", dim-until-a-pawn-passes reveal via
+EventBus.notice→HUD + chronicle), world_spawner.spawn_landmark + _scatter_landmarks
+(area-scaled, per-def min-dist from center). Renamed the old cosmetic _place_landmarks
+→ _place_scenery to free the name. New EventBus signal `notice(text,tint,jump)` wired to
+hud.set_event in main. **F2 next:** Job.Type.INVESTIGATE + reward roll (resources/renown/
+shard/relic), deplete one-shots, regrow renewables.
 
 **Open-world scale pass (2026-07-23):** MAP_SIZE 64→96 (world_grid.gd), TICKS_PER_SECOND
 10→7 (game_clock.gd, ~4.8 real min/day at 1x), scatter now area-scaled via
@@ -37,9 +47,10 @@ runs a 4-wave siege via raid_director.spawn_legion_wave (siege_active suspends n
 = Long Peace, siege-survived = Vhal Reclaimed (true, 2-page), else Ruler of the Realm. Siege
 state saved additively (siege{phase,wave,timer} + faction long_night bool).
 
-- **SAVE_VERSION = 25** (history: 21 bushes, 22 warmth/joy/bonds/chronicle,
-  23 food kinds, 24 livestock, 25 armor; trap_uses / sites / oath /
-  beast-elite flags / expedition supplies / weather ride additively via get()).
+- **SAVE_VERSION = 26** (history: 21 bushes, 22 warmth/joy/bonds/chronicle,
+  23 food kinds, 24 livestock, 25 armor, 26 frontier landmarks; trap_uses / sites /
+  oath / beast-elite flags / expedition supplies / weather ride additively via get()).
+  NB: a version bump hard-rejects older saves on load (no migration) — test fresh.
 - Repo: https://github.com/PakkaponBon/gameproject.git — push after every commit.
 - Human-side debt: v1.4 DoD playtest; POLISH.md two-tester gate;
   v1.1/v1.2/v1.3 DoD playtests were skipped by owner's choice.
