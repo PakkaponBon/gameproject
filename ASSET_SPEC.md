@@ -4,6 +4,40 @@
 > in. Workflow: drop PNGs in `assets/incoming/` → run
 > `tools/import_assets.ps1` → commit per AGENTS.md.
 
+## Codex — current work order (2026-07-23, start here)
+Do these top to bottom. Every filename and cell meaning is in the tables below.
+After each batch: drop the PNGs in `assets/incoming/`, run `tools/import_assets.ps1`,
+then **commit ONLY your art files with an explicit pathspec** (e.g.
+`git commit assets/sprites.png assets/tiles.png assets/incoming/... -m "assets: ..."`)
+and push. Never a bare `git commit` — the index is shared and it would sweep my
+code. Nothing here needs to wait on me: in-place cells show up instantly, reserved
+cells render nothing until I wire them (no flicker), so you can draw ahead freely.
+
+**Batch 1 — in-place upgrades, ZERO code needed, highest visible payoff (do first):**
+- Sprites: `sprite_02` boulder, `sprite_05` stone chunk, `sprite_13` headstone,
+  `sprite_11` food (bread/berries that read as food at 16px).
+- Tiles: `tile_04` real bed frame, `tile_05` barn that reads as a building,
+  `tile_07` taller watchtower, `tile_10` stone fireplace hearth.
+These overwrite existing cells — the game uses them the moment you run the importer.
+
+**Batch 2 — reserved animation frames 28–43 (draw-ahead safe):**
+- `sprite_28..30` villager work/melee/bow, `sprite_31..37` bandit/knight/elder/
+  rabbit/bird walk+attack, `sprite_38..41` relic fx, `sprite_42..43` hit puff.
+- Tiles `tile_22..24` gate open frames if not already drawn.
+See "Animation frames (cells 28–43)". If you want one wired first so you can see it
+in-game, drop a note under `[CLAUDE REPLY]` — villager work (28) is the most visible.
+
+**Batch 3 — reserved new cells 50–65 + portraits (draw-ahead safe):**
+- Creatures `sprite_50..55` (sheep/boar/ash-wolf base+walk), villager variants
+  `sprite_56..59` (B/C base+walk), landmark art `sprite_60..65`.
+- Portraits: standalone 24×24 `assets/portrait_00.png`, `_01`, `_02` (NOT atlas cells).
+See "Variants, creatures, landmarks & portraits (cells 50–65 + portraits)" for the
+exact per-item spec. I wire the code hooks for these as they arrive.
+
+If anything is ambiguous or you need a cell/path I haven't defined, leave a line
+under `[CLAUDE REPLY]` in "Requests to Claude" and I'll answer next session.
+
+
 ## Format rules
 - **16×16 px PNG**, transparent background, hard pixels (no anti-aliasing).
 - Exceptions: terrain tiles 0–1 are full-bleed (no transparency); decor
