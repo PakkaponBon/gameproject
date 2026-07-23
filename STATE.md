@@ -2,7 +2,8 @@
 
 > Dense resume file for Claude Code. Updated at the end of each work burst.
 > CLAUDE.md = rules; VISION.md = the full game; this file = *where we are*.
-> Last updated: 2026-07-16, after v1.4 code-complete.
+> Last updated: 2026-07-23, after the whole VISION ladder went code-complete
+> + the open-world scale pass (96x96 map, calmer 1x).
 
 ## Position
 
@@ -13,7 +14,21 @@
 | v1.2 Field & Flock (ROADMAP-1.2.md) | done | v1.2-field-flock |
 | v1.3 Steel & Oath (ROADMAP-1.3.md) | done | v1.3-steel-oath |
 | v1.4 The Wilds (ROADMAP-1.4.md) | **code-complete, untagged** — human DoD pending | — |
-| v2.0 The Long Night (ROADMAP-2.0.md) | **N1+N2 built** (siege + 3 endings); N3 scenarios / N4 music+DoD remain | — |
+| v2.0 The Long Night (ROADMAP-2.0.md) | **code-complete** (siege + 3 endings + scenarios + difficulty); only music/DoD (human) remain | — |
+| v2.1 The Living Realm (ROADMAP-2.1.md) | **code-complete** (event deck, traits, magic variety, arms variety); human DoD only | — |
+| v2.2 Quality & Clarity (ROADMAP-2.2.md) | **code-complete** (mood transparency, weapon upgrades, full-table dining); human DoD only | — |
+
+**The entire planned VISION ladder is code-complete.** Every remaining unchecked box
+across all roadmaps is a human DoD playtest or the music pass — no build item is
+pending. Next real work is either (a) Bo's playtests → tag the versions, (b) new
+content beyond VISION (needs a fresh mini-roadmap; park ideas in IDEAS.md first),
+or (c) targeted polish/robustness on what exists.
+
+**Open-world scale pass (2026-07-23):** MAP_SIZE 64→96 (world_grid.gd), TICKS_PER_SECOND
+10→7 (game_clock.gd, ~4.8 real min/day at 1x), scatter now area-scaled via
+world_spawner.scaled() so a bigger map auto-populates (change MAP_SIZE alone to rescale),
+pawn/raider LERP_WEIGHT eased to 8/7, camera opens at 768,768 (new center). AStar grid is
+now 9,216 cells — watch new-game gen + big-wave pathing for hitches on real hardware.
 
 The Long Night: trigger = the four non-Legion factions resolved while the Ashen Legion
 stands → FactionManager.long_night_begins → LongNightDirector (DORMANT→WARNING→WAVE↔LULL→WON)
