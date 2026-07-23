@@ -111,7 +111,7 @@ func _oath_offer() -> void:
 ## what wanders in is a boar — more meat, but it bites.
 func _replenish_game() -> void:
 	var count := get_tree().get_nodes_in_group("game").size()
-	while count < Balance.CRITTER_TARGET:
+	while count < main.spawner.scaled(Balance.CRITTER_TARGET):
 		main.spawner.spawn_one_critter(false, randf() < Balance.BOAR_CHANCE)
 		count += 1
 

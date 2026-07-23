@@ -9,7 +9,7 @@ signal stats_changed
 signal died
 
 ## How fast the sprite eases toward its logical cell (rendering only).
-const LERP_WEIGHT := 12.0
+const LERP_WEIGHT := 8.0  # eased to match the 7-tick/sec pace (smooth step-to-step)
 const DIRS: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
 const BODY_COLOR := Color.WHITE  # real character art now; tints only for states
 const SLEEP_COLOR := Color(0.55, 0.6, 0.8)

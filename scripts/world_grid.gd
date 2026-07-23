@@ -5,7 +5,7 @@ extends Node
 
 signal zones_changed  # stockpiles or fields repainted
 
-const MAP_SIZE := Vector2i(64, 64)
+const MAP_SIZE := Vector2i(96, 96)  # open-world scale (was 64); scatter scales with area
 const TILE_SIZE := 16
 const INVALID_CELL := Vector2i(-1, -1)
 

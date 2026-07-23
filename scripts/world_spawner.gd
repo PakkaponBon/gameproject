@@ -44,12 +44,18 @@ func new_game() -> void:
 	ground_seed = randi()
 	generate_ground()
 	var used := {}
-	_spawn_pawns(used, int(scenario.pawns))
-	_scatter(TREE_SCENE, TREE_COUNT, used)
-	_scatter_bushes(int(scenario.start_food), used)
-	_scatter_ore("stone", STONE_NODES, used)
-	_scatter_ore("iron_ore", IRON_NODES, used)
+	_spawn_pawns(used, int(scenario.pawns))  # founders stay a small band, centered
+	_scatter(TREE_SCENE, scaled(TREE_COUNT), used)
+	_scatter_bushes(scaled(int(scenario.start_food)), used)
+	_scatter_ore("stone", scaled(STONE_NODES), used)
+	_scatter_ore("iron_ore", scaled(IRON_NODES), used)
 	_guarantee_start_resources(used)
+
+## Scale a count tuned for the original 64x64 map to the current map area,
+## so a bigger world stays populated instead of barren (and auto-adjusts if
+## MAP_SIZE changes again).
+func scaled(base: int) -> int:
+	return int(round(float(base) * WorldGrid.MAP_SIZE.x * WorldGrid.MAP_SIZE.y / 4096.0))
 
 ## Mapgen constraint (POLISH.md): wood and stone always near the wagon.
 func _guarantee_start_resources(used: Dictionary) -> void:
@@ -90,7 +96,7 @@ func _scatter_decor() -> void:
 		child.queue_free()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = ground_seed + 7
-	for i in DECOR_COUNT:
+	for i in scaled(DECOR_COUNT):
 		var sprite := Sprite2D.new()
 		sprite.texture = SPRITES
 		sprite.region_enabled = true
@@ -121,7 +127,7 @@ func _place_landmarks(rng: RandomNumberGenerator) -> void:
 		ground.add_child(sprite)
 
 func spawn_critters() -> void:
-	for i in CRITTER_COUNT:
+	for i in scaled(CRITTER_COUNT):
 		spawn_one_critter(i % 2 == 1)  # every other one is a bird
 
 ## One critter. Rabbits (and boars) are huntable game; birds stay set

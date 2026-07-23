@@ -92,7 +92,7 @@ script = ExtResource("24_kitchen")
 script = ExtResource("25_events")
 
 [node name="Camera" type="Camera2D" parent="."]
-position = Vector2(512, 512)
+position = Vector2(768, 768)
 zoom = Vector2(2, 2)
 script = ExtResource("3_camera")
 

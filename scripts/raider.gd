@@ -5,7 +5,7 @@ extends Node2D
 
 signal gone  # died or left; main uses this to clear the event banner
 
-const LERP_WEIGHT := 10.0
+const LERP_WEIGHT := 7.0  # matches the slower sim tick
 const HP_MAX := 50.0
 const SWORD_DROP_CHANCE := 0.4
 const RESOURCE_SCENE := preload("res://scenes/resource_item.tscn")

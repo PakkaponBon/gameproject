@@ -8,9 +8,9 @@ signal day_started(day: int)
 signal season_changed(season: int)
 signal speed_changed  # sim pause or speed multiplier flipped
 
-const TICKS_PER_SECOND := 10.0
-## Pacing: ~3.3 real minutes per day, 4-day seasons — a year in under an
-## hour, so the faction arc fits one sitting instead of an afternoon.
+const TICKS_PER_SECOND := 7.0  # calmer 1x pace (was 10); 3x/5x still speed up
+## Pacing: ~4.8 real minutes per day at 1x, 4-day seasons — a year still
+## fits one sitting, but the open-world scale breathes (3x/5x compress it).
 const TICKS_PER_DAY := 2000
 const DAYS_PER_SEASON := 4
 const SEASON_NAMES := ["Spring", "Summer", "Autumn", "Winter"]
