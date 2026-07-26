@@ -22,6 +22,7 @@ var indoor_cells := {}  # Set of Vector2i sealed off from the map edge (rooms)
 var warmth_sources := {}  # Vector2i -> radius (hearth, brazier)
 var comfort_sources := {}  # Vector2i -> comfort value (furniture)
 var traps := {}  # Vector2i -> remaining uses (spike pits)
+var biomes := {}  # Vector2i -> biome id (String); filled at world-gen, regenerated from seed (not saved)
 
 func _ready() -> void:
 	for grid: AStarGrid2D in [astar, astar_enemy]:
@@ -43,9 +44,15 @@ func reset() -> void:
 	warmth_sources.clear()
 	comfort_sources.clear()
 	traps.clear()
+	biomes.clear()
 	astar.fill_solid_region(astar.region, false)
 	astar_enemy.fill_solid_region(astar_enemy.region, false)
 	zones_changed.emit()
+
+## Which biome a cell belongs to (see BiomeDefs). Defaults to meadow before
+## world-gen has run or for any unfilled cell.
+func biome_at(cell: Vector2i) -> String:
+	return String(biomes.get(cell, "meadow"))
 
 func in_bounds(cell: Vector2i) -> bool:
 	return astar.region.has_point(cell)

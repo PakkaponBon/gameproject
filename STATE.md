@@ -25,6 +25,7 @@ VISION, new content has begun:
 | Beyond-VISION update | Status | File |
 |---|---|---|
 | v2.3 The Frontier (home-map landmarks) | **F1+F2 built** (catalog, scatter, discovery, click-to-investigate job, reward payout, deplete/regrow, save); F3 flavor/danger next | ROADMAP-2.3.md |
+| v2.4 The Wider World (biome regions) | **W1 built** (BiomeDefs, concentric wilds by distance+noise, biome-biased ground + scatter, WorldGrid.biome_at); W2 region character next | ROADMAP-2.4.md |
 
 v2.3 F1: LandmarkDefs catalog (6 places, reuse sprite cells 17/1/2/5/12/22), class_name
 Landmark (code-built node, group "landmarks", dim-until-a-pawn-passes reveal via
@@ -38,6 +39,16 @@ the cell (haulers bring home), renown, shard/relic; one-shot dims to spent, rene
 regrow_ticks then re-opens. spawner_ref set on the node so it can drop goods. **F3 next:**
 fill catalog to ~8, renown-gated rumor reveal for a far high-value place, optional data
 danger flag (rouse a beast/bandit on investigate, reusing raider/critter).
+
+**v2.4 W1 biomes:** BiomeDefs (meadow/deepwood/highlands/ashlands, dirt_bias + scatter
+weights). generate_ground now assigns WorldGrid.biomes[cell] = f(distance-from-center +
+low-freq region noise) → concentric wilds (green home → ashen edge), and biases the
+grass/dirt tile per biome. All scatter (trees/ore/bushes/decor/landmarks) routes through
+world_spawner._biome_weighted_cell(key, rng) (samples 5, keeps the best-fitting biome), so
+forests cluster in deepwood, ore in highlands, landmarks in ashlands. Regenerated from seed
+on load (biomes cleared in WorldGrid.reset, not saved). Art-free (grass/dirt only). Query
+via WorldGrid.biome_at(cell). **W2 next:** biome-flavored critters/weather/danger gradient,
+biome named in tooltips.
 
 **Open-world scale pass (2026-07-23):** MAP_SIZE 64→96 (world_grid.gd), TICKS_PER_SECOND
 10→7 (game_clock.gd, ~4.8 real min/day at 1x), scatter now area-scaled via

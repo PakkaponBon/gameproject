@@ -44,12 +44,14 @@ func new_game() -> void:
 	GameClock.ticks = int(scenario.start_season) * GameClock.DAYS_PER_SEASON * GameClock.TICKS_PER_DAY
 	ground_seed = randi()
 	generate_ground()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = ground_seed + 500  # one stream for all biome-weighted scatter
 	var used := {}
 	_spawn_pawns(used, int(scenario.pawns))  # founders stay a small band, centered
-	_scatter(TREE_SCENE, scaled(TREE_COUNT), used)
-	_scatter_bushes(scaled(int(scenario.start_food)), used)
-	_scatter_ore("stone", scaled(STONE_NODES), used)
-	_scatter_ore("iron_ore", scaled(IRON_NODES), used)
+	_scatter(TREE_SCENE, scaled(TREE_COUNT), used, "tree", rng)
+	_scatter_bushes(scaled(int(scenario.start_food)), used, rng)
+	_scatter_ore("stone", scaled(STONE_NODES), used, rng)
+	_scatter_ore("iron_ore", scaled(IRON_NODES), used, rng)
 	_guarantee_start_resources(used)
 	_scatter_landmarks(scaled(LANDMARK_COUNT), used)  # the frontier: places to find out there
 
@@ -82,13 +84,27 @@ func _guarantee_start_resources(used: Dictionary) -> void:
 			placed.iron += 1
 
 func generate_ground() -> void:
-	var noise := FastNoiseLite.new()
-	noise.seed = ground_seed
-	noise.frequency = 0.08
+	WorldGrid.biomes.clear()
+	# Two noises: fine detail breaks up the ground; a low-frequency "region"
+	# noise ragged-borders the concentric biome rings (home meadow → ashen edge).
+	var detail := FastNoiseLite.new()
+	detail.seed = ground_seed
+	detail.frequency = 0.08
+	var region := FastNoiseLite.new()
+	region.seed = ground_seed + 1
+	region.frequency = 0.03
+	var center := Vector2(WorldGrid.MAP_SIZE) * 0.5
+	var max_r := float(WorldGrid.MAP_SIZE.x) * 0.5
 	for x in WorldGrid.MAP_SIZE.x:
 		for y in WorldGrid.MAP_SIZE.y:
-			var tile := DIRT if noise.get_noise_2d(x, y) > 0.25 else GRASS
-			ground.set_cell(Vector2i(x, y), SOURCE_ID, tile)
+			var cell := Vector2i(x, y)
+			var dist := Vector2(cell).distance_to(center) / max_r  # 0 home .. ~1 edge
+			var t := clampf(dist + region.get_noise_2d(x, y) * 0.30, 0.0, 1.0)
+			var biome := BiomeDefs.at_fraction(t)
+			WorldGrid.biomes[cell] = biome
+			# Grass vs dirt is biased by biome, then jittered by the detail noise.
+			var earthiness := BiomeDefs.dirt_bias(biome) + detail.get_noise_2d(x, y) * 0.35
+			ground.set_cell(cell, SOURCE_ID, DIRT if earthiness > 0.5 else GRASS)
 	_scatter_decor()
 
 ## Cosmetic scatter (flowers, pebbles, bushes, mushrooms). Seeded from the
@@ -103,7 +119,7 @@ func _scatter_decor() -> void:
 		sprite.texture = SPRITES
 		sprite.region_enabled = true
 		sprite.region_rect = Rect2(DECOR_SPRITES[rng.randi() % DECOR_SPRITES.size()] * 16, 0, 16, 16)
-		var cell := Vector2i(rng.randi() % WorldGrid.MAP_SIZE.x, rng.randi() % WorldGrid.MAP_SIZE.y)
+		var cell := _biome_weighted_cell("decor", rng)
 		sprite.position = WorldGrid.cell_to_world(cell)
 		ground.add_child(sprite)
 	_place_scenery(rng)
@@ -178,12 +194,12 @@ func spawn_bush(cell: Vector2i, with_berries: bool) -> BerryBush:
 	return bush
 
 ## Wild forage: each bush starts bearing food, then regrows after picking.
-func _scatter_bushes(count: int, used: Dictionary) -> void:
+func _scatter_bushes(count: int, used: Dictionary, rng: RandomNumberGenerator) -> void:
 	var placed := 0
 	var attempts := 0
 	while placed < count and attempts < 1000:
 		attempts += 1
-		var cell := Vector2i(randi() % WorldGrid.MAP_SIZE.x, randi() % WorldGrid.MAP_SIZE.y)
+		var cell := _biome_weighted_cell("bush", rng)
 		if used.has(cell):
 			continue
 		used[cell] = true
@@ -248,8 +264,9 @@ func _scatter_landmarks(count: int, used: Dictionary) -> void:
 		var id := LandmarkDefs.random_id(rng)
 		var def := LandmarkDefs.get_def(id)
 		var min_dist: int = def.min_dist
-		var cell := Vector2i(4 + rng.randi() % (WorldGrid.MAP_SIZE.x - 8),
-				4 + rng.randi() % (WorldGrid.MAP_SIZE.y - 8))
+		# Biome-biased toward the wild edges (ashlands weight landmarks highest),
+		# which also naturally satisfies each landmark's min distance from home.
+		var cell := _biome_weighted_cell("landmark", rng)
 		if used.has(cell) or not WorldGrid.in_bounds(cell) or WorldGrid.is_wall(cell):
 			continue
 		if float((cell - center).length_squared()) < float(min_dist * min_dist):
@@ -258,12 +275,12 @@ func _scatter_landmarks(count: int, used: Dictionary) -> void:
 		spawn_landmark(cell, id)
 		placed += 1
 
-func _scatter_ore(id: String, count: int, used: Dictionary) -> void:
+func _scatter_ore(id: String, count: int, used: Dictionary, rng: RandomNumberGenerator) -> void:
 	var placed := 0
 	var attempts := 0
 	while placed < count and attempts < 1000:
 		attempts += 1
-		var cell := Vector2i(randi() % WorldGrid.MAP_SIZE.x, randi() % WorldGrid.MAP_SIZE.y)
+		var cell := _biome_weighted_cell("ore", rng)
 		if used.has(cell):
 			continue
 		used[cell] = true
@@ -323,12 +340,27 @@ func _random_traits() -> Array:
 	pool.shuffle()
 	return pool.slice(0, 1 + randi() % 2)  # 1-2 traits each
 
-func _scatter(scene: PackedScene, count: int, used: Dictionary) -> void:
+## Pick a cell biased toward biomes that favor `weight_key` (tree/ore/bush/…):
+## sample a handful, keep the best-fitting. Turns uniform scatter into country
+## that reads — forests in the deepwood, ore in the highlands, and so on.
+func _biome_weighted_cell(weight_key: String, rng: RandomNumberGenerator) -> Vector2i:
+	var best := Vector2i(rng.randi() % WorldGrid.MAP_SIZE.x, rng.randi() % WorldGrid.MAP_SIZE.y)
+	var best_w := BiomeDefs.weight(WorldGrid.biome_at(best), weight_key)
+	for i in 4:
+		var c := Vector2i(rng.randi() % WorldGrid.MAP_SIZE.x, rng.randi() % WorldGrid.MAP_SIZE.y)
+		var w := BiomeDefs.weight(WorldGrid.biome_at(c), weight_key)
+		if w > best_w:
+			best = c
+			best_w = w
+	return best
+
+func _scatter(scene: PackedScene, count: int, used: Dictionary, weight_key: String,
+		rng: RandomNumberGenerator) -> void:
 	var placed := 0
 	var attempts := 0
 	while placed < count and attempts < 1000:
 		attempts += 1
-		var cell := Vector2i(randi() % WorldGrid.MAP_SIZE.x, randi() % WorldGrid.MAP_SIZE.y)
+		var cell := _biome_weighted_cell(weight_key, rng)
 		if used.has(cell):
 			continue
 		used[cell] = true
