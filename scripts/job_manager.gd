@@ -30,8 +30,15 @@ func request_job(seeker: Pawn, reserve := true) -> Job:
 	var best: Job = null
 	var best_prio := 0
 	var best_dist := INF
+	var stale: Array[Job] = []
 	for job in jobs:
 		if job.reserved:
+			continue
+		# A job whose target entity was freed (item picked up/destroyed, building
+		# gone) is dead — prune it. MUST check validity before any `as` cast: a
+		# cast on a freed object throws "Trying to cast a freed object" (pitfall #2).
+		if job.target != null and not is_instance_valid(job.target):
+			stale.append(job)
 			continue
 		# SUPPLY is hauling work; DECONSTRUCT is construction work;
 		# HARVEST shares the farm (PLANT) priority; MINE is gathering (CHOP).
@@ -107,6 +114,8 @@ func request_job(seeker: Pawn, reserve := true) -> Job:
 			best = job
 			best_prio = prio
 			best_dist = float((job.cell - from_cell).length_squared())
+	for job in stale:
+		jobs.erase(job)  # drop dead-target jobs so we never re-scan them
 	if best and reserve:
 		best.reserved = true
 	return best

@@ -103,6 +103,9 @@ func sync(input_ctrl: PlayerInput) -> void:
 			var tip: String = "%s — %s" % [def.name, " + ".join(costs)]
 			if int(def.get("renown_req", 0)) > 0:
 				tip += "  (renown %d)" % int(def.get("renown_req", 0))
+			var about := BuildingDefs.desc(id)
+			if about != "":
+				tip += "\n" + about  # say what it DOES, not just its cost
 			_add_tool(TILES, Rect2(def.tile.x * 16, 0, 16, 16), Color.WHITE, tip,
 					id == _input.current_building,
 					func() -> void:
