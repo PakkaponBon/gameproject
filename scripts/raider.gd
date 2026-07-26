@@ -226,6 +226,8 @@ func _attack_defender(target: Variant) -> void:
 	if attack_cooldown > 0:
 		return
 	attack_cooldown = ATTACK_COOLDOWN_TICKS
+	if not is_beast:
+		($Body as Sprite2D).region_rect.position.x = 512.0  # bandit attack frame (32)
 	Fx.lunge($Body, (target as Node2D).position - position)
 	target.take_damage(attack_damage)
 	EventBus.play_sfx.emit("hit")
@@ -245,6 +247,8 @@ func _attack_gate(gate: Vector2i) -> void:
 	if attack_cooldown > 0:
 		return
 	attack_cooldown = ATTACK_COOLDOWN_TICKS
+	if not is_beast:
+		($Body as Sprite2D).region_rect.position.x = 512.0  # bandit attack frame (32)
 	Fx.lunge($Body, WorldGrid.cell_to_world(gate) - position)
 	WorldGrid.damage_building(gate, attack_damage)
 
@@ -282,9 +286,13 @@ func _process(delta: float) -> void:
 	if body.has_meta("lunging"):
 		return
 	var t := Time.get_ticks_msec() / 1000.0
-	if position.distance_to(dest) > 1.5:
+	var moving := position.distance_to(dest) > 1.5
+	if moving:
 		body.position.y = -absf(sin(t * 8.0)) * 2.0
 		body.rotation = sin(t * 8.0) * 0.08
 	else:
 		body.position.y = 0.0
 		body.rotation = 0.0
+	# Bandits swap idle(15)↔walk(31); beasts (wolf, cell 23) keep their sprite.
+	if not is_beast:
+		body.region_rect.position.x = 496.0 if (moving and int(t * 6.0) % 2 == 0) else 240.0

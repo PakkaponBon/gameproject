@@ -114,6 +114,13 @@ res://assets/portrait_00..02.png (not atlas cells). sprites.png now 66 cells
 (1056px); importer sprite-max 65, auto-extends. FX hooks (relic 38-41, puff 42-43) + map markers 47/48/49
 wired (graceful blank); entity walk/work/attack (28-37) and map type-markers (44-46) land
 once drawn. World-map backdrop: standalone res://assets/worldmap.png (load-if-exists).
+**Animation hooks WIRED (2026-07-23, Codex drew 28-43):** villager work-swing (28,
+pawn.gd _process) + melee flash (29, via Fx.lunge attack_cell param, base-0 only);
+bandit walk (31) + attack (32) in raider.gd (guarded `not is_beast`, base cell 15 so
+wolves at 23 keep their sprite); critter walk (36 rabbit/37 bird) in critter.gd by
+`huntable`. Relic fx (38-41) + hit puff (42-43) were already wired. **Still unwired:**
+villager bow (30), knight walk/attack (33/34, ally.gd uses Fx.flash not lunge), elder
+walk (35), and map type-markers (44-46, world_map.gd).
 World map has discovery (sites reveal by renown, derived), hover tooltips, route highlight.
 
 **Regenerating art:** tools/*.ps1 (rescued from session scratchpad). Order if rebuilding

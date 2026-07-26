@@ -93,15 +93,23 @@ static func emote(anchor: Node2D, text: String, color := Color.WHITE) -> void:
 
 ## Melee swing: the body sprite snaps toward the target and settles back.
 ## Sets a "lunging" meta so per-frame animators leave the offset alone.
-static func lunge(body: Node2D, dir: Vector2) -> void:
+## `attack_cell` (opt-in) flashes an atlas frame for the swing, then restores the
+## base frame (cell 0). Only pass it for entities whose base sprite IS cell 0
+## (villagers); leave it -1 for anything else (raiders/allies keep their sprite).
+static func lunge(body: Node2D, dir: Vector2, attack_cell := -1) -> void:
 	if body.has_meta("lunging"):
 		return
 	body.set_meta("lunging", true)
+	if attack_cell >= 0 and body is Sprite2D:
+		(body as Sprite2D).region_rect.position.x = attack_cell * 16.0
 	var push := dir.normalized() * 5.0
 	var tween := body.create_tween()
 	tween.tween_property(body, "position", push, 0.06)
 	tween.tween_property(body, "position", Vector2.ZERO, 0.14)
-	tween.tween_callback(func() -> void: body.remove_meta("lunging"))
+	tween.tween_callback(func() -> void:
+		body.remove_meta("lunging")
+		if attack_cell >= 0 and body is Sprite2D:
+			(body as Sprite2D).region_rect.position.x = 0.0)
 
 ## Dropped items bounce into place instead of teleporting.
 static func hop(item: Node2D) -> void:

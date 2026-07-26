@@ -364,8 +364,9 @@ func _process(delta: float) -> void:
 		body.region_rect.position.x = 224.0 if int(t * 6.0) % 2 == 0 else 0.0
 	elif working:
 		body.position.y = 0.0
-		body.rotation = (0.22 if body.flip_h else -0.22) * (0.5 + 0.5 * sin(t * 14.0))
-		body.region_rect.position.x = 0.0
+		# Frame 28 (work-swing) carries the motion now; keep a gentle lean on top.
+		body.rotation = (0.14 if body.flip_h else -0.14) * (0.5 + 0.5 * sin(t * 14.0))
+		body.region_rect.position.x = 448.0 if int(t * 7.0) % 2 == 0 else 0.0
 	else:
 		body.position.y = 0.0
 		body.rotation = 0.0

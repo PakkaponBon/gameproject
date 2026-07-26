@@ -50,7 +50,7 @@ func engage_adjacent() -> bool:
 		return false
 	if attack_cooldown <= 0:
 		attack_cooldown = _melee_cooldown()
-		Fx.lunge(pawn.body, raider.position - pawn.position)
+		Fx.lunge(pawn.body, raider.position - pawn.position, 29)  # flash melee frame
 		var lvl := pawn.skills.level("melee")
 		if randf() < BASE_HIT_CHANCE + HIT_PER_MELEE_LEVEL * lvl:
 			var damage := attack_damage * (1.0 + DAMAGE_PER_MELEE_LEVEL * lvl) \
