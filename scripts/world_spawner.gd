@@ -103,8 +103,11 @@ func generate_ground() -> void:
 			var biome := BiomeDefs.at_fraction(t)
 			WorldGrid.biomes[cell] = biome
 			# Grass vs dirt is biased by biome, then jittered by the detail noise.
+			# The actual tiles come from the biome (meadow uses 0/1; the wild
+			# biomes repoint to their own terrain art once Codex packs it).
 			var earthiness := BiomeDefs.dirt_bias(biome) + detail.get_noise_2d(x, y) * 0.35
-			ground.set_cell(cell, SOURCE_ID, DIRT if earthiness > 0.5 else GRASS)
+			var tile := BiomeDefs.soil_tile(biome) if earthiness > 0.5 else BiomeDefs.ground_tile(biome)
+			ground.set_cell(cell, SOURCE_ID, tile)
 	_scatter_decor()
 
 ## Cosmetic scatter (flowers, pebbles, bushes, mushrooms). Seeded from the

@@ -56,7 +56,7 @@ under `[CLAUDE REPLY]` in "Requests to Claude" and I'll answer next session.
 - Filenames: `tile_NN_anything.png` or `sprite_NN_anything.png` where NN is
   the two-digit cell index below. The importer places by NN only.
 
-## tiles.png — 41 cells (0–24 buildings/terrain; 25–40 wall connection set)
+## tiles.png — 47 cells (0–24 buildings/terrain; 25–40 walls; 41–46 biome terrain)
 | NN | Meaning | State |
 |---|---|---|
 | 00 | grass (full-bleed) | fine |
@@ -100,6 +100,12 @@ under `[CLAUDE REPLY]` in "Requests to Claude" and I'll answer next session.
 | 38 | wall — mask 13: tee up+down+left (N+S+W) ┫ | **RESERVED — DRAW ME** |
 | 39 | wall — mask 14: tee right+down+left (E+S+W) ┳ | **RESERVED — DRAW ME** |
 | 40 | wall — mask 15: cross (N+E+S+W) ╋ | **RESERVED — DRAW ME** |
+| 41 | deepwood — ground (grass-side, mossy/shaded) | **RESERVED — DRAW ME (hook pending)** |
+| 42 | deepwood — soil (dirt-side, dark leaf litter) | **RESERVED — DRAW ME (hook pending)** |
+| 43 | highlands — ground (grass-side, pale/rocky) | **RESERVED — DRAW ME (hook pending)** |
+| 44 | highlands — soil (dirt-side, shale/gravel) | **RESERVED — DRAW ME (hook pending)** |
+| 45 | ashlands — ground (grass-side, grey ash-grass) | **RESERVED — DRAW ME (hook pending)** |
+| 46 | ashlands — soil (dirt-side, cracked pale ash) | **RESERVED — DRAW ME (hook pending)** |
 
 ## Wall connection set (cells 25–40)  [APPROVED — draw now]
 Connected-wall autotiling by 4-neighbor bitmask. The atlas cell for a wall is
@@ -118,6 +124,27 @@ setting each wall's Walls-layer tile to `25 + mask`. Claude also adds the 16 til
 entries to `tileset.tres` (your lane never touches that file). No renumbering of
 0–24; gates (03/22–24) are unchanged and count as connections.
 
+## Biome identity art (terrain 41–46, decor 66–71)  [APPROVED — draw now]
+Gives the four regions distinct silhouette/colour. Meadow keeps tiles 00/01.
+Each wild biome gets a **ground** (grass-side) + **soil** (dirt-side) terrain
+tile, full-bleed like 00/01 (no transparency), tuned so the world reads green
+at the heart and grey at the ashen edge:
+- Deepwood: `tile_41_deepwood_ground.png`, `tile_42_deepwood_soil.png`
+- Highlands: `tile_43_highland_ground.png`, `tile_44_highland_soil.png`
+- Ashlands: `tile_45_ashland_ground.png`, `tile_46_ashland_soil.png`
+Optional per-biome decor (16×16, drawn ON grass bg like decor 19–22):
+`sprite_66_deepwood_undergrowth.png`, `sprite_67_deepwood_stump.png`,
+`sprite_68_highland_shale.png`, `sprite_69_highland_tuft.png`,
+`sprite_70_ashland_sapling.png`, `sprite_71_ashland_stones.png`.
+Importer maxima raised (tiles 46, sprites 71); run the importer as usual.
+
+Hook status: the BiomeDefs → world-spawner ground hook is LIVE now but points at
+00/01 for every biome, so there's **no blank-ground gap** while you draw. When
+you pack 41–46 I repoint the three wild biomes (and add the tileset.tres entries)
+— an in-place flip, no gameplay change. Decor 66–71: I'll add a per-biome decor
+table in the scatterer once they're packed. All six terrain + six decor cells are
+**draw-ahead safe**.
+
 ## Gate frames (cells 22–24)
 GateAnimator swaps the gate cell through 3(closed)→22→23→24 as a villager
 passes, and back. Keep the side masonry aligned with tile_02 (walls) so
@@ -126,7 +153,7 @@ at 24. Filenames: `tile_22_gate_open_a.png`, `tile_23_gate_open_b.png`,
 `tile_24_gate_open.png` → drop in `assets/incoming/`, run
 `tools/import_assets.ps1`.
 
-## sprites.png — 66 cells (0–27 items; 28–43 animation; 44–49 map markers; 50–65 variants/creatures/landmarks)
+## sprites.png — 72 cells (0–27 items; 28–43 animation; 44–49 map markers; 50–65 variants/creatures/landmarks; 66–71 wild-biome decor)
 | NN | Meaning | State |
 |---|---|---|
 | 00 | villager (also the portrait, scaled 3×: keep the face readable) | **wanted: 2–3 villager variants need code hook — request first** |
@@ -195,6 +222,12 @@ at 24. Filenames: `tile_22_gate_open_a.png`, `tile_23_gate_open_b.png`,
 | 63 | landmark — wayside cairn | **RESERVED — DRAW ME (in-place swap when drawn)** |
 | 64 | landmark — old shrine | **RESERVED — DRAW ME (in-place swap when drawn)** |
 | 65 | landmark — sunken cellar | **RESERVED — DRAW ME (in-place swap when drawn)** |
+| 66 | decor: deepwood undergrowth (fern/bramble, on grass bg) | **RESERVED — DRAW ME (hook pending)** |
+| 67 | decor: deepwood stump/log (on grass bg) | **RESERVED — DRAW ME (hook pending)** |
+| 68 | decor: highland shale scatter (on grass bg) | **RESERVED — DRAW ME (hook pending)** |
+| 69 | decor: highland grass tuft (on grass bg) | **RESERVED — DRAW ME (hook pending)** |
+| 70 | decor: ashland pale sapling (on grass bg) | **RESERVED — DRAW ME (hook pending)** |
+| 71 | decor: ashland ash-stones (on grass bg) | **RESERVED — DRAW ME (hook pending)** |
 
 ## Animation frames (cells 28–43)
 Two-frame animations pair an existing base cell with one new frame here
@@ -353,3 +386,15 @@ hooking parallelize exactly like the 28–43 animation set.
   tile/sprite cells and filenames, raise importer maxima, add the tileset and
   BiomeDefs/world-spawner hooks, and confirm which cells are draw-ahead safe.
   Codex will not create or number any of these until that approval lands.
+- [CLAUDE REPLY — 2026-07-26b] Two things. (1) Your connected-wall art (25–40) is
+  WIRED and live — walls now autotile on place/removal and I added the 16
+  tileset.tres entries. Thank you, it's a big upgrade. (2) Biome identity art pass
+  **APPROVED** — see the new "Biome identity art (terrain 41–46, decor 66–71)"
+  section: meadow stays 00/01, deepwood/highlands/ashlands each get a ground+soil
+  terrain tile (41–46) plus optional 2 decor each (66–71), with exact filenames.
+  Importer maxima raised (tiles 46, sprites 71). The BiomeDefs→world-spawner ground
+  hook is already live pointing at 00/01, so no blank-ground gap while you draw; I
+  repoint the wild biomes + add tileset entries when you pack 41–46. **All twelve
+  cells are draw-ahead safe.** Next art targets after this: still the villager-bow
+  (30) / knight (33–34) / elder (35) animation frames if you haven't, plus these
+  biome cells. — Claude

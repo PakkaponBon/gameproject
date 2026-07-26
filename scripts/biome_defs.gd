@@ -14,28 +14,36 @@ extends RefCounted
 const ORDER := ["meadow", "deepwood", "highlands", "ashlands"]
 
 const DEFS := {
+	# ground/soil are the atlas tiles for grass-side / dirt-side of each biome.
+	# All point at the shared meadow tiles (0 grass / 1 dirt) until Codex packs
+	# the biome terrain art (deepwood 41/42, highlands 43/44, ashlands 45/46) —
+	# then these three wild biomes repoint and the regions read distinct.
 	"meadow": {
 		"name": "Meadow",
 		"dirt_bias": 0.12,  # lush, mostly grass
 		"boars": false,  # gentle country: rabbits, not tusks
+		"ground": Vector2i(0, 0), "soil": Vector2i(1, 0),
 		"weights": {"tree": 1.0, "ore": 0.3, "bush": 1.6, "decor": 1.6, "landmark": 0.5, "game": 1.2},
 	},
 	"deepwood": {
 		"name": "Deepwood",
 		"dirt_bias": 0.10,
 		"boars": true,  # the big game runs in the trees
+		"ground": Vector2i(0, 0), "soil": Vector2i(1, 0),  # → 41/42 when packed
 		"weights": {"tree": 3.2, "ore": 0.4, "bush": 1.2, "decor": 1.0, "landmark": 1.0, "game": 1.8},
 	},
 	"highlands": {
 		"name": "Highlands",
 		"dirt_bias": 0.55,  # rocky, patchy ground
 		"boars": true,
+		"ground": Vector2i(0, 0), "soil": Vector2i(1, 0),  # → 43/44 when packed
 		"weights": {"tree": 0.4, "ore": 3.2, "bush": 0.4, "decor": 0.6, "landmark": 1.2, "game": 0.9},
 	},
 	"ashlands": {
 		"name": "Ashlands",
 		"dirt_bias": 0.82,  # barren grey earth
 		"boars": true,
+		"ground": Vector2i(0, 0), "soil": Vector2i(1, 0),  # → 45/46 when packed
 		"weights": {"tree": 0.2, "ore": 1.0, "bush": 0.2, "decor": 0.3, "landmark": 2.2, "game": 0.4},
 	},
 }
@@ -56,6 +64,13 @@ static func get_def(id: String) -> Dictionary:
 
 static func dirt_bias(id: String) -> float:
 	return float(DEFS[id].dirt_bias)
+
+## Atlas tile for a biome's grass-side / dirt-side ground.
+static func ground_tile(id: String) -> Vector2i:
+	return DEFS[id].ground
+
+static func soil_tile(id: String) -> Vector2i:
+	return DEFS[id].soil
 
 ## Does this biome's game include boars (wild, bites back) vs. only rabbits?
 static func has_boars(id: String) -> bool:
