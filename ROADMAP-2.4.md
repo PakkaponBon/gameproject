@@ -23,12 +23,17 @@
       the far edges, reinforcing the Frontier's "reward is out there."
 - [x] WorldGrid.biome_at(cell) for any system that wants to ask.
 
-## Phase W2 — Region Character  *(make biomes matter to play)*
-- [ ] Biome-flavored ambient: which critters spawn where (boar/wolf lean wild),
-      weather/tint per region, a one-line "you cross into the Ashlands" notice.
-- [ ] Danger gradient: raids/beasts skew toward the wild rings; the Ashlands
-      edge is where the Frontier's danger-on-investigate (v2.3 F3) concentrates.
-- [ ] Hook biome into the villager/landmark tooltips (name the country).
+## Phase W2 — Region Character  *(make biomes matter to play)* ~ (partial)
+- [x] Game is biome-regional: critters spawn biome-weighted ("game" weight —
+      thick in the Deepwood, thin in the Ashlands), and boars only turn up in the
+      wild biomes that have them (BiomeDefs.has_boars). Replenished game is regional
+      too (the spawner decides, so no scripted boar-roll needed).
+- [x] Biome named in the villager panel (the country the selected villager stands
+      in), so regions are legible without spammy crossing toasts.
+- Note: the danger gradient largely comes free — raiders/beasts already spawn from
+  the map edges, which are now Ashlands, so danger literally comes from the ashen
+  frontier. Explicit skew + per-region weather/tint + landmark-tooltip country
+  remain for a later pass (pairs with v2.3 F3 danger-on-investigate).
 
 ## Phase W3 — Ship it
 - [ ] Optional distinct terrain art (Codex: sand/marsh/ash tiles) swapped in by

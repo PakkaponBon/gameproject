@@ -17,22 +17,26 @@ const DEFS := {
 	"meadow": {
 		"name": "Meadow",
 		"dirt_bias": 0.12,  # lush, mostly grass
-		"weights": {"tree": 1.0, "ore": 0.3, "bush": 1.6, "decor": 1.6, "landmark": 0.5},
+		"boars": false,  # gentle country: rabbits, not tusks
+		"weights": {"tree": 1.0, "ore": 0.3, "bush": 1.6, "decor": 1.6, "landmark": 0.5, "game": 1.2},
 	},
 	"deepwood": {
 		"name": "Deepwood",
 		"dirt_bias": 0.10,
-		"weights": {"tree": 3.2, "ore": 0.4, "bush": 1.2, "decor": 1.0, "landmark": 1.0},
+		"boars": true,  # the big game runs in the trees
+		"weights": {"tree": 3.2, "ore": 0.4, "bush": 1.2, "decor": 1.0, "landmark": 1.0, "game": 1.8},
 	},
 	"highlands": {
 		"name": "Highlands",
 		"dirt_bias": 0.55,  # rocky, patchy ground
-		"weights": {"tree": 0.4, "ore": 3.2, "bush": 0.4, "decor": 0.6, "landmark": 1.2},
+		"boars": true,
+		"weights": {"tree": 0.4, "ore": 3.2, "bush": 0.4, "decor": 0.6, "landmark": 1.2, "game": 0.9},
 	},
 	"ashlands": {
 		"name": "Ashlands",
 		"dirt_bias": 0.82,  # barren grey earth
-		"weights": {"tree": 0.2, "ore": 1.0, "bush": 0.2, "decor": 0.3, "landmark": 2.2},
+		"boars": true,
+		"weights": {"tree": 0.2, "ore": 1.0, "bush": 0.2, "decor": 0.3, "landmark": 2.2, "game": 0.4},
 	},
 }
 
@@ -52,6 +56,10 @@ static func get_def(id: String) -> Dictionary:
 
 static func dirt_bias(id: String) -> float:
 	return float(DEFS[id].dirt_bias)
+
+## Does this biome's game include boars (wild, bites back) vs. only rabbits?
+static func has_boars(id: String) -> bool:
+	return bool(DEFS[id].boars)
 
 ## How strongly a biome favors scattering a given thing (tree/ore/bush/decor/
 ## landmark). 1.0 is neutral; the spawner samples a few cells and keeps the one

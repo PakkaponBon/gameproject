@@ -107,12 +107,13 @@ func _oath_offer() -> void:
 			accept, decline)
 
 ## Keep huntable game topped up: ambient life stays alive AND meat stays a
-## renewable trickle, so hunting never exterminates the meadow. Some of
-## what wanders in is a boar — more meat, but it bites.
+## renewable trickle, so hunting never exterminates the land. Game spawns in
+## its country (biome-weighted) and boars only turn up in the wild biomes —
+## the spawner decides, so replenished game reads as regional too.
 func _replenish_game() -> void:
 	var count := get_tree().get_nodes_in_group("game").size()
 	while count < main.spawner.scaled(Balance.CRITTER_TARGET):
-		main.spawner.spawn_one_critter(false, randf() < Balance.BOAR_CHANCE)
+		main.spawner.spawn_one_critter(false)
 		count += 1
 
 ## Winter's own raid: an ash-wolf pack breaks from the treeline.

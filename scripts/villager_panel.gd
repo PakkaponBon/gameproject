@@ -54,7 +54,8 @@ func refresh() -> void:
 	var bond := pawn.social.strongest_bond_text()
 	_bond_label.text = bond
 	_bond_label.visible = bond != "" and not _collapsed
-	_activity_label.text = pawn.activity_text()
+	_activity_label.text = "%s · %s" % [pawn.activity_text(),
+			String(BiomeDefs.get_def(WorldGrid.biome_at(pawn.cell)).name)]
 	_bars.hunger.value = pawn.needs.hunger
 	_bars.rest.value = pawn.needs.rest
 	_bars.mood.value = pawn.needs.mood

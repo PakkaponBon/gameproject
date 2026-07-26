@@ -149,11 +149,19 @@ func spawn_critters() -> void:
 	for i in scaled(CRITTER_COUNT):
 		spawn_one_critter(i % 2 == 1)  # every other one is a bird
 
-## One critter. Rabbits (and boars) are huntable game; birds stay set
-## dressing. A boar yields more meat but wounds whoever corners it.
-func spawn_one_critter(is_bird: bool, boar := false) -> void:
+## One critter. Rabbits (and boars) are huntable game; birds stay set dressing.
+## Game spawns in game country (biome-weighted); boars only turn up in the wild
+## biomes that have them (see BiomeDefs). A boar yields more meat but wounds
+## whoever corners it. `force_boar` overrides for scripted events.
+func spawn_one_critter(is_bird: bool, force_boar := false) -> void:
 	var critter: Critter = CRITTER_SCENE.instantiate()
 	critter.huntable = not is_bird
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var cell := _biome_weighted_cell("game", rng) if not is_bird \
+			else Vector2i(rng.randi() % WorldGrid.MAP_SIZE.x, rng.randi() % WorldGrid.MAP_SIZE.y)
+	var boar := force_boar or (not is_bird \
+			and BiomeDefs.has_boars(WorldGrid.biome_at(cell)) and randf() < Balance.BOAR_CHANCE)
 	var body: Sprite2D = critter.get_node("Body")
 	if is_bird:
 		body.region_rect = Rect2(384, 0, 16, 16)
@@ -162,8 +170,7 @@ func spawn_one_critter(is_bird: bool, boar := false) -> void:
 		critter.meat_count = Balance.MEAT_PER_KILL + 1
 		body.modulate = Color(0.55, 0.42, 0.32)  # dark bristled hide
 		body.scale = Vector2(1.15, 1.15)
-	critter.position = WorldGrid.cell_to_world(
-			Vector2i(randi() % WorldGrid.MAP_SIZE.x, randi() % WorldGrid.MAP_SIZE.y))
+	critter.position = WorldGrid.cell_to_world(cell)
 	entities.add_child(critter)
 
 func spawn_entity(scene: PackedScene, cell: Vector2i) -> Node2D:
