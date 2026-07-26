@@ -93,7 +93,10 @@ state saved additively (siege{phase,wave,timer} + faction long_night bool).
 15 brazier-torch · 16 brewery-barrel(custom) · 17 coop-hut(custom) ·
 18 pasture-fence(custom) · 19 loom(custom) · 20 spike-pit(custom) · 21 alarm-bell(custom) ·
 22 gate-transition-A · 23 gate-transition-B · 24 gate-open — GateAnimator swaps 3→22→23→24
-as a villager passes; cells 22-24 reserved transparent, asset agent draws them
+as a villager passes; cells 22-24 reserved transparent, asset agent draws them.
+**25-40 wall connection set (RESERVED, Codex drawing):** cell = 25 + 4-neighbor mask
+(N1 E2 S4 W8); Claude wires autotiling + adds 16 tileset.tres entries when packed —
+walls render cell 02 until then. importer tile-max now 40 (auto-extends).
 
 **sprites.png (28 cells, 448px):** 0 villager · 1 tree · 2 rock(proc) · 3 crop-sprigs ·
 4 wood-logs(custom) · 5 stone-chunk(proc) · 6 ingot-disc(also wool/hide tinted) · 7 sword ·
@@ -108,8 +111,8 @@ sheep/boar/wolf tinted) · 24 bird(also chicken tinted) · 25 knight-ally · 26 
 47 selected · 48 locked · 49 completed. **50-65 reserved (Codex drawing, hooks
 pending):** 50/51 sheep+walk · 52/53 boar+walk · 54/55 ash-wolf+walk · 56/57
 villager-variant-B+walk · 58/59 variant-C+walk · 60-65 landmark art (standing
-stones/ash grove/watchtower/cairn/shrine/cellar — LandmarkDefs.cell repoints from
-reused 17/1/2/5/12/22 to 60-65 when drawn). Portraits are standalone 24x24
+stones/ash grove/watchtower/cairn/shrine/cellar — LandmarkDefs.cell now points at
+60-65, Codex packed them 2026-07-26). Portraits are standalone 24x24
 res://assets/portrait_00..02.png (not atlas cells). sprites.png now 66 cells
 (1056px); importer sprite-max 65, auto-extends. FX hooks (relic 38-41, puff 42-43) + map markers 47/48/49
 wired (graceful blank); entity walk/work/attack (28-37) and map type-markers (44-46) land

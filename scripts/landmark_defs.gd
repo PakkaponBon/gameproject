@@ -28,7 +28,7 @@ const ORDER := ["standing_stones", "ash_grove", "fallen_watchtower",
 const DEFS := {
 	"standing_stones": {
 		"name": "Standing Stones",
-		"cell": 17,  # jagged-rock silhouette
+		"cell": 60,  # dedicated standing-stones art
 		"tint": Color(0.72, 0.78, 0.92),
 		"scale": 2.3,
 		"blurb": "A ring of stones older than the ash. Standing among them, the village feels less alone.",
@@ -41,7 +41,7 @@ const DEFS := {
 	},
 	"ash_grove": {
 		"name": "Ash-scarred Grove",
-		"cell": 1,  # tree
+		"cell": 61,  # dedicated ash-grove art
 		"tint": Color(0.62, 0.66, 0.6),
 		"scale": 2.4,
 		"blurb": "Trees the fire spared, half-grey with old ash. Their bark still gives, and healing grows in their shade.",
@@ -54,7 +54,7 @@ const DEFS := {
 	},
 	"fallen_watchtower": {
 		"name": "Fallen Watchtower",
-		"cell": 2,  # rock/rubble
+		"cell": 62,  # dedicated fallen-watchtower art
 		"tint": Color(0.7, 0.68, 0.62),
 		"scale": 2.5,
 		"blurb": "A border tower thrown down long ago. Its armory still holds arms for hands willing to dig.",
@@ -68,7 +68,7 @@ const DEFS := {
 	},
 	"wayside_cairn": {
 		"name": "Wayside Cairn",
-		"cell": 5,  # stone-chunk
+		"cell": 63,  # dedicated wayside-cairn art
 		"tint": Color(0.8, 0.8, 0.78),
 		"scale": 1.9,
 		"blurb": "Travelers heaped these stones for the lost. A coin is left, a name is said, and the road feels shorter.",
@@ -81,7 +81,7 @@ const DEFS := {
 	},
 	"old_shrine": {
 		"name": "Old Shrine",
-		"cell": 12,  # relic-wand
+		"cell": 64,  # dedicated old-shrine art
 		"tint": Color(0.95, 0.85, 0.5),
 		"scale": 2.1,
 		"blurb": "A shrine to a god whose name the ash took. Something of the old power still lingers, faint and cold.",
@@ -94,7 +94,7 @@ const DEFS := {
 	},
 	"sunken_cache": {
 		"name": "Sunken Cellar",
-		"cell": 22,  # mushrooms over a buried door
+		"cell": 65,  # dedicated sunken-cellar art
 		"tint": Color(0.72, 0.82, 0.68),
 		"scale": 2.0,
 		"blurb": "A farmstead's cellar, roof long gone. The stores kept better than the house — preserves, and herbs gone wild.",
