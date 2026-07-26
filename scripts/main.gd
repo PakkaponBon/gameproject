@@ -221,6 +221,8 @@ func place_building(cell: Vector2i, id: String) -> void:
 	WorldGrid.register_building(cell, id)
 	var def: Dictionary = BuildingDefs.get_def(id)
 	walls.set_cell(cell, SOURCE_ID, def.tile)
+	if id == "wall" or id == "gate":
+		_refresh_wall_area(cell)  # connect this wall/gate to its neighbors
 	# Fire-warmed workstations, hearths, and braziers glow at night.
 	if def.get("workstation", false) or def.get("kitchen", false) or def.get("light", false):
 		var light := PointLight2D.new()
@@ -236,6 +238,35 @@ func _remove_light(cell: Vector2i) -> void:
 	if _lights.has(cell):
 		_lights[cell].queue_free()
 		_lights.erase(cell)
+
+const _WALL_NEIGHBORS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]  # N E S W
+
+## Connected-wall autotiling: a wall's tile is 25 + NESW mask, where a side
+## "connects" to an adjacent wall or gate. Recompute a cell and its four
+## neighbors on any wall/gate change, so runs, corners, tees, and caps pick
+## themselves — order-independent, so it self-heals during save-load too.
+func _wall_connects(cell: Vector2i) -> bool:
+	var id: String = WorldGrid.buildings.get(cell, "")
+	return id == "wall" or id == "gate"
+
+func _refresh_wall(cell: Vector2i) -> void:
+	if String(WorldGrid.buildings.get(cell, "")) != "wall":
+		return  # only walls autotile; gates keep their own (animated) tile
+	var mask := 0
+	if _wall_connects(cell + Vector2i(0, -1)):
+		mask |= 1
+	if _wall_connects(cell + Vector2i(1, 0)):
+		mask |= 2
+	if _wall_connects(cell + Vector2i(0, 1)):
+		mask |= 4
+	if _wall_connects(cell + Vector2i(-1, 0)):
+		mask |= 8
+	walls.set_cell(cell, SOURCE_ID, Vector2i(25 + mask, 0))
+
+func _refresh_wall_area(cell: Vector2i) -> void:
+	_refresh_wall(cell)  # no-ops if this cell isn't a wall (e.g. a gate or removal)
+	for d: Vector2i in _WALL_NEIGHBORS:
+		_refresh_wall(cell + d)
 
 func place_blueprint(cell: Vector2i, id: String) -> void:
 	if not WorldGrid.in_bounds(cell) or WorldGrid.buildings.has(cell) \
@@ -407,6 +438,7 @@ func _on_building_destroyed(cell: Vector2i) -> void:
 		decon_orders.erase(cell)
 	WorldGrid.remove_building(cell)
 	walls.erase_cell(cell)
+	_refresh_wall_area(cell)  # neighbors lose this connection
 	_remove_light(cell)
 	hud.set_event("The %s is destroyed!" % bname, Color(1.0, 0.6, 0.3), WorldGrid.cell_to_world(cell))
 
@@ -415,6 +447,7 @@ func _on_building_deconstructed(cell: Vector2i) -> void:
 	var refund: Dictionary = BuildingDefs.get_def(WorldGrid.buildings[cell]).refund
 	WorldGrid.remove_building(cell)
 	walls.erase_cell(cell)
+	_refresh_wall_area(cell)  # neighbors lose this connection
 	_remove_light(cell)
 	for id: String in refund:
 		spawner.drop_resource(cell, id, int(refund[id]))
