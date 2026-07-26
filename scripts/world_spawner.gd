@@ -171,8 +171,7 @@ func spawn_one_critter(is_bird: bool, force_boar := false) -> void:
 	elif boar:
 		critter.fierce = true
 		critter.meat_count = Balance.MEAT_PER_KILL + 1
-		body.modulate = Color(0.55, 0.42, 0.32)  # dark bristled hide
-		body.scale = Vector2(1.15, 1.15)
+		body.scale = Vector2(1.15, 1.15)  # reads bigger; sprite is cell 52/53 (set in _process)
 	critter.position = WorldGrid.cell_to_world(cell)
 	entities.add_child(critter)
 

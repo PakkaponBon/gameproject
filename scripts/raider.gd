@@ -56,8 +56,8 @@ func make_wolf() -> void:
 	attack_damage = 6.0 * Balance.enemy_damage_mult()
 	move_cooldown = 0
 	var body: Sprite2D = $Body
-	body.region_rect = Rect2(368, 0, 16, 16)  # four-legged silhouette
-	body.modulate = Color(0.5, 0.52, 0.58)  # ash-gray
+	body.region_rect = Rect2(864, 0, 16, 16)  # dedicated ash-wolf art (cell 54)
+	body.modulate = Color.WHITE  # art carries its own colour now
 	body.scale = Vector2(1.2, 1.2)
 
 ## Legion elite: armored rank in the Cindermarked's big raids.
@@ -293,6 +293,8 @@ func _process(delta: float) -> void:
 	else:
 		body.position.y = 0.0
 		body.rotation = 0.0
-	# Bandits swap idle(15)↔walk(31); beasts (wolf, cell 23) keep their sprite.
+	# Bandits swap idle(15)↔walk(31); ash-wolves swap their own idle(54)↔walk(55).
 	if not is_beast:
 		body.region_rect.position.x = 496.0 if (moving and int(t * 6.0) % 2 == 0) else 240.0
+	else:
+		body.region_rect.position.x = 880.0 if (moving and int(t * 6.0) % 2 == 0) else 864.0

@@ -65,9 +65,15 @@ func _process(delta: float) -> void:
 	var body := $Body as Sprite2D
 	if absf(dest.x - position.x) > 0.5:
 		body.flip_h = dest.x < position.x
-	# Walk-frame hop: huntable (rabbit/boar) base 23↔walk 36; bird base 24↔walk 37.
+	# Walk-frame hop by kind: boar 52↔53, rabbit 23↔36, bird 24↔37.
 	var moving := position.distance_to(dest) > 1.0
 	var t := Time.get_ticks_msec() / 1000.0
-	var base_x := 368.0 if huntable else 384.0
-	var walk_x := 576.0 if huntable else 592.0
+	var base_x := 368.0  # rabbit
+	var walk_x := 576.0
+	if fierce:  # boar has its own sprite
+		base_x = 832.0
+		walk_x = 848.0
+	elif not huntable:  # bird
+		base_x = 384.0
+		walk_x = 592.0
 	body.region_rect.position.x = walk_x if (moving and int(t * 7.0) % 2 == 0) else base_x

@@ -9,9 +9,9 @@ const FOOD_SCENE := preload("res://scenes/food_item.tscn")
 const RESOURCE_SCENE := preload("res://scenes/resource_item.tscn")
 const KINDS := {
 	"chicken": {"region": Rect2(384, 0, 16, 16), "tint": Color(1.05, 1.0, 0.85),
-			"product": "", "days": Balance.EGG_LAY_DAYS},  # "" = food (an egg)
-	"sheep": {"region": Rect2(368, 0, 16, 16), "tint": Color(1.15, 1.13, 1.05),
-			"product": "wool", "days": Balance.WOOL_DAYS},
+			"walk_x": 592.0, "product": "", "days": Balance.EGG_LAY_DAYS},  # bird walk 37; "" = egg
+	"sheep": {"region": Rect2(800, 0, 16, 16), "tint": Color.WHITE,
+			"walk_x": 816.0, "product": "wool", "days": Balance.WOOL_DAYS},  # own art 50/51
 }
 
 var cell: Vector2i
@@ -62,5 +62,11 @@ func _produce() -> void:
 func _process(delta: float) -> void:
 	var dest := WorldGrid.cell_to_world(cell)
 	position = position.lerp(dest, minf(1.0, 6.0 * delta))
+	var body := $Body as Sprite2D
 	if absf(dest.x - position.x) > 0.5:
-		($Body as Sprite2D).flip_h = dest.x < position.x
+		body.flip_h = dest.x < position.x
+	var base_x: float = KINDS[kind].region.position.x
+	var walk_x: float = KINDS[kind].get("walk_x", base_x)
+	var moving := position.distance_to(dest) > 1.0
+	var t := Time.get_ticks_msec() / 1000.0
+	body.region_rect.position.x = walk_x if (moving and int(t * 7.0) % 2 == 0) else base_x

@@ -121,9 +121,15 @@ once drawn. World-map backdrop: standalone res://assets/worldmap.png (load-if-ex
 pawn.gd _process) + melee flash (29, via Fx.lunge attack_cell param, base-0 only);
 bandit walk (31) + attack (32) in raider.gd (guarded `not is_beast`, base cell 15 so
 wolves at 23 keep their sprite); critter walk (36 rabbit/37 bird) in critter.gd by
-`huntable`. Relic fx (38-41) + hit puff (42-43) were already wired. **Still unwired:**
-villager bow (30), knight walk/attack (33/34, ally.gd uses Fx.flash not lunge), elder
-walk (35), and map type-markers (44-46, world_map.gd).
+`huntable`. Relic fx (38-41) + hit puff (42-43) were already wired.
+**Batch 3 + walls WIRED (2026-07-26):** distinct creatures — sheep (livestock KINDS →
+50/51 base+walk, white tint), boar (critter fierce → 52/53, dropped brown tint), ash-wolf
+(raider.make_wolf → 54, _process beast branch 54/55); landmarks already 60-65. Connected
+walls autotile (tiles 25-40, tileset.tres entries added, main._refresh_wall_area on
+place/removal, cell = 25 + NESW mask). **Still unwired:** villager bow (30), knight
+walk/attack (33/34, ally uses Fx.flash), elder walk (35), map type-markers (44-46);
+villager variants (56-59) + 24x24 portraits; biome terrain repoint (41-46) + wild decor
+(66-71) when Codex packs them.
 World map has discovery (sites reveal by renown, derived), hover tooltips, route highlight.
 
 **Regenerating art:** tools/*.ps1 (rescued from session scratchpad). Order if rebuilding
