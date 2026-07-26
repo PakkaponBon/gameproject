@@ -10,7 +10,8 @@ every indie.
 
 - **Ashfall original artwork** (base tile/sprite atlases, connected wall and
   gate revisions, character/effect animation frames, world-map marker cells
-  44–49, and the illustrated realm background) — generated and hand
+  44–49, the illustrated realm background, creature and villager variants,
+  world-landmark cells 60–65, and villager portraits) — generated and hand
   pixel-cleaned for this project by OpenAI Codex; original work.
 
 ## Audio
